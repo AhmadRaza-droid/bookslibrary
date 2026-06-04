@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Dashboard - Library Management System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav>
+    <div class="logo">📖 Library Management System</div>
+    <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="books.html">Books</a></li>
+        <li><a class="active" href="dashboard.html">Dashboard</a></li>
+        <li><a href="login.html">Logout</a></li>
+    </ul>
+</nav>
+
+<section class="page-header">
+    <h1>Student Dashboard</h1>
+    <p>Manage your issued books and library activity.</p>
+</section>
+
+<section class="dashboard-cards">
+    <div class="dash-card">
+        <h2>6</h2>
+        <p>Total Books</p>
+    </div>
+
+    <div class="dash-card">
+        <h2>2</h2>
+        <p>Issued Books</p>
+    </div>
+
+    <div class="dash-card">
+        <h2>1</h2>
+        <p>Pending Return</p>
+    </div>
+
+    <div class="dash-card">
+        <h2>Rs. 0</h2>
+        <p>Fine</p>
+    </div>
+</section>
+
+<section class="table-section">
+    <h2>Issued Books</h2>
+
+    <table>
+        <tr>
+            <th>Book Name</th>
+            <th>Author</th>
+            <th>Issue Date</th>
+            <th>Return Date</th>
+            <th>Status</th>
+        </tr>
+
+        <tr>
+            <td>Atomic Habits</td>
+            <td>James Clear</td>
+            <td>01-06-2026</td>
+            <td>08-06-2026</td>
+            <td>Issued</td>
+        </tr>
+
+        <tr>
+            <td>Clean Code</td>
+            <td>Robert C. Martin</td>
+            <td>02-06-2026</td>
+            <td>09-06-2026</td>
+            <td>Pending</td>
+        </tr>
+    </table>
+</section>
+
+</body>
+</html>
