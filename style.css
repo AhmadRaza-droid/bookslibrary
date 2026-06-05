@@ -621,39 +621,3 @@ footer p{
 .issue-btn:hover{
     background:#ff9800;
 }
-.about-section{
-    padding:60px 20px;
-    background:#f5f5f5;
-}
-
-.about-box{
-    max-width:800px;
-    margin:auto;
-    background:white;
-    padding:40px;
-    border-radius:20px;
-    box-shadow:0 5px 20px rgba(0,0,0,0.1);
-    text-align:center;
-}
-
-.about-box h2{
-    font-size:40px;
-    margin-bottom:20px;
-    color:#1e3c72;
-}
-
-.about-box p{
-    font-size:20px;
-    line-height:1.8;
-    color:#333;
-}
-
-.about-box ul{
-    list-style:none;
-    padding:0;
-}
-
-.about-box ul li{
-    padding:10px;
-    font-size:18px;
-}
