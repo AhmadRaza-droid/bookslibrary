@@ -29,8 +29,7 @@ $books = mysqli_query($conn, "SELECT * FROM books LIMIT 10");
 
 <section class="hero">
     <div class="hero-text">
-       
-        <h1>Welcome To <br><b>Digital Library</b></h1>
+               <h1>Welcome To <br><b>Digital Library</b></h1>
         <p>Manage books easily and explore a world of knowledge. Read. Learn. Grow.</p>
 
         <a href="books.php" class="btn">📖 Explore Books</a>
@@ -82,6 +81,17 @@ $books = mysqli_query($conn, "SELECT * FROM books LIMIT 10");
 
     </div>
 </section>
+<footer>
+
+<p>
+© 2026 UMT University Library. All rights reserved.
+</p>
+
+<p>
+Developed by Ahmad Raza
+</p>
+
+</footer>
 
 </body>
 </html>
