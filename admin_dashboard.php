@@ -28,7 +28,7 @@ $total_books = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM books"));
     <div class="logo">📖 Admin Panel</div>
 
     <ul>
-        <li><a href="index.phph">Website</a></li>
+        <li><a href="index.php">Website</a></li>
         <li><a href="admin_logout.php">Logout</a></li>
     </ul>
 </nav>
