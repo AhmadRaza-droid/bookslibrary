@@ -81,6 +81,39 @@ $books = mysqli_query($conn, "SELECT * FROM books LIMIT 10");
 
     </div>
 </section>
+<section class="about-section">
+
+    <div class="about-box">
+
+        <h2>📚 About UMT University Library</h2>
+
+        <p>
+            This platform allows students to read, download,
+            and explore books online easily.
+            Our goal is to provide a modern digital library
+            experience for students anytime and anywhere.
+        </p>
+
+        <hr>
+
+        <p><b>👨‍💻 Developer:</b> Ahmad Raza</p>
+
+        <p><b>🚀 Features:</b></p>
+
+        <ul>
+            <li>Online Book Reading</li>
+            <li>Book Download System</li>
+            <li>User Login & Registration</li>
+            <li>Admin Dashboard</li>
+            <li>OTP Password Reset</li>
+            <li>Contact & Email Support</li>
+        </ul>
+
+        <p><b>Version:</b> 1.0</p>
+
+    </div>
+
+</section>
 <footer>
 
 <p>
