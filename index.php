@@ -84,7 +84,7 @@ $books = mysqli_query($conn, "SELECT * FROM books LIMIT 10");
 <footer>
 
 <p>
-© 2026 UMT University Library. All rights reserved.
+© 2026  University Library. All rights reserved.
 </p>
 
 <p>
