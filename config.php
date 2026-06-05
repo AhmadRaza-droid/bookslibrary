@@ -1,18 +1,14 @@
 <?php
 
-$conn = mysqli_connect("localhost","root","","library_db","3307");
-
-if(!$conn){
-    die("Connection Failed");
-}
-
-?>
-<?php
-
-$conn = mysqli_connect("localhost", "root", "", "library_db", 3307);
+$conn = mysqli_connect(
+    "sql309.byetcluster.com",
+    "if0_42100687",
+    "yasirjajja321",
+    "if0_42100687_library_db"
+);
 
 if (!$conn) {
-    die("Database Connection Failed: " . mysqli_connect_error());
+    die("Connection failed: " . mysqli_connect_error());
 }
 
 ?>
