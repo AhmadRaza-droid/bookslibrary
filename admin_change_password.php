@@ -1,5 +1,6 @@
 <?php
 session_start();
+include 'config.php';
 
 if(!isset($_SESSION['admin'])){
     header("Location: admin_login.php");
@@ -8,12 +9,21 @@ if(!isset($_SESSION['admin'])){
 
 if(isset($_POST['change'])){
 
-    $old = $_POST['old_password'];
-    $new = $_POST['new_password'];
+    $username = $_SESSION['admin'];
+    $old = mysqli_real_escape_string($conn, $_POST['old_password']);
+    $new = mysqli_real_escape_string($conn, $_POST['new_password']);
 
-    if($old == "admin123"){
+    $check = mysqli_query($conn,
+        "SELECT * FROM admin 
+         WHERE username='$username' 
+         AND password='$old'");
 
-        $_SESSION['admin_password'] = $new;
+    if(mysqli_num_rows($check) > 0){
+
+        mysqli_query($conn,
+            "UPDATE admin 
+             SET password='$new' 
+             WHERE username='$username'");
 
         echo "<script>
                 alert('Password Changed Successfully');
@@ -24,6 +34,7 @@ if(isset($_POST['change'])){
 
         echo "<script>
                 alert('Old Password Incorrect');
+                window.location.href='admin_change_password.php';
               </script>";
     }
 }
@@ -38,7 +49,6 @@ if(isset($_POST['change'])){
 <body>
 
 <section class="form-section">
-
 <div class="form-box">
 
 <h2>Change Admin Password</h2>
@@ -61,8 +71,11 @@ Change Password
 
 </form>
 
-</div>
+<p>
+    <a href="admin_dashboard.php">Back to Dashboard</a>
+</p>
 
+</div>
 </section>
 
 </body>
