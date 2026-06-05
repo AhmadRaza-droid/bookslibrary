@@ -1,23 +1,16 @@
-```php
 <?php
 session_start();
-include 'config.php';
 
 if(isset($_POST['verify'])){
 
-    $otp = $_POST['otp'];
+    $entered_otp = $_POST['otp'];
 
-    $email = $_SESSION['reset_email'];
+    if(isset($_SESSION['otp']) && $entered_otp == $_SESSION['otp']){
 
-    $check = mysqli_query($conn,
-    "SELECT * FROM password_otp
-     WHERE email='$email'
-     AND otp='$otp'");
-
-    if(mysqli_num_rows($check) > 0){
+        $_SESSION['otp_verified'] = true;
 
         echo "<script>
-                alert('OTP Verified');
+                alert('OTP Verified Successfully');
                 window.location.href='reset_password.php';
               </script>";
 
@@ -25,6 +18,7 @@ if(isset($_POST['verify'])){
 
         echo "<script>
                 alert('Invalid OTP');
+                window.location.href='verify_otp.php';
               </script>";
     }
 }
@@ -36,11 +30,9 @@ if(isset($_POST['verify'])){
     <title>Verify OTP</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <section class="form-section">
-
 <div class="form-box">
 
 <h2>Verify OTP</h2>
@@ -59,9 +51,7 @@ Verify OTP
 </form>
 
 </div>
-
 </section>
 
 </body>
 </html>
-```
