@@ -1,12 +1,23 @@
- id="5vjlp7"
 <?php
+include 'config.php';
 
 if(isset($_POST['reset'])){
 
-    $username = $_POST['username'];
-    $new = $_POST['new_password'];
+    $username = mysqli_real_escape_string($conn, $_POST['username']);
+    $new_password = mysqli_real_escape_string($conn, $_POST['new_password']);
 
-    if($username == "admin"){
+    // CHECK ADMIN EXISTS
+    $check = mysqli_query($conn,
+        "SELECT * FROM admin
+         WHERE username='$username'");
+
+    if(mysqli_num_rows($check) > 0){
+
+        // UPDATE PASSWORD
+        mysqli_query($conn,
+            "UPDATE admin
+             SET password='$new_password'
+             WHERE username='$username'");
 
         echo "<script>
                 alert('Admin Password Reset Successful');
@@ -26,8 +37,9 @@ if(isset($_POST['reset'])){
 <html>
 <head>
     <title>Admin Forgot Password</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel='stylesheet' href='style.css'>
 </head>
+
 <body>
 
 <section class="form-section">
@@ -60,4 +72,3 @@ Reset Password
 
 </body>
 </html>
-
