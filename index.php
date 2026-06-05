@@ -83,13 +83,6 @@ $books = mysqli_query($conn, "SELECT * FROM books LIMIT 10");
 </section>
 <footer>
 
-<p>
-© 2026  University Library. All rights reserved.
-</p>
-
-<p>
-Developed by Ahmad Raza
-</p>
 
 </footer>
 
