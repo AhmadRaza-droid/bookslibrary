@@ -1,4 +1,3 @@
-```php
 <?php
 
 include 'config.php';
@@ -10,73 +9,64 @@ require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
 
-$name = $_POST['name'];
+if(isset($_POST['name']) && isset($_POST['email']) && isset($_POST['message'])){
 
-$email = $_POST['email'];
+    $name = mysqli_real_escape_string($conn, $_POST['name']);
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $message = mysqli_real_escape_string($conn, $_POST['message']);
 
-$message = $_POST['message'];
+    $query = "INSERT INTO messages(name,email,message)
+              VALUES('$name','$email','$message')";
 
-$query = "INSERT INTO messages(name,email,message)
-VALUES('$name','$email','$message')";
+    mysqli_query($conn, $query);
 
-mysqli_query($conn,$query);
+    $mail = new PHPMailer(true);
 
-$mail = new PHPMailer(true);
+    try{
 
-try{
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
 
-    $mail->isSMTP();
+        $mail->Username = 'universitylibrary172@gmail.com';
+        $mail->Password = 'vmrntxjtzpvobfyr';
 
-    $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPSecure = 'tls';
+        $mail->Port = 587;
 
-    $mail->SMTPAuth = true;
+        $mail->setFrom('universitylibrary172@gmail.com', 'Library Management System');
 
-    $mail->Username = 'universitylibrary172@gmail.com';
+        $mail->addAddress('universitylibrary172@gmail.com');
 
-    $mail->Password = 'vmrntxjtzpvobfyr';
+        $mail->isHTML(true);
 
-    $mail->SMTPSecure = 'tls';
+        $mail->Subject = 'New Contact Message';
 
-    $mail->Port = 587;
+        $mail->Body = "
+            <h2>New User Message</h2>
+            <p><b>Name:</b> $name</p>
+            <p><b>Email:</b> $email</p>
+            <p><b>Message:</b><br>$message</p>
+        ";
 
-    $mail->setFrom(
-    'universitylibrary172@gmail.com',
-    'Library Management System'
-    );
+        $mail->send();
 
-    $mail->addAddress('universitylibrary172@gmail.com');
+        echo "<script>
+                alert('Message Sent Successfully');
+                window.location.href='contact.php';
+              </script>";
 
-    $mail->isHTML(true);
+    } catch(Exception $e){
 
-    $mail->Subject = 'New Contact Message';
+        echo "Mailer Error: " . $mail->ErrorInfo;
+    }
 
-    $mail->Body = "
-
-    <h2>New User Message</h2>
-
-    <p><b>Name:</b> $name</p>
-
-    <p><b>Email:</b> $email</p>
-
-    <p><b>Message:</b><br>$message</p>
-
-    ";
-
-    $mail->send();
+} else {
 
     echo "<script>
-
-    alert('Message Sent Successfully');
-
-    window.location.href='contact.php';
-
-    </script>";
-
-}
-catch(Exception $e){
-
-    echo 'Mailer Error: ' . $mail->ErrorInfo;
+            alert('Invalid Request');
+            window.location.href='contact.php';
+          </script>";
 }
 
 ?>
-```
