@@ -4,23 +4,34 @@ include 'config.php';
 
 if(isset($_POST['login'])){
 
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+    $username = mysqli_real_escape_string($conn, $_POST['username']);
 
-    if($username == "aliadmin" && $password == "admin123"){
+    $password = mysqli_real_escape_string($conn, $_POST['password']);
+
+    $query = "SELECT * FROM admin
+              WHERE username='$username'
+              AND password='$password'";
+
+    $result = mysqli_query($conn, $query);
+
+    if(mysqli_num_rows($result) > 0){
 
         $_SESSION['admin'] = $username;
 
         echo "<script>
+
                 alert('Admin Login Successful');
+
                 window.location.href='admin_dashboard.php';
+
               </script>";
 
     } else {
 
         echo "<script>
-                alert('Invalid Admin Username or Password');
-                window.location.href='admin_login.php';
+
+                alert('Invalid Username or Password');
+
               </script>";
     }
 }
@@ -28,37 +39,67 @@ if(isset($_POST['login'])){
 
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Admin Login</title>
-    <link rel="stylesheet" href="style.css">
+
+<title>Admin Login</title>
+
+<link rel="stylesheet" href="style.css">
+
 </head>
+
 <body>
 
 <section class="form-section">
-    <div class="form-box">
 
-        <h2>Admin Login</h2>
+<div class="form-box">
 
-        <form method="POST">
+<h2>Admin Login</h2>
 
-            <input type="text" name="username" placeholder="Enter Username" required>
+<form method="POST">
 
-            <input type="password" name="password" placeholder="Enter Password" required>
+<input type="text"
+       name="username"
+       placeholder="Enter Username"
+       required>
 
-            <button type="submit" name="login">Login</button>
+<input type="password"
+       name="password"
+       placeholder="Enter Password"
+       required>
 
-        </form>
+<button type="submit" name="login">
 
-        <p>
-            <a href="admin_forgot_password.php">Forgot Password?</a>
-        </p>
+Login
 
-        <p>
-            <a href="admin_change_password.php">Change Admin Password</a>
-        </p>
+</button>
 
-    </div>
+</form>
+
+<p>
+
+<a href="admin_forgot_password.php">
+
+Forgot Password?
+
+</a>
+
+</p>
+
+<p>
+
+<a href="admin_change_password.php">
+
+Change Admin Password
+
+</a>
+
+</p>
+
+</div>
+
 </section>
 
 </body>
 </html>
+
