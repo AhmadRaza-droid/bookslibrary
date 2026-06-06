@@ -1,14 +1,14 @@
 <?php
 
 $conn = mysqli_connect(
-    "sql309.byetcluster.com",
-    "if0_42100687",
-    "yasirjajja321",
-    "if0_42100687_library_db"
+    "sql103.byetcluster.com",
+    "if0_42113689",
+    "yasirijaz712",
+    "if0_42113689_library_db"
 );
 
-if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
+if(!$conn){
+    die("Connection Failed");
 }
 
 ?>

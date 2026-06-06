@@ -81,10 +81,6 @@ $books = mysqli_query($conn, "SELECT * FROM books LIMIT 10");
 
     </div>
 </section>
-<footer>
-
-
-</footer>
 
 </body>
 </html>
