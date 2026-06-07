@@ -685,3 +685,15 @@ footer p{
     }
 
 }
+footer{
+    background-color:#061b33;
+    color:white;
+    text-align:center;
+    padding:20px;
+    margin-top:40px;
+}
+
+footer p{
+    margin:8px 0;
+    font-size:16px;
+}

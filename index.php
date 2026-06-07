@@ -81,6 +81,16 @@ $books = mysqli_query($conn, "SELECT * FROM books LIMIT 10");
 
     </div>
 </section>
+<footer>
 
+    <p>
+        © 2026 UMT University Library. All Rights Reserved.
+    </p>
+
+    <p>
+        Developed by Ahmad Raza
+    </p>
+
+</footer>
 </body>
 </html>
