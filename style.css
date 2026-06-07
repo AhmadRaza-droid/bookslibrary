@@ -621,3 +621,67 @@ footer p{
 .issue-btn:hover{
     background:#ff9800;
 }
+@media(max-width:768px){
+
+    nav{
+        flex-direction: column;
+        height: auto;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .logo{
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+
+    nav ul{
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+        padding: 0;
+    }
+
+    nav ul li{
+        list-style: none;
+    }
+
+    nav ul li a{
+        font-size: 18px;
+    }
+
+    .hero{
+        padding: 60px 20px;
+        text-align: center;
+        min-height: auto;
+    }
+
+    .hero-text h1{
+        font-size: 45px;
+    }
+
+    .hero-text p{
+        font-size: 18px;
+    }
+
+    .btn,
+    .btn-outline{
+        display: block;
+        width: 100%;
+        margin: 12px auto;
+    }
+
+    .features,
+    .book-container,
+    .books-list,
+    .dashboard-cards,
+    .about-features{
+        grid-template-columns: 1fr;
+    }
+
+    .contact-section{
+        grid-template-columns: 1fr;
+    }
+
+}
