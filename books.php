@@ -2,14 +2,27 @@
 session_start();
 include 'config.php';
 
-$result = mysqli_query($conn, "SELECT * FROM books");
+$search = "";
+
+if(isset($_GET['search'])){
+    $search = mysqli_real_escape_string($conn, $_GET['search']);
+
+    $result = mysqli_query($conn,
+        "SELECT * FROM books
+         WHERE title LIKE '%$search%'
+         OR author LIKE '%$search%'
+         OR description LIKE '%$search%'"
+    );
+} else {
+    $result = mysqli_query($conn, "SELECT * FROM books");
+}
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
     <title>Books</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20">
 </head>
 
 <body>
@@ -23,6 +36,7 @@ $result = mysqli_query($conn, "SELECT * FROM books");
         <li><a href="profile.php">Profile</a></li>
         <li><a href="contact.php">Contact</a></li>
         <li><a href="admin_login.php">Admin</a></li>
+        <li><a href="about.php">About</a></li>
     </ul>
 </nav>
 
@@ -31,15 +45,23 @@ $result = mysqli_query($conn, "SELECT * FROM books");
     <p>Read and download free classic books.</p>
 </section>
 
+<section class="search-section">
+    <form method="GET" action="books.php">
+        <input type="text"
+               name="search"
+               placeholder="Search books by title, author or description..."
+               value="<?php echo htmlspecialchars($search); ?>">
+    </form>
+</section>
+
 <section class="books-container">
 
 <?php
+if(mysqli_num_rows($result) > 0){
+
 while ($row = mysqli_fetch_assoc($result)) {
 
-    // Book ID extract karna
     $bookId = basename($row['read_link']);
-
-    // Direct online read link banana
     $directReadLink = "https://www.gutenberg.org/files/$bookId/{$bookId}-h/{$bookId}-h.htm";
 ?>
 
@@ -55,12 +77,10 @@ while ($row = mysqli_fetch_assoc($result)) {
 
         <div class="book-buttons">
 
-            <!-- Read Book -->
             <a href="<?php echo $directReadLink; ?>" target="_blank">
                 <button>Read Book</button>
             </a>
 
-            <!-- Download EPUB -->
             <a href="<?php echo $row['download_epub_link']; ?>" target="_blank">
                 <button>Download EPUB</button>
             </a>
@@ -70,6 +90,10 @@ while ($row = mysqli_fetch_assoc($result)) {
     </div>
 
 <?php
+}
+
+} else {
+    echo "<h2 style='text-align:center; width:100%;'>No books found</h2>";
 }
 ?>
 
