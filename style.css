@@ -792,3 +792,20 @@ footer p{
     line-height:1.9;
     color:#444;
 }
+.about-page .books{
+    width:100%;
+    display:flex;
+    justify-content:center;
+    padding:60px 20px;
+}
+
+.about-page .card{
+    width:100%;
+    max-width:900px;
+    margin:auto;
+    background:white;
+    padding:50px;
+    border-radius:18px;
+    text-align:center;
+    box-shadow:0 5px 20px rgba(0,0,0,0.12);
+}
