@@ -9,7 +9,7 @@ $books = mysqli_query($conn, "SELECT * FROM books LIMIT 10");
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Library Management System</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=30">
 </head>
 <body>
 
@@ -94,5 +94,107 @@ $books = mysqli_query($conn, "SELECT * FROM books LIMIT 10");
     </p>
 
 </footer>
+<!-- AI CHATBOT -->
+
+<div class="chatbot-icon" onclick="toggleChat()">
+    🤖
+</div>
+
+<div class="chatbot-box" id="chatbot">
+
+    <div class="chat-header">
+        AI Library Assistant
+    </div>
+
+    <div class="chat-body" id="chat-body">
+
+        <div class="bot-message">
+            Hello 👋 Ask me about books, login, admin, downloads or contact.
+        </div>
+
+    </div>
+
+    <div class="chat-input">
+
+        <input type="text"
+               id="userInput"
+               placeholder="Ask something...">
+
+        <button onclick="sendMessage()">Send</button>
+
+    </div>
+
+</div>
+
+<script>
+
+function toggleChat(){
+
+    let bot = document.getElementById("chatbot");
+
+    if(bot.style.display === "flex"){
+        bot.style.display = "none";
+    }
+    else{
+        bot.style.display = "flex";
+    }
+}
+
+function sendMessage(){
+
+    let input = document.getElementById("userInput");
+
+    let message = input.value.toLowerCase();
+
+    let chatBody = document.getElementById("chat-body");
+
+    if(message.trim() === ""){
+        return;
+    }
+
+    chatBody.innerHTML += `
+    <div class="user-message">${message}</div>
+    `;
+
+    let reply = "Sorry 😅 I don't understand.";
+
+    if(message.includes("book")){
+        reply = "📚 Go to the Books page to explore and download books.";
+    }
+
+    else if(message.includes("login")){
+        reply = "🔐 Use the Login page to access your account.";
+    }
+
+    else if(message.includes("admin")){
+        reply = "🛡 Admin panel is available from the Admin button.";
+    }
+
+    else if(message.includes("download")){
+        reply = "⬇ Click the Download EPUB button to download books.";
+    }
+
+    else if(message.includes("contact")){
+        reply = "📞 Use the Contact page to send us a message.";
+    }
+
+    else if(message.includes("profile")){
+        reply = "👤 Profile page shows your account details.";
+    }
+
+    setTimeout(() => {
+
+        chatBody.innerHTML += `
+        <div class="bot-message">${reply}</div>
+        `;
+
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+    }, 500);
+
+    input.value = "";
+}
+
+</script>
 </body>
 </html>

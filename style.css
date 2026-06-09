@@ -855,7 +855,7 @@ footer p{
     font-size:30px;
     cursor:pointer;
     box-shadow:0 5px 20px rgba(0,0,0,0.3);
-    z-index:999;
+    z-index:9999;
 }
 
 .chatbot-box{
@@ -870,7 +870,7 @@ footer p{
     display:none;
     flex-direction:column;
     overflow:hidden;
-    z-index:999;
+    z-index:9999;
 }
 
 .chat-header{
