@@ -838,3 +838,89 @@ footer p{
         grid-template-columns:1fr;
     }
 }
+/* AI CHATBOT */
+
+.chatbot-icon{
+    position:fixed;
+    bottom:25px;
+    right:25px;
+    width:65px;
+    height:65px;
+    background:#061b33;
+    color:white;
+    border-radius:50%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:30px;
+    cursor:pointer;
+    box-shadow:0 5px 20px rgba(0,0,0,0.3);
+    z-index:999;
+}
+
+.chatbot-box{
+    position:fixed;
+    bottom:100px;
+    right:25px;
+    width:340px;
+    height:450px;
+    background:white;
+    border-radius:15px;
+    box-shadow:0 5px 20px rgba(0,0,0,0.25);
+    display:none;
+    flex-direction:column;
+    overflow:hidden;
+    z-index:999;
+}
+
+.chat-header{
+    background:#061b33;
+    color:white;
+    padding:15px;
+    font-weight:bold;
+    text-align:center;
+}
+
+.chat-body{
+    flex:1;
+    padding:15px;
+    overflow-y:auto;
+    background:#f5f8ff;
+}
+
+.bot-message,
+.user-message{
+    padding:12px;
+    margin-bottom:12px;
+    border-radius:10px;
+    max-width:80%;
+}
+
+.bot-message{
+    background:white;
+}
+
+.user-message{
+    background:#ffc72c;
+    margin-left:auto;
+}
+
+.chat-input{
+    display:flex;
+    border-top:1px solid #ddd;
+}
+
+.chat-input input{
+    flex:1;
+    padding:14px;
+    border:none;
+    outline:none;
+}
+
+.chat-input button{
+    background:#061b33;
+    color:white;
+    border:none;
+    padding:0 20px;
+    cursor:pointer;
+}
