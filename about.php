@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About - Library Management System</title>
     <link rel="stylesheet" href="style.css">
+    <body class="about-page">
 </head>
 <body>
 
@@ -35,7 +36,7 @@
         <h3>📚 About Our Library</h3>
 
         <p>
-            UMT University Library is a modern digital platform
+            University Library is a modern digital platform
             where students can read, explore, and download books online.
             Our mission is to make learning simple, fast, and accessible.
         </p>
