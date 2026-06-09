@@ -757,3 +757,38 @@ footer p{
     color:#555;
     line-height:1.8;
 }
+/* ===== ABOUT PAGE FINAL ===== */
+
+.about-page{
+    background:#f5f8ff;
+}
+
+.about-page .books{
+    width:100%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:60px 20px;
+}
+
+.about-page .card{
+    width:100%;
+    max-width:900px;
+    background:white;
+    padding:50px;
+    border-radius:18px;
+    text-align:center;
+    box-shadow:0 5px 20px rgba(0,0,0,0.12);
+}
+
+.about-page .card h3{
+    font-size:34px;
+    margin-bottom:20px;
+    color:#061b33;
+}
+
+.about-page .card p{
+    font-size:20px;
+    line-height:1.9;
+    color:#444;
+}
