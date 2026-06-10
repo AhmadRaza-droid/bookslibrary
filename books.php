@@ -36,7 +36,7 @@ $result = mysqli_query($conn, "SELECT * FROM books $where");
 
     <title>Books</title>
 
-    <link rel="stylesheet" href="style.css?v=1100">
+    <link rel="stylesheet" href="style.css?v=1200">
 
 </head>
 
@@ -224,13 +224,24 @@ while($row = mysqli_fetch_assoc($result)){
 
     $downloadLink = $row['download_epub_link'];
 
+    // DIRECT ONLINE READING FIX
+
     if(is_numeric($readLink)){
 
+        $bookId = $readLink;
+
         $readLink =
-        "https://www.gutenberg.org/ebooks/" .
-        $readLink;
+        "https://www.gutenberg.org/files/" .
+        $bookId .
+        "/" .
+        $bookId .
+        "-h/" .
+        $bookId .
+        "-h.htm";
 
     }
+
+    // DIRECT EPUB DOWNLOAD FIX
 
     if(is_numeric($downloadLink)){
 
