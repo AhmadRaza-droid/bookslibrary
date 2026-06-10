@@ -301,8 +301,7 @@ Category:
 
 <div class="book-buttons">
 
-<a href="<?php echo htmlspecialchars($readLink); ?>"
-target="_blank">
+<a href="<?php echo htmlspecialchars($readLink); ?>" target="_blank">
 
 <button>
 Read Book
