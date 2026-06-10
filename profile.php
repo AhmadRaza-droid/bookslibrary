@@ -1,6 +1,6 @@
 <?php
 include 'session_timeout.php';
-include 'config.php';php';
+include 'config.php';
 
 if(!isset($_SESSION['user_id'])){
     header("Location: login.php");
