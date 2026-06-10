@@ -141,20 +141,68 @@ if($totalReviews > 0){
 
 <p><strong>Downloads:</strong> <?php echo (int)$row['downloads']; ?></p>
 
+<?php
+$isPdfBook = (
+isset($row['pdf_file'])
+&&
+$row['pdf_file'] != ""
+);
+?>
+
 <div class="book-buttons">
 
-<a href="view_book.php?id=<?php echo $row['id']; ?>" target="_blank">
-    <button>Read Book</button>
+<?php if($isPdfBook){ ?>
+
+<a href="<?php echo htmlspecialchars($row['pdf_file']); ?>"
+target="_blank">
+
+<button>
+📖 Read PDF
+</button>
+
 </a>
 
-<a href="download_book.php?id=<?php echo $row['id']; ?>" target="_blank">
-    <button>Download EPUB</button>
+<a href="<?php echo htmlspecialchars($row['pdf_file']); ?>"
+download>
+
+<button>
+⬇ Download PDF
+</button>
+
 </a>
+
+<?php } else { ?>
+
+<a href="view_book.php?id=<?php echo $row['id']; ?>"
+target="_blank">
+
+<button>
+Read Book
+</button>
+
+</a>
+
+<a href="download_book.php?id=<?php echo $row['id']; ?>"
+target="_blank">
+
+<button>
+Download EPUB
+</button>
+
+</a>
+
+<?php } ?>
 
 <?php if(isset($_SESSION['user_id'])){ ?>
+
 <a href="favorite_book.php?book_id=<?php echo $row['id']; ?>">
-    <button style="background:red; color:white;">❤️ Favorite</button>
+
+<button style="background:red;">
+❤️ Favorite
+</button>
+
 </a>
+
 <?php } ?>
 
 </div>
