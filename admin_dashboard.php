@@ -33,7 +33,7 @@ $most_favorites = mysqli_query($conn,
 <html>
 <head>
     <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=5000">
+    <link rel="stylesheet" href="style.css?v=6000">
 </head>
 
 <body>
@@ -50,7 +50,7 @@ $most_favorites = mysqli_query($conn,
 
 <section class="page-header">
     <h1>Admin Dashboard</h1>
-    <p>Manage books, users, reviews, analytics and uploads.</p>
+    <p>Manage books, users, reviews and analytics.</p>
 </section>
 
 <div style="display:flex; gap:20px; margin:20px; flex-wrap:wrap;">
@@ -125,8 +125,6 @@ $most_favorites = mysqli_query($conn,
 </table>
 </section>
 
-<!-- ADD BOOK -->
-
 <section class="table-section">
 
     <h2>Add New Book by Link</h2>
@@ -150,36 +148,6 @@ $most_favorites = mysqli_query($conn,
     </form>
 
 </section>
-
-<!-- PDF UPLOAD -->
-
-<section class="table-section">
-
-<h2>Upload PDF Book</h2>
-
-<form action="upload_book.php" method="POST" enctype="multipart/form-data">
-
-    <input type="text" name="title" placeholder="Book Title" required>
-
-    <input type="text" name="author" placeholder="Author Name" required>
-
-    <input type="text" name="category" placeholder="Category" required>
-
-    <textarea name="description" placeholder="Book Description" required></textarea>
-
-    <label>Upload Cover Image</label>
-    <input type="file" name="cover" accept="image/*" required>
-
-    <label>Upload PDF File</label>
-    <input type="file" name="pdf" accept="application/pdf" required>
-
-    <button type="submit" name="upload">Upload PDF Book</button>
-
-</form>
-
-</section>
-
-<!-- ALL BOOKS -->
 
 <section class="table-section">
 
@@ -237,8 +205,6 @@ $most_favorites = mysqli_query($conn,
 
 </section>
 
-<!-- USER MESSAGES -->
-
 <section class="table-section">
 
     <h2>User Messages</h2>
@@ -266,8 +232,6 @@ $most_favorites = mysqli_query($conn,
     </table>
 
 </section>
-
-<!-- REVIEWS -->
 
 <section class="table-section">
 
@@ -313,8 +277,6 @@ while($review = mysqli_fetch_assoc($reviews)){
 </table>
 
 </section>
-
-<!-- USERS -->
 
 <section class="table-section">
 
