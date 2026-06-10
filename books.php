@@ -296,7 +296,15 @@ Category:
 <?php } ?>
 
 <p>
-<?php echo htmlspecialchars($row['description']); ?>
+
+<strong>
+Downloads:
+</strong>
+
+<?php
+echo (int)$row['downloads'];
+?>
+
 </p>
 
 <div class="book-buttons">
@@ -310,7 +318,7 @@ Read Book
 
 </a>
 
-<a href="<?php echo htmlspecialchars($downloadLink); ?>"
+<a href="download_book.php?id=<?php echo $row['id']; ?>"
 target="_blank">
 
 <button>
