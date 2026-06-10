@@ -924,3 +924,13 @@ footer p{
     padding:0 20px;
     cursor:pointer;
 }
+.version {
+    text-align: center;
+    font-size: 18px;
+    margin-top: 25px;
+    color: #333;
+}
+
+.version b {
+    font-weight: bold;
+}

@@ -72,6 +72,7 @@ session_start();
         <p>Khaleel</p>
 
     </div>
+    <p class="version"><b>Version:</b> 2.0</p>
 
 </section>
 
