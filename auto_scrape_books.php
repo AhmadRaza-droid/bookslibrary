@@ -12,17 +12,35 @@ if(!isset($_SESSION['admin'])){
 
 $url = "https://gutendex.com/books/?languages=en";
 
-$response = file_get_contents($url);
+$ch = curl_init();
 
-if($response === false){
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0");
+
+$response = curl_exec($ch);
+$error = curl_error($ch);
+
+curl_close($ch);
+
+if(!$response){
     echo "<script>
-            alert('Books import failed. API not responding.');
+            alert('Books import failed. API not responding. $error');
             window.location.href='admin_dashboard.php';
           </script>";
     exit();
 }
 
 $data = json_decode($response, true);
+
+if(!isset($data['results'])){
+    echo "<script>
+            alert('Invalid API response');
+            window.location.href='admin_dashboard.php';
+          </script>";
+    exit();
+}
 
 $count = 0;
 
