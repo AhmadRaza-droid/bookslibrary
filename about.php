@@ -1,3 +1,6 @@
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,7 +22,9 @@
         <li><a href="register.php">Register</a></li>
         <li><a href="contact.php">Contact</a></li>
         <li><a href="profile.php">Profile</a></li>
-        <li><a href="admin_login.php">Admin</a></li>
+       <?php if(isset($_SESSION['email']) && $_SESSION['email'] == "universitylibrary172@gmail.com"){ ?>
+    <li><a href="admin_dashboard.php">Admin Panel</a></li>
+<?php } ?>
         <li><a class="active" href="about.php">About</a></li>
     </ul>
 </nav>
