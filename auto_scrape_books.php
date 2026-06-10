@@ -187,8 +187,8 @@ $allBooks = [
 "author"=>"Library Team",
 "category"=>"islamic religion quran hadith urdu",
 "description"=>"An introductory book for Islamic studies and basic concepts.",
-"cover"=>"https://upload.wikimedia.org/wikipedia/commons/8/8e/Quran_Mus'haf_Al_Tajweed.jpg",
-"read"=>"https://quran.com/",
+"cover"=>"",
+"read"=>"https://quran.com/",https://images.unsplash.com/photo-1542816417-0983670d7f62?q=80&w=800&auto=format&fit=crop
 "download"=>"https://quran.com/"
 ]
 

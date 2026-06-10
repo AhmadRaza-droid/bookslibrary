@@ -64,7 +64,17 @@ if(mysqli_num_rows($result) > 0){
 while ($row = mysqli_fetch_assoc($result)) {
 
     $bookId = basename($row['read_link']);
-    $directReadLink = "https://www.gutenberg.org/files/$bookId/{$bookId}-h/{$bookId}-h.htm";
+   if(is_numeric($bookId)){
+
+    $directReadLink =
+    "https://www.gutenberg.org/ebooks/$bookId";
+
+}
+else{
+
+    $directReadLink = $row['read_link'];
+
+}
 ?>
 
     <div class="book-card">
