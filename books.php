@@ -30,7 +30,7 @@ $result = mysqli_query($conn, "SELECT * FROM books $where");
 <html>
 <head>
     <title>Books</title>
-    <link rel="stylesheet" href="style.css?v=1300">
+    <link rel="stylesheet" href="style.css?v=1500">
 </head>
 
 <body>
@@ -59,6 +59,7 @@ $result = mysqli_query($conn, "SELECT * FROM books $where");
 </section>
 
 <section class="search-section">
+
 <form method="GET" action="books.php">
 
 <input type="text"
@@ -92,6 +93,7 @@ Filter Books
 </button>
 
 </form>
+
 </section>
 
 <section class="books-container">
@@ -112,6 +114,20 @@ while($row = mysqli_fetch_assoc($result)){
 
     $avgRating = round($reviewData['avg_rating'], 1);
     $totalReviews = $reviewData['total_reviews'];
+
+    $isPdfBook = (
+        isset($row['pdf_file']) &&
+        $row['pdf_file'] != "" &&
+        strpos($row['pdf_file'], "uploads/pdfs/") !== false
+    );
+
+    $allReviews = mysqli_query($conn,
+    "SELECT reviews.*, users.fullname
+     FROM reviews
+     JOIN users ON reviews.user_id = users.id
+     WHERE reviews.book_id='$book_id'
+     ORDER BY reviews.created_at DESC
+     LIMIT 3");
 ?>
 
 <div class="book-card">
@@ -141,68 +157,34 @@ if($totalReviews > 0){
 
 <p><strong>Downloads:</strong> <?php echo (int)$row['downloads']; ?></p>
 
-<?php
-$isPdfBook = (
-isset($row['pdf_file'])
-&&
-$row['pdf_file'] != ""
-);
-?>
-
 <div class="book-buttons">
 
 <?php if($isPdfBook){ ?>
 
-<a href="<?php echo htmlspecialchars($row['pdf_file']); ?>"
-target="_blank">
+    <a href="<?php echo htmlspecialchars($row['pdf_file']); ?>" target="_blank">
+        <button>📖 Read PDF</button>
+    </a>
 
-<button>
-📖 Read PDF
-</button>
-
-</a>
-
-<a href="<?php echo htmlspecialchars($row['pdf_file']); ?>"
-download>
-
-<button>
-⬇ Download PDF
-</button>
-
-</a>
+    <a href="<?php echo htmlspecialchars($row['pdf_file']); ?>" download>
+        <button>⬇ Download PDF</button>
+    </a>
 
 <?php } else { ?>
 
-<a href="view_book.php?id=<?php echo $row['id']; ?>"
-target="_blank">
+    <a href="view_book.php?id=<?php echo $row['id']; ?>" target="_blank">
+        <button>Read Book</button>
+    </a>
 
-<button>
-Read Book
-</button>
-
-</a>
-
-<a href="download_book.php?id=<?php echo $row['id']; ?>"
-target="_blank">
-
-<button>
-Download EPUB
-</button>
-
-</a>
+    <a href="download_book.php?id=<?php echo $row['id']; ?>" target="_blank">
+        <button>Download EPUB</button>
+    </a>
 
 <?php } ?>
 
 <?php if(isset($_SESSION['user_id'])){ ?>
-
-<a href="favorite_book.php?book_id=<?php echo $row['id']; ?>">
-
-<button style="background:red;">
-❤️ Favorite
-</button>
-
-</a>
-
+    <a href="favorite_book.php?book_id=<?php echo $row['id']; ?>">
+        <button style="background:red; color:white;">❤️ Favorite</button>
+    </a>
 <?php } ?>
 
 </div>
@@ -232,15 +214,6 @@ Download EPUB
 </form>
 
 <?php } ?>
-<?php
-$allReviews = mysqli_query($conn,
-"SELECT reviews.*, users.fullname
- FROM reviews
- JOIN users ON reviews.user_id = users.id
- WHERE reviews.book_id='$book_id'
- ORDER BY reviews.created_at DESC
- LIMIT 3");
-?>
 
 <h4 style="margin-top:15px;">User Reviews</h4>
 
