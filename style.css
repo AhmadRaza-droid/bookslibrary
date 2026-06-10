@@ -979,3 +979,34 @@ body.dark-mode select{
     color:white;
     border-color:#374151;
 }
+body.dark-mode .books-container{
+    background:#0b1020;
+}
+
+body.dark-mode .book-card{
+    background:#111827;
+    color:white;
+    box-shadow:0 0 10px rgba(255,255,255,0.1);
+}
+
+body.dark-mode .book-card p,
+body.dark-mode .book-card h3,
+body.dark-mode .book-card strong{
+    color:white;
+}
+
+body.dark-mode .search-section{
+    background:#0b1020;
+}
+
+body.dark-mode .search-section input,
+body.dark-mode .search-section select{
+    background:#1f2937;
+    color:white;
+    border:1px solid #374151;
+}
+
+body.dark-mode button{
+    background:#ffc72c;
+    color:#061b33;
+}
