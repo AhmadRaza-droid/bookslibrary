@@ -184,6 +184,39 @@ if($totalReviews > 0){
 </form>
 
 <?php } ?>
+<?php
+$allReviews = mysqli_query($conn,
+"SELECT reviews.*, users.fullname
+ FROM reviews
+ JOIN users ON reviews.user_id = users.id
+ WHERE reviews.book_id='$book_id'
+ ORDER BY reviews.created_at DESC
+ LIMIT 3");
+?>
+
+<h4 style="margin-top:15px;">User Reviews</h4>
+
+<?php if(mysqli_num_rows($allReviews) > 0){ ?>
+
+<?php while($reviewRow = mysqli_fetch_assoc($allReviews)){ ?>
+
+<div style="background:#f5f5f5; padding:10px; margin-top:10px; border-radius:8px; text-align:left;">
+
+    <p><strong><?php echo htmlspecialchars($reviewRow['fullname']); ?></strong></p>
+
+    <p><?php echo $reviewRow['rating']; ?> ⭐</p>
+
+    <p><?php echo htmlspecialchars($reviewRow['review']); ?></p>
+
+</div>
+
+<?php } ?>
+
+<?php } else { ?>
+
+<p style="margin-top:10px;">No reviews yet.</p>
+
+<?php } ?>
 
 </div>
 
