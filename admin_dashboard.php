@@ -183,6 +183,88 @@ $total_books = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM books"));
     </table>
 
 </section>
+<!-- REVIEWS -->
+
+<section class="table-section">
+
+<h2>Book Reviews</h2>
+
+<table border="1" cellpadding="10">
+
+<tr>
+    <th>ID</th>
+    <th>User</th>
+    <th>Book</th>
+    <th>Rating</th>
+    <th>Review</th>
+    <th>Action</th>
+</tr>
+
+<?php
+
+$reviews = mysqli_query($conn,
+
+"SELECT reviews.*, users.fullname, books.title
+
+FROM reviews
+
+JOIN users
+ON reviews.user_id = users.id
+
+JOIN books
+ON reviews.book_id = books.id
+
+ORDER BY reviews.id DESC"
+
+);
+
+while($review = mysqli_fetch_assoc($reviews)){
+
+?>
+
+<tr>
+
+<td>
+<?php echo $review['id']; ?>
+</td>
+
+<td>
+<?php echo htmlspecialchars($review['fullname']); ?>
+</td>
+
+<td>
+<?php echo htmlspecialchars($review['title']); ?>
+</td>
+
+<td>
+<?php echo $review['rating']; ?> ⭐
+</td>
+
+<td>
+<?php echo htmlspecialchars($review['review']); ?>
+</td>
+
+<td>
+
+<a href="delete_review.php?id=<?php echo $review['id']; ?>">
+
+<button style="background:red; color:white;">
+
+Delete
+
+</button>
+
+</a>
+
+</td>
+
+</tr>
+
+<?php } ?>
+
+</table>
+
+</section>
 
 <!-- USERS -->
 
