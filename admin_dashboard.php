@@ -29,6 +29,8 @@ $total_books = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM books"));
     <ul>
         <li><a href="index.php">Website</a></li>
         <li><a href="admin_logout.php">Logout</a></li>
+<li><button onclick="toggleDarkMode()" class="dark-btn">🌙 Dark</button></li>
+
     </ul>
 </nav>
 
@@ -213,6 +215,23 @@ $total_books = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM books"));
     </table>
 
 </section>
+<script>
+if(localStorage.getItem("theme") === "dark"){
+    document.body.classList.add("dark-mode");
+}
+
+function toggleDarkMode(){
+
+    document.body.classList.toggle("dark-mode");
+
+    if(document.body.classList.contains("dark-mode")){
+        localStorage.setItem("theme", "dark");
+    }
+    else{
+        localStorage.setItem("theme", "light");
+    }
+}
+</script>
 
 </body>
 </html>

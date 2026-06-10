@@ -26,6 +26,8 @@ session_start();
     <li><a href="admin_dashboard.php">Admin Panel</a></li>
 <?php } ?>
         <li><a class="active" href="about.php">About</a></li>
+<li><button onclick="toggleDarkMode()" class="dark-btn">🌙 Dark</button></li>
+
     </ul>
 </nav>
 
@@ -83,6 +85,23 @@ session_start();
     <p>© 2026  University Library. All Rights Reserved.</p>
     <p>Developed by Ahmad Raza</p>
 </footer>
+<script>
+if(localStorage.getItem("theme") === "dark"){
+    document.body.classList.add("dark-mode");
+}
+
+function toggleDarkMode(){
+
+    document.body.classList.toggle("dark-mode");
+
+    if(document.body.classList.contains("dark-mode")){
+        localStorage.setItem("theme", "dark");
+    }
+    else{
+        localStorage.setItem("theme", "light");
+    }
+}
+</script>
 
 </body>
 </html>

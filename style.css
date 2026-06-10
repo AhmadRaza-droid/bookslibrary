@@ -934,3 +934,48 @@ footer p{
 .version b {
     font-weight: bold;
 }
+.dark-btn{
+    background:#ffc72c;
+    color:#061b33;
+    border:none;
+    padding:8px 14px;
+    border-radius:8px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+body.dark-mode{
+    background:#0b1020;
+    color:white;
+}
+
+body.dark-mode nav,
+body.dark-mode footer,
+body.dark-mode .page-header{
+    background:#020817;
+}
+
+body.dark-mode .card,
+body.dark-mode .book-card,
+body.dark-mode .form-box,
+body.dark-mode .table-section,
+body.dark-mode .contact-info,
+body.dark-mode .contact-form{
+    background:#111827;
+    color:white;
+}
+
+body.dark-mode p,
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3{
+    color:white;
+}
+
+body.dark-mode input,
+body.dark-mode textarea,
+body.dark-mode select{
+    background:#1f2937;
+    color:white;
+    border-color:#374151;
+}
