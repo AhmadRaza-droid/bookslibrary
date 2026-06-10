@@ -1,5 +1,23 @@
 <?php
 session_start();
+$timeout = 300; // 5 minutes
+
+if(isset($_SESSION['LAST_ACTIVITY'])){
+
+    if(time() - $_SESSION['LAST_ACTIVITY'] > $timeout){
+
+        session_unset();
+        session_destroy();
+
+        echo "<script>
+                alert('Session expired. Please login again.');
+                window.location.href='login.php';
+              </script>";
+        exit();
+    }
+}
+
+$_SESSION['LAST_ACTIVITY'] = time();
 include 'config.php';
 
 if(!isset($_SESSION['user_id'])){
