@@ -3,36 +3,40 @@ include 'session_timeout.php';
 include 'config.php';
 
 $search = "";
+$category = "";
 
-if(isset($_GET['search'])){
+$where = "WHERE 1";
+
+if(isset($_GET['search']) && $_GET['search'] != ""){
 
     $search = mysqli_real_escape_string($conn, $_GET['search']);
 
-    $result = mysqli_query($conn,
-
-    "SELECT * FROM books
-     WHERE title LIKE '%$search%'
-     OR author LIKE '%$search%'
-     OR description LIKE '%$search%'
-     OR category LIKE '%$search%'"
-
-    );
-
+    $where .= " AND (
+        title LIKE '%$search%'
+        OR author LIKE '%$search%'
+        OR description LIKE '%$search%'
+        OR category LIKE '%$search%'
+    )";
 }
-else{
 
-    $result = mysqli_query($conn, "SELECT * FROM books");
+if(isset($_GET['category']) && $_GET['category'] != ""){
 
+    $category = mysqli_real_escape_string($conn, $_GET['category']);
+
+    $where .= " AND category LIKE '%$category%'";
 }
+
+$result = mysqli_query($conn, "SELECT * FROM books $where");
 ?>
 
 <!DOCTYPE html>
 <html>
+
 <head>
 
     <title>Books</title>
 
-    <link rel="stylesheet" href="style.css?v=1000">
+    <link rel="stylesheet" href="style.css?v=1100">
 
 </head>
 
@@ -46,7 +50,11 @@ else{
 
     <ul>
 
-        <li><a href="index.php">Home</a></li>
+        <li>
+            <a href="index.php">
+                Home
+            </a>
+        </li>
 
         <li>
             <a class="active" href="books.php">
@@ -54,9 +62,17 @@ else{
             </a>
         </li>
 
-        <li><a href="profile.php">Profile</a></li>
+        <li>
+            <a href="profile.php">
+                Profile
+            </a>
+        </li>
 
-        <li><a href="contact.php">Contact</a></li>
+        <li>
+            <a href="contact.php">
+                Contact
+            </a>
+        </li>
 
 <?php
 if(
@@ -75,7 +91,11 @@ $_SESSION['email'] ==
 
 <?php } ?>
 
-        <li><a href="about.php">About</a></li>
+        <li>
+            <a href="about.php">
+                About
+            </a>
+        </li>
 
     </ul>
 
@@ -83,7 +103,9 @@ $_SESSION['email'] ==
 
 <section class="page-header">
 
-    <h1>Available Books</h1>
+    <h1>
+        Available Books
+    </h1>
 
     <p>
         Read and download free books online.
@@ -97,8 +119,94 @@ $_SESSION['email'] ==
 
 <input type="text"
        name="search"
-       placeholder="Search books..."
+       placeholder="Search books by title, author or description..."
        value="<?php echo htmlspecialchars($search); ?>">
+
+<select name="category"
+style="width:100%;
+padding:14px;
+margin-top:12px;
+border-radius:10px;
+border:2px solid #ddd;">
+
+<option value="">
+All Categories
+</option>
+
+<option value="programming"
+<?php if($category=="programming") echo "selected"; ?>>
+Programming
+</option>
+
+<option value="science"
+<?php if($category=="science") echo "selected"; ?>>
+Science
+</option>
+
+<option value="adventure"
+<?php if($category=="adventure") echo "selected"; ?>>
+Adventure
+</option>
+
+<option value="movie"
+<?php if($category=="movie") echo "selected"; ?>>
+Movie
+</option>
+
+<option value="history"
+<?php if($category=="history") echo "selected"; ?>>
+History
+</option>
+
+<option value="islamic"
+<?php if($category=="islamic") echo "selected"; ?>>
+Islamic
+</option>
+
+<option value="urdu"
+<?php if($category=="urdu") echo "selected"; ?>>
+Urdu
+</option>
+
+<option value="business"
+<?php if($category=="business") echo "selected"; ?>>
+Business
+</option>
+
+<option value="horror"
+<?php if($category=="horror") echo "selected"; ?>>
+Horror
+</option>
+
+<option value="detective"
+<?php if($category=="detective") echo "selected"; ?>>
+Detective
+</option>
+
+<option value="novel"
+<?php if($category=="novel") echo "selected"; ?>>
+Novel
+</option>
+
+<option value="philosophy"
+<?php if($category=="philosophy") echo "selected"; ?>>
+Philosophy
+</option>
+
+</select>
+
+<button type="submit"
+style="margin-top:12px;
+padding:12px 20px;
+border:none;
+border-radius:8px;
+background:#061b33;
+color:white;
+cursor:pointer;">
+
+Filter Books
+
+</button>
 
 </form>
 
@@ -113,20 +221,14 @@ if(mysqli_num_rows($result) > 0){
 while($row = mysqli_fetch_assoc($result)){
 
     $readLink = $row['read_link'];
+
     $downloadLink = $row['download_epub_link'];
 
     if(is_numeric($readLink)){
 
-        $bookId = $readLink;
-
         $readLink =
-        "https://www.gutenberg.org/files/" .
-        $bookId .
-        "/" .
-        $bookId .
-        "-h/" .
-        $bookId .
-        "-h.htm";
+        "https://www.gutenberg.org/ebooks/" .
+        $readLink;
 
     }
 
@@ -151,8 +253,13 @@ while($row = mysqli_fetch_assoc($result)){
 </h3>
 
 <p>
-<strong>Author:</strong>
+
+<strong>
+Author:
+</strong>
+
 <?php echo htmlspecialchars($row['author']); ?>
+
 </p>
 
 <?php
@@ -165,7 +272,9 @@ $row['category'] != ""
 
 <p>
 
-<strong>Category:</strong>
+<strong>
+Category:
+</strong>
 
 <?php echo htmlspecialchars($row['category']); ?>
 
@@ -180,7 +289,7 @@ $row['category'] != ""
 <div class="book-buttons">
 
 <a href="<?php echo htmlspecialchars($readLink); ?>"
-   target="_blank">
+target="_blank">
 
 <button>
 Read Book
@@ -189,7 +298,7 @@ Read Book
 </a>
 
 <a href="<?php echo htmlspecialchars($downloadLink); ?>"
-   target="_blank">
+target="_blank">
 
 <button>
 Download EPUB
