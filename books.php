@@ -314,6 +314,17 @@ target="_blank">
 <button>
 Download EPUB
 </button>
+<?php if(isset($_SESSION['user_id'])){ ?>
+
+<a href="favorite_book.php?book_id=<?php echo $row['id']; ?>">
+
+<button style="background:red;">
+❤️ Favorite
+</button>
+
+</a>
+
+<?php } ?>
 
 </a>
 
