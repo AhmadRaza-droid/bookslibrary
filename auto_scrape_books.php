@@ -3,84 +3,97 @@ session_start();
 include 'config.php';
 
 if(!isset($_SESSION['admin'])){
-    echo "<script>
-            alert('Access Denied');
-            window.location.href='admin_login.php';
-          </script>";
+    header("Location: admin_login.php");
     exit();
 }
 
-$books = [
-    [
-        "title" => "Pride and Prejudice",
-        "author" => "Jane Austen",
-        "description" => "A classic novel about manners, love, and society.",
-        "cover" => "https://www.gutenberg.org/cache/epub/1342/pg1342.cover.medium.jpg",
-        "read" => "1342",
-        "download" => "https://www.gutenberg.org/ebooks/1342.epub3.images"
-    ],
-    [
-        "title" => "Moby Dick",
-        "author" => "Herman Melville",
-        "description" => "A classic adventure novel about Captain Ahab and the white whale.",
-        "cover" => "https://www.gutenberg.org/cache/epub/2701/pg2701.cover.medium.jpg",
-        "read" => "2701",
-        "download" => "https://www.gutenberg.org/ebooks/2701.epub3.images"
-    ],
-    [
-        "title" => "The Adventures of Sherlock Holmes",
-        "author" => "Arthur Conan Doyle",
-        "description" => "A collection of detective stories featuring Sherlock Holmes.",
-        "cover" => "https://www.gutenberg.org/cache/epub/1661/pg1661.cover.medium.jpg",
-        "read" => "1661",
-        "download" => "https://www.gutenberg.org/ebooks/1661.epub3.images"
-    ],
-    [
-        "title" => "Frankenstein",
-        "author" => "Mary Shelley",
-        "description" => "A famous gothic novel about science, creation, and responsibility.",
-        "cover" => "https://www.gutenberg.org/cache/epub/84/pg84.cover.medium.jpg",
-        "read" => "84",
-        "download" => "https://www.gutenberg.org/ebooks/84.epub3.images"
-    ],
-    [
-        "title" => "Alice's Adventures in Wonderland",
-        "author" => "Lewis Carroll",
-        "description" => "A fantasy story about Alice and her adventures in Wonderland.",
-        "cover" => "https://www.gutenberg.org/cache/epub/11/pg11.cover.medium.jpg",
-        "read" => "11",
-        "download" => "https://www.gutenberg.org/ebooks/11.epub3.images"
-    ]
-];
+if(isset($_POST['import'])){
 
-$count = 0;
+    $title = mysqli_real_escape_string($conn, $_POST['title']);
+    $author = mysqli_real_escape_string($conn, $_POST['author']);
+    $category = mysqli_real_escape_string($conn, $_POST['category']);
+    $description = mysqli_real_escape_string($conn, $_POST['description']);
+    $cover = mysqli_real_escape_string($conn, $_POST['cover_image_url']);
+    $read_link = mysqli_real_escape_string($conn, $_POST['read_link']);
+    $download_link = mysqli_real_escape_string($conn, $_POST['download_epub_link']);
 
-foreach($books as $book){
+    $check = mysqli_query($conn,
+        "SELECT * FROM books 
+         WHERE title='$title' 
+         AND author='$author'"
+    );
 
-    $title = mysqli_real_escape_string($conn, $book['title']);
-    $author = mysqli_real_escape_string($conn, $book['author']);
-    $description = mysqli_real_escape_string($conn, $book['description']);
-    $cover = mysqli_real_escape_string($conn, $book['cover']);
-    $read_link = mysqli_real_escape_string($conn, $book['read']);
-    $download_link = mysqli_real_escape_string($conn, $book['download']);
+    if(mysqli_num_rows($check) > 0){
 
-    $check = mysqli_query($conn, "SELECT * FROM books WHERE title='$title' AND author='$author'");
+        echo "<script>
+                alert('This book already exists');
+                window.location.href='auto_scrape_books.php';
+              </script>";
+        exit();
+    }
 
-    if(mysqli_num_rows($check) == 0){
+    $query = "INSERT INTO books
+    (title, author, category, description, cover_image_url, read_link, download_epub_link, source)
+    VALUES
+    ('$title', '$author', '$category', '$description', '$cover', '$read_link', '$download_link', 'Admin Import')";
 
-        $query = "INSERT INTO books
-        (title, author, description, cover_image_url, read_link, download_epub_link, source)
-        VALUES
-        ('$title', '$author', '$description', '$cover', '$read_link', '$download_link', 'Project Gutenberg')";
-
-        if(mysqli_query($conn, $query)){
-            $count++;
-        }
+    if(mysqli_query($conn, $query)){
+        echo "<script>
+                alert('Book imported successfully');
+                window.location.href='admin_dashboard.php';
+              </script>";
+    } else {
+        echo "Error: " . mysqli_error($conn);
     }
 }
-
-echo "<script>
-        alert('$count books imported successfully');
-        window.location.href='admin_dashboard.php';
-      </script>";
 ?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Import Book</title>
+    <link rel="stylesheet" href="style.css?v=300">
+</head>
+<body>
+
+<nav>
+    <div class="logo">📖 Import Book</div>
+    <ul>
+        <li><a href="admin_dashboard.php">Dashboard</a></li>
+        <li><a href="admin_logout.php">Logout</a></li>
+    </ul>
+</nav>
+
+<section class="page-header">
+    <h1>Import Custom Book</h1>
+    <p>Add a new book manually without duplicate entries.</p>
+</section>
+
+<section class="table-section">
+
+    <h2>Book Details</h2>
+
+    <form method="POST">
+
+        <input type="text" name="title" placeholder="Book Title" required>
+
+        <input type="text" name="author" placeholder="Author Name" required>
+
+        <input type="text" name="category" placeholder="Category e.g Fiction, Science, Programming" required>
+
+        <textarea name="description" placeholder="Book Description" required></textarea>
+
+        <input type="text" name="cover_image_url" placeholder="Cover Image URL" required>
+
+        <input type="text" name="read_link" placeholder="Read Book ID or Link" required>
+
+        <input type="text" name="download_epub_link" placeholder="Download EPUB Link" required>
+
+        <button type="submit" name="import">Import Book</button>
+
+    </form>
+
+</section>
+
+</body>
+</html>
