@@ -159,7 +159,7 @@ $allBooks = [
 "description"=>"A beginner friendly programming book for learning Python concepts.",
 "cover"=>"https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg",
 "read"=>"https://docs.python.org/3/tutorial/",
-"download"=>"https://docs.python.org/3/archives/python-3.12.0-docs-pdf-a4.zip"
+"download"=>"https://www.python.org/ftp/python/doc/3.12.0/python-3.12.0-docs-pdf-a4.zip"
 ],
 
 [
