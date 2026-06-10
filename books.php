@@ -1,4 +1,3 @@
-```php
 <?php
 session_start();
 include 'config.php';
@@ -33,7 +32,7 @@ else{
 
     <title>Books</title>
 
-    <link rel="stylesheet" href="style.css?v=999">
+    <link rel="stylesheet" href="style.css?v=1000">
 
 </head>
 
@@ -114,16 +113,20 @@ if(mysqli_num_rows($result) > 0){
 while($row = mysqli_fetch_assoc($result)){
 
     $readLink = $row['read_link'];
-
     $downloadLink = $row['download_epub_link'];
-
-    // GUTENBERG FIX
 
     if(is_numeric($readLink)){
 
+        $bookId = $readLink;
+
         $readLink =
-        "https://www.gutenberg.org/ebooks/" .
-        $readLink;
+        "https://www.gutenberg.org/files/" .
+        $bookId .
+        "/" .
+        $bookId .
+        "-h/" .
+        $bookId .
+        "-h.htm";
 
     }
 
@@ -140,7 +143,7 @@ while($row = mysqli_fetch_assoc($result)){
 
 <div class="book-card">
 
-<img src="<?php echo $row['cover_image_url']; ?>"
+<img src="<?php echo htmlspecialchars($row['cover_image_url']); ?>"
      alt="Book Cover">
 
 <h3>
@@ -176,7 +179,7 @@ $row['category'] != ""
 
 <div class="book-buttons">
 
-<a href="<?php echo $readLink; ?>"
+<a href="<?php echo htmlspecialchars($readLink); ?>"
    target="_blank">
 
 <button>
@@ -185,7 +188,7 @@ Read Book
 
 </a>
 
-<a href="<?php echo $downloadLink; ?>"
+<a href="<?php echo htmlspecialchars($downloadLink); ?>"
    target="_blank">
 
 <button>
@@ -224,4 +227,3 @@ No books found
 
 </body>
 </html>
-```
