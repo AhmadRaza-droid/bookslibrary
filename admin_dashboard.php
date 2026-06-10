@@ -19,7 +19,7 @@ $total_books = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM books"));
 <html>
 <head>
     <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=250">
 </head>
 
 <body>
@@ -38,7 +38,7 @@ $total_books = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM books"));
     <p>Manage books, users and messages.</p>
 </section>
 
-<div style="display:flex; gap:20px; margin:20px;">
+<div style="display:flex; gap:20px; margin:20px; flex-wrap:wrap;">
 
     <div style="background:#0b1f3a; color:white; padding:20px; border-radius:10px; width:250px;">
         <h2>Total Users</h2>
@@ -48,6 +48,16 @@ $total_books = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM books"));
     <div style="background:#0b1f3a; color:white; padding:20px; border-radius:10px; width:250px;">
         <h2>Total Books</h2>
         <h1><?php echo $total_books; ?></h1>
+    </div>
+
+    <div style="background:#ffc72c; color:#061b33; padding:20px; border-radius:10px; width:250px;">
+        <h2>Auto Import</h2>
+
+        <a href="auto_scrape_books.php">
+            <button style="margin-top:10px; padding:12px 18px; border:none; border-radius:8px; background:#061b33; color:white; cursor:pointer;">
+                Auto Import Books
+            </button>
+        </a>
     </div>
 
 </div>
