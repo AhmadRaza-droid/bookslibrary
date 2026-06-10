@@ -71,8 +71,11 @@ session_start();
         <p>Ehtasham Bilal</p>
         <p>Khaleel</p>
 
+
+         <p class="version"><b>Version:</b> 2.0</p>
+
     </div>
-    <p class="version"><b>Version:</b> 2.0</p>
+   
 
 </section>
 
