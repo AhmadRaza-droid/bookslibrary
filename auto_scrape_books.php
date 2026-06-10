@@ -61,7 +61,7 @@ function addBook($conn, $book){
     if(is_numeric($book['read'])){
         $id = $book['read'];
         $read_link = "https://www.gutenberg.org/ebooks/$id";
-        $download_link = "https://www.gutenberg.org/ebooks/$id.epub3.images";
+       $download_link = "https://www.gutenberg.org/ebooks/$id.epub.images";
     } else {
         $read_link = mysqli_real_escape_string($conn, $book['read']);
         $download_link = mysqli_real_escape_string($conn, $book['download']);
