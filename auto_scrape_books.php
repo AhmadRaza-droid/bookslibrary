@@ -7,57 +7,107 @@ if(!isset($_SESSION['admin'])){
     exit();
 }
 
-if(isset($_POST['import'])){
+if(isset($_POST['scrape'])){
 
-    $title = mysqli_real_escape_string($conn, $_POST['title']);
-    $author = mysqli_real_escape_string($conn, $_POST['author']);
-    $category = mysqli_real_escape_string($conn, $_POST['category']);
-    $description = mysqli_real_escape_string($conn, $_POST['description']);
-    $cover = mysqli_real_escape_string($conn, $_POST['cover_image_url']);
-    $read_link = mysqli_real_escape_string($conn, $_POST['read_link']);
-    $download_link = mysqli_real_escape_string($conn, $_POST['download_epub_link']);
+    $keyword = mysqli_real_escape_string($conn, $_POST['keyword']);
+    $quantity = (int) $_POST['quantity'];
 
-    $check = mysqli_query($conn,
-        "SELECT * FROM books 
-         WHERE title='$title' 
-         AND author='$author'"
-    );
+    if($quantity <= 0){
+        $quantity = 5;
+    }
 
-    if(mysqli_num_rows($check) > 0){
+    $url = "https://gutendex.com/books/?search=" . urlencode($keyword);
 
+    $response = @file_get_contents($url);
+
+    if($response === false){
         echo "<script>
-                alert('This book already exists');
+                alert('Auto scrape failed. InfinityFree API request block kar raha hai.');
                 window.location.href='auto_scrape_books.php';
               </script>";
         exit();
     }
 
-    $query = "INSERT INTO books
-    (title, author, category, description, cover_image_url, read_link, download_epub_link, source)
-    VALUES
-    ('$title', '$author', '$category', '$description', '$cover', '$read_link', '$download_link', 'Admin Import')";
+    $data = json_decode($response, true);
 
-    if(mysqli_query($conn, $query)){
+    if(!isset($data['results'])){
         echo "<script>
-                alert('Book imported successfully');
-                window.location.href='admin_dashboard.php';
+                alert('No books found');
+                window.location.href='auto_scrape_books.php';
               </script>";
-    } else {
-        echo "Error: " . mysqli_error($conn);
+        exit();
     }
+
+    $count = 0;
+
+    foreach($data['results'] as $book){
+
+        if($count >= $quantity){
+            break;
+        }
+
+        $title = mysqli_real_escape_string($conn, $book['title']);
+
+        $author = "Unknown";
+        if(!empty($book['authors'])){
+            $author = mysqli_real_escape_string($conn, $book['authors'][0]['name']);
+        }
+
+        $description = "Free public domain book from Project Gutenberg.";
+
+        $cover = "";
+        if(isset($book['formats']['image/jpeg'])){
+            $cover = mysqli_real_escape_string($conn, $book['formats']['image/jpeg']);
+        }
+
+        $read_link = "";
+        if(isset($book['formats']['text/html'])){
+            $read_link = mysqli_real_escape_string($conn, $book['formats']['text/html']);
+        }
+
+        $download_link = "";
+        if(isset($book['formats']['application/epub+zip'])){
+            $download_link = mysqli_real_escape_string($conn, $book['formats']['application/epub+zip']);
+        }
+
+        $category = mysqli_real_escape_string($conn, $keyword);
+
+        $check = mysqli_query($conn,
+            "SELECT * FROM books 
+             WHERE title='$title' 
+             AND author='$author'"
+        );
+
+        if(mysqli_num_rows($check) == 0){
+
+            $query = "INSERT INTO books
+            (title, author, category, description, cover_image_url, read_link, download_epub_link, source)
+            VALUES
+            ('$title', '$author', '$category', '$description', '$cover', '$read_link', '$download_link', 'Gutendex')";
+
+            if(mysqli_query($conn, $query)){
+                $count++;
+            }
+        }
+    }
+
+    echo "<script>
+            alert('$count new books imported successfully');
+            window.location.href='admin_dashboard.php';
+          </script>";
 }
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Import Book</title>
-    <link rel="stylesheet" href="style.css?v=300">
+    <title>Auto Scrape Books</title>
+    <link rel="stylesheet" href="style.css?v=400">
 </head>
 <body>
 
 <nav>
-    <div class="logo">📖 Import Book</div>
+    <div class="logo">📖 Auto Scrape Books</div>
     <ul>
         <li><a href="admin_dashboard.php">Dashboard</a></li>
         <li><a href="admin_logout.php">Logout</a></li>
@@ -65,33 +115,37 @@ if(isset($_POST['import'])){
 </nav>
 
 <section class="page-header">
-    <h1>Import Custom Book</h1>
-    <p>Add a new book manually without duplicate entries.</p>
+    <h1>Auto Scrape Books</h1>
+    <p>Enter book name/category and quantity to import automatically.</p>
 </section>
 
-<section class="table-section">
+<section class="form-section">
 
-    <h2>Book Details</h2>
+    <div class="form-box">
 
-    <form method="POST">
+        <h2>Scrape Books</h2>
 
-        <input type="text" name="title" placeholder="Book Title" required>
+        <form method="POST">
 
-        <input type="text" name="author" placeholder="Author Name" required>
+            <input type="text"
+                   name="keyword"
+                   placeholder="Enter book name or category e.g. science, history, novel"
+                   required>
 
-        <input type="text" name="category" placeholder="Category e.g Fiction, Science, Programming" required>
+            <input type="number"
+                   name="quantity"
+                   placeholder="How many books?"
+                   min="1"
+                   max="50"
+                   required>
 
-        <textarea name="description" placeholder="Book Description" required></textarea>
+            <button type="submit" name="scrape">
+                Auto Import Books
+            </button>
 
-        <input type="text" name="cover_image_url" placeholder="Cover Image URL" required>
+        </form>
 
-        <input type="text" name="read_link" placeholder="Read Book ID or Link" required>
-
-        <input type="text" name="download_epub_link" placeholder="Download EPUB Link" required>
-
-        <button type="submit" name="import">Import Book</button>
-
-    </form>
+    </div>
 
 </section>
 
