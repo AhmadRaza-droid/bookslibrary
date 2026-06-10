@@ -23,7 +23,7 @@ $topRated = mysqli_query($conn,
 
 <title>Library Management System</title>
 
-<link rel="stylesheet" href="style.css?v=2200">
+<link rel="stylesheet" href="style.css?v=2300">
 </head>
 
 <body>
@@ -57,8 +57,10 @@ $topRated = mysqli_query($conn,
             Read. Learn. Grow.
         </p>
 
-        <a href="books.php" class="btn">📖 Explore Books</a>
-        <a href="login.php" class="btn-outline">👤 Login Now</a>
+        <div class="hero-buttons">
+            <a href="books.php" class="btn">📖 Explore Books</a>
+            <a href="login.php" class="btn-outline">👤 Login Now</a>
+        </div>
     </div>
 </section>
 
@@ -188,8 +190,6 @@ $topRated = mysqli_query($conn,
     <p>Developed by Ahmad Raza</p>
 </footer>
 
-<!-- AI CHATBOT -->
-
 <div class="chatbot-icon" onclick="toggleChat()">
     🤖
 </div>
@@ -238,9 +238,7 @@ function sendMessage(){
     }
 
     chatBody.innerHTML += `<div class="user-message">${input.value}</div>`;
-
     chatBody.innerHTML += `<div class="bot-message" id="typing">Typing...</div>`;
-
     chatBody.scrollTop = chatBody.scrollHeight;
 
     let reply = getBotReply(message);
@@ -254,7 +252,6 @@ function sendMessage(){
         }
 
         chatBody.innerHTML += `<div class="bot-message">${reply}</div>`;
-
         chatBody.scrollTop = chatBody.scrollHeight;
 
     }, 1000);
