@@ -5,6 +5,15 @@ include 'config.php';
 $search = "";
 $category = "";
 
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+
+if($page < 1){
+    $page = 1;
+}
+
+$limit = 6;
+$offset = ($page - 1) * $limit;
+
 $where = "WHERE 1";
 
 if(isset($_GET['search']) && $_GET['search'] != ""){
@@ -23,14 +32,20 @@ if(isset($_GET['category']) && $_GET['category'] != ""){
     $where .= " AND category LIKE '%$category%'";
 }
 
-$result = mysqli_query($conn, "SELECT * FROM books $where");
+$countResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM books $where");
+$countRow = mysqli_fetch_assoc($countResult);
+
+$totalBooks = $countRow['total'];
+$totalPages = ceil($totalBooks / $limit);
+
+$result = mysqli_query($conn, "SELECT * FROM books $where LIMIT $limit OFFSET $offset");
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
     <title>Books</title>
-    <link rel="stylesheet" href="style.css?v=1600">
+    <link rel="stylesheet" href="style.css?v=1700">
 </head>
 
 <body>
@@ -230,6 +245,26 @@ if($totalReviews > 0){
 ?>
 
 </section>
+
+<div style="text-align:center; margin:30px;">
+
+<?php if($page > 1){ ?>
+    <a href="books.php?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&category=<?php echo urlencode($category); ?>">
+        <button>Previous</button>
+    </a>
+<?php } ?>
+
+<span style="margin:0 15px; font-weight:bold;">
+    Page <?php echo $page; ?> of <?php echo $totalPages; ?>
+</span>
+
+<?php if($page < $totalPages){ ?>
+    <a href="books.php?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>&category=<?php echo urlencode($category); ?>">
+        <button>Next</button>
+    </a>
+<?php } ?>
+
+</div>
 
 <script>
 if(localStorage.getItem("theme") === "dark"){
