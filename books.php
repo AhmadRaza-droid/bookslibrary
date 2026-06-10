@@ -8,7 +8,6 @@ $category = "";
 $where = "WHERE 1";
 
 if(isset($_GET['search']) && $_GET['search'] != ""){
-
     $search = mysqli_real_escape_string($conn, $_GET['search']);
 
     $where .= " AND (
@@ -20,9 +19,7 @@ if(isset($_GET['search']) && $_GET['search'] != ""){
 }
 
 if(isset($_GET['category']) && $_GET['category'] != ""){
-
     $category = mysqli_real_escape_string($conn, $_GET['category']);
-
     $where .= " AND category LIKE '%$category%'";
 }
 
@@ -31,92 +28,37 @@ $result = mysqli_query($conn, "SELECT * FROM books $where");
 
 <!DOCTYPE html>
 <html>
-
 <head>
-
     <title>Books</title>
-
-    <link rel="stylesheet" href="style.css?v=1200">
-
+    <link rel="stylesheet" href="style.css?v=1300">
 </head>
 
 <body>
 
 <nav>
-
-    <div class="logo">
-        📖 Library Management System
-    </div>
+    <div class="logo">📖 Library Management System</div>
 
     <ul>
+        <li><a href="index.php">Home</a></li>
+        <li><a class="active" href="books.php">Books</a></li>
+        <li><a href="profile.php">Profile</a></li>
+        <li><a href="contact.php">Contact</a></li>
 
-        <li>
-            <a href="index.php">
-                Home
-            </a>
-        </li>
+        <?php if(isset($_SESSION['email']) && $_SESSION['email'] == "universitylibrary172@gmail.com"){ ?>
+            <li><a href="admin_dashboard.php">Admin Panel</a></li>
+        <?php } ?>
 
-        <li>
-            <a class="active" href="books.php">
-                Books
-            </a>
-        </li>
-
-        <li>
-            <a href="profile.php">
-                Profile
-            </a>
-        </li>
-
-        <li>
-            <a href="contact.php">
-                Contact
-            </a>
-        </li>
-
-<?php
-if(
-isset($_SESSION['email'])
-&&
-$_SESSION['email'] ==
-"universitylibrary172@gmail.com"
-){
-?>
-
-<li>
-    <a href="admin_dashboard.php">
-        Admin Panel
-    </a>
-</li>
-
-<?php } ?>
-
-        <li>
-            <a href="about.php">
-                About
-            </a>
-        </li>
-<li><button onclick="toggleDarkMode()" class="dark-btn">🌙 Dark</button></li>
-
-
+        <li><a href="about.php">About</a></li>
+        <li><button onclick="toggleDarkMode()" class="dark-btn">🌙 Dark</button></li>
     </ul>
-
 </nav>
 
 <section class="page-header">
-
-    <h1>
-        Available Books
-    </h1>
-
-    <p>
-        Read and download free books online.
-    </p>
-
+    <h1>Available Books</h1>
+    <p>Read and download free books online.</p>
 </section>
 
 <section class="search-section">
-
 <form method="GET" action="books.php">
 
 <input type="text"
@@ -125,254 +67,142 @@ $_SESSION['email'] ==
        value="<?php echo htmlspecialchars($search); ?>">
 
 <select name="category"
-style="width:100%;
-padding:14px;
-margin-top:12px;
-border-radius:10px;
-border:2px solid #ddd;">
+style="width:100%; padding:14px; margin-top:12px; border-radius:10px; border:2px solid #ddd;">
 
-<option value="">
-All Categories
-</option>
+<option value="">All Categories</option>
 
-<option value="programming"
-<?php if($category=="programming") echo "selected"; ?>>
-Programming
-</option>
-
-<option value="science"
-<?php if($category=="science") echo "selected"; ?>>
-Science
-</option>
-
-<option value="adventure"
-<?php if($category=="adventure") echo "selected"; ?>>
-Adventure
-</option>
-
-<option value="movie"
-<?php if($category=="movie") echo "selected"; ?>>
-Movie
-</option>
-
-<option value="history"
-<?php if($category=="history") echo "selected"; ?>>
-History
-</option>
-
-<option value="islamic"
-<?php if($category=="islamic") echo "selected"; ?>>
-Islamic
-</option>
-
-<option value="urdu"
-<?php if($category=="urdu") echo "selected"; ?>>
-Urdu
-</option>
-
-<option value="business"
-<?php if($category=="business") echo "selected"; ?>>
-Business
-</option>
-
-<option value="horror"
-<?php if($category=="horror") echo "selected"; ?>>
-Horror
-</option>
-
-<option value="detective"
-<?php if($category=="detective") echo "selected"; ?>>
-Detective
-</option>
-
-<option value="novel"
-<?php if($category=="novel") echo "selected"; ?>>
-Novel
-</option>
-
-<option value="philosophy"
-<?php if($category=="philosophy") echo "selected"; ?>>
-Philosophy
-</option>
+<option value="programming" <?php if($category=="programming") echo "selected"; ?>>Programming</option>
+<option value="science" <?php if($category=="science") echo "selected"; ?>>Science</option>
+<option value="adventure" <?php if($category=="adventure") echo "selected"; ?>>Adventure</option>
+<option value="movie" <?php if($category=="movie") echo "selected"; ?>>Movie</option>
+<option value="history" <?php if($category=="history") echo "selected"; ?>>History</option>
+<option value="islamic" <?php if($category=="islamic") echo "selected"; ?>>Islamic</option>
+<option value="urdu" <?php if($category=="urdu") echo "selected"; ?>>Urdu</option>
+<option value="business" <?php if($category=="business") echo "selected"; ?>>Business</option>
+<option value="horror" <?php if($category=="horror") echo "selected"; ?>>Horror</option>
+<option value="detective" <?php if($category=="detective") echo "selected"; ?>>Detective</option>
+<option value="novel" <?php if($category=="novel") echo "selected"; ?>>Novel</option>
+<option value="philosophy" <?php if($category=="philosophy") echo "selected"; ?>>Philosophy</option>
 
 </select>
 
 <button type="submit"
-style="margin-top:12px;
-padding:12px 20px;
-border:none;
-border-radius:8px;
-background:#061b33;
-color:white;
-cursor:pointer;">
-
+style="margin-top:12px; padding:12px 20px; border:none; border-radius:8px; background:#061b33; color:white; cursor:pointer;">
 Filter Books
-
 </button>
 
 </form>
-
 </section>
 
 <section class="books-container">
 
 <?php
-
 if(mysqli_num_rows($result) > 0){
 
 while($row = mysqli_fetch_assoc($result)){
 
-    $readLink = $row['read_link'];
+    $book_id = $row['id'];
 
-    $downloadLink = $row['download_epub_link'];
+    $reviewQuery = mysqli_query($conn,
+    "SELECT AVG(rating) AS avg_rating, COUNT(*) AS total_reviews
+     FROM reviews
+     WHERE book_id='$book_id'");
 
-    // DIRECT ONLINE READING FIX
+    $reviewData = mysqli_fetch_assoc($reviewQuery);
 
-    if(is_numeric($readLink)){
-
-        $bookId = $readLink;
-
-        $readLink =
-        "https://www.gutenberg.org/files/" .
-        $bookId .
-        "/" .
-        $bookId .
-        "-h/" .
-        $bookId .
-        "-h.htm";
-
-    }
-
-    // DIRECT EPUB DOWNLOAD FIX
-
-    if(is_numeric($downloadLink)){
-
-        $downloadLink =
-        "https://www.gutenberg.org/ebooks/" .
-        $downloadLink .
-        ".epub.noimages";
-
-    }
-
+    $avgRating = round($reviewData['avg_rating'], 1);
+    $totalReviews = $reviewData['total_reviews'];
 ?>
 
 <div class="book-card">
 
-<img src="<?php echo htmlspecialchars($row['cover_image_url']); ?>"
-     alt="Book Cover">
+<img src="<?php echo htmlspecialchars($row['cover_image_url']); ?>" alt="Book Cover">
 
-<h3>
-<?php echo htmlspecialchars($row['title']); ?>
-</h3>
+<h3><?php echo htmlspecialchars($row['title']); ?></h3>
+
+<p><strong>Author:</strong> <?php echo htmlspecialchars($row['author']); ?></p>
 
 <p>
-
-<strong>
-Author:
-</strong>
-
-<?php echo htmlspecialchars($row['author']); ?>
-
-</p>
-
+<strong>Rating:</strong>
 <?php
-if(
-isset($row['category'])
-&&
-$row['category'] != ""
-){
+if($totalReviews > 0){
+    echo $avgRating . " ⭐ (" . $totalReviews . " reviews)";
+} else {
+    echo "No ratings yet";
+}
 ?>
-
-<p>
-
-<strong>
-Category:
-</strong>
-
-<?php echo htmlspecialchars($row['category']); ?>
-
 </p>
 
+<?php if(isset($row['category']) && $row['category'] != ""){ ?>
+<p><strong>Category:</strong> <?php echo htmlspecialchars($row['category']); ?></p>
 <?php } ?>
 
-<p>
+<p><?php echo htmlspecialchars($row['description']); ?></p>
 
-<strong>
-Downloads:
-</strong>
-
-<?php
-echo (int)$row['downloads'];
-?>
-
-</p>
+<p><strong>Downloads:</strong> <?php echo (int)$row['downloads']; ?></p>
 
 <div class="book-buttons">
 
-<a href="view_book.php?id=<?php echo $row['id']; ?>"
-target="_blank">
-
-<button>
-Read Book
-</button>
-
+<a href="view_book.php?id=<?php echo $row['id']; ?>" target="_blank">
+    <button>Read Book</button>
 </a>
 
-<a href="download_book.php?id=<?php echo $row['id']; ?>"
-target="_blank">
+<a href="download_book.php?id=<?php echo $row['id']; ?>" target="_blank">
+    <button>Download EPUB</button>
+</a>
 
-<button>
-Download EPUB
-</button>
 <?php if(isset($_SESSION['user_id'])){ ?>
-
 <a href="favorite_book.php?book_id=<?php echo $row['id']; ?>">
-
-<button style="background:red;">
-❤️ Favorite
-</button>
-
+    <button style="background:red; color:white;">❤️ Favorite</button>
 </a>
-
 <?php } ?>
 
-
-</a>
-
 </div>
+
+<?php if(isset($_SESSION['user_id'])){ ?>
+
+<form action="add_review.php" method="POST" style="margin-top:15px;">
+
+    <input type="hidden" name="book_id" value="<?php echo $row['id']; ?>">
+
+    <select name="rating" required style="width:100%; padding:10px; margin-bottom:10px;">
+        <option value="">Rate Book</option>
+        <option value="5">⭐⭐⭐⭐⭐</option>
+        <option value="4">⭐⭐⭐⭐</option>
+        <option value="3">⭐⭐⭐</option>
+        <option value="2">⭐⭐</option>
+        <option value="1">⭐</option>
+    </select>
+
+    <textarea name="review" placeholder="Write your review..." required
+    style="width:100%; height:80px; padding:10px; margin-bottom:10px;"></textarea>
+
+    <button type="submit" name="submit_review">
+        Submit Review
+    </button>
+
+</form>
+
+<?php } ?>
 
 </div>
 
 <?php
-
 }
 
+} else {
+    echo "<h2 style='text-align:center; width:100%;'>No books found</h2>";
 }
-else{
-
-echo "
-
-<h2 style='text-align:center;
-width:100%;'>
-
-No books found
-
-</h2>
-
-";
-
-}
-
 ?>
 
 </section>
+
 <script>
 if(localStorage.getItem("theme") === "dark"){
     document.body.classList.add("dark-mode");
 }
 
 function toggleDarkMode(){
-
     document.body.classList.toggle("dark-mode");
 
     if(document.body.classList.contains("dark-mode")){
