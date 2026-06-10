@@ -13,7 +13,9 @@
         <li><a href="books.php">Books</a></li>
         <li><a href="login.php">Login</a></li>
         <li><a href="register.php">Register</a></li>
-        <li><a href="admin_login.php">Admin</a></li>
+        <?php if(isset($_SESSION['email']) && $_SESSION['email'] == "universitylibrary172@gmail.com"){ ?>
+    <li><a href="admin_dashboard.php">Admin Panel</a></li>
+<?php } ?>
         <li><a class="active" href="contact.php">Contact</a></li>
     </ul>
 </nav>

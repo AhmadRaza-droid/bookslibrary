@@ -4,10 +4,13 @@ include 'config.php';
 
 if(isset($_POST['login'])){
 
-    $email = $_POST['email'];
-    $password = $_POST['password'];
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $password = mysqli_real_escape_string($conn, $_POST['password']);
 
-    $query = "SELECT * FROM users WHERE email='$email' AND password='$password'";
+    $query = "SELECT * FROM users 
+              WHERE email='$email' 
+              AND password='$password'";
+
     $result = mysqli_query($conn, $query);
 
     if(mysqli_num_rows($result) > 0){
@@ -16,10 +19,11 @@ if(isset($_POST['login'])){
 
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user_name'] = $user['fullname'];
+        $_SESSION['email'] = $user['email'];
 
         echo "<script>
                 alert('Login Successful');
-                window.location.href='books.php';
+                window.location.href='index.php';
               </script>";
 
     } else {
@@ -36,7 +40,7 @@ if(isset($_POST['login'])){
 <html lang="en">
 <head>
     <title>Login - Library Management System</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=100">
 </head>
 
 <body>
@@ -50,7 +54,13 @@ if(isset($_POST['login'])){
         <li><a class="active" href="login.php">Login</a></li>
         <li><a href="register.php">Register</a></li>
         <li><a href="contact.php">Contact</a></li>
-        <li><a href="admin_login.php">Admin</a></li>
+        <li><a href="profile.php">Profile</a></li>
+
+        <?php if(isset($_SESSION['email']) && $_SESSION['email'] == "universitylibrary172@gmail.com"){ ?>
+            <li><a href="admin_dashboard.php">Admin Panel</a></li>
+        <?php } ?>
+
+        <li><a href="about.php">About</a></li>
     </ul>
 </nav>
 

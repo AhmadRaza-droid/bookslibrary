@@ -1,4 +1,5 @@
 <?php
+session_start();
 include 'config.php';
 $books = mysqli_query($conn, "SELECT * FROM books LIMIT 10");
 ?>
@@ -9,7 +10,7 @@ $books = mysqli_query($conn, "SELECT * FROM books LIMIT 10");
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Library Management System</title>
-    <link rel="stylesheet" href="style.css?v=50">
+    <link rel="stylesheet" href="style.css?v=100">
 </head>
 <body>
 
@@ -23,7 +24,9 @@ $books = mysqli_query($conn, "SELECT * FROM books LIMIT 10");
         <li><a href="register.php">Register</a></li>
         <li><a href="contact.php">Contact</a></li>
         <li><a href="profile.php">Profile</a></li>
-        <li><a href="admin_login.php">Admin</a></li>
+        <?php if(isset($_SESSION['email']) && $_SESSION['email'] == "universitylibrary172@gmail.com"){ ?>
+    <li><a href="admin_dashboard.php">Admin Panel</a></li>
+<?php } ?>
         <li><a href="about.php">About</a></li>
     </ul>
 </nav>
