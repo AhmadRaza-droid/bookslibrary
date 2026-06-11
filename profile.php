@@ -33,7 +33,7 @@ $recentlyViewed = mysqli_query($conn,
 <html>
 <head>
     <title>My Profile</title>
-    <link rel="stylesheet" href="style.css?v=4000">
+    <link rel="stylesheet" href="style.css?v=5000">
 </head>
 
 <body>
@@ -57,7 +57,7 @@ $recentlyViewed = mysqli_query($conn,
 
 <section class="form-section">
 
-<div class="form-box">
+<div class="form-box profile-box">
 
 <h2>My Profile</h2>
 
@@ -77,13 +77,13 @@ $recentlyViewed = mysqli_query($conn,
     <button>Logout</button>
 </a>
 
-<h2 style="margin-top:40px;">❤️ My Favorite Books</h2>
+<h2 class="profile-heading">❤️ My Favorite Books</h2>
 
 <?php if(mysqli_num_rows($favorites) > 0){ ?>
 
 <?php while($book = mysqli_fetch_assoc($favorites)){ ?>
 
-<div style="background:#f5f5f5; padding:15px; margin-top:15px; border-radius:12px; text-align:left;">
+<div class="profile-book-card">
 
     <h3><?php echo htmlspecialchars($book['title']); ?></h3>
 
@@ -94,13 +94,11 @@ $recentlyViewed = mysqli_query($conn,
     <?php } ?>
 
     <a href="books.php">
-        <button style="margin-top:10px;">View Book</button>
+        <button>View Book</button>
     </a>
 
     <a href="remove_favorite.php?book_id=<?php echo $book['id']; ?>">
-        <button style="margin-top:10px; background:#b91c1c; color:white;">
-            Remove Favorite
-        </button>
+        <button class="remove-btn">Remove Favorite</button>
     </a>
 
 </div>
@@ -109,24 +107,24 @@ $recentlyViewed = mysqli_query($conn,
 
 <?php } else { ?>
 
-<p style="margin-top:20px;">No favorite books yet 😢</p>
+<p class="empty-text">No favorite books yet 😢</p>
 
 <?php } ?>
 
-<h2 style="margin-top:40px;">🕒 Recently Viewed Books</h2>
+<h2 class="profile-heading">🕒 Recently Viewed Books</h2>
 
 <?php if(mysqli_num_rows($recentlyViewed) > 0){ ?>
 
 <?php while($book = mysqli_fetch_assoc($recentlyViewed)){ ?>
 
-<div style="background:#f5f5f5; padding:15px; margin-top:15px; border-radius:12px; text-align:left;">
+<div class="profile-book-card">
 
     <h3><?php echo htmlspecialchars($book['title']); ?></h3>
 
     <p><strong>Author:</strong> <?php echo htmlspecialchars($book['author']); ?></p>
 
     <a href="view_book.php?id=<?php echo $book['id']; ?>" target="_blank">
-        <button style="margin-top:10px;">Continue Reading</button>
+        <button>Continue Reading</button>
     </a>
 
 </div>
@@ -135,7 +133,7 @@ $recentlyViewed = mysqli_query($conn,
 
 <?php } else { ?>
 
-<p style="margin-top:20px;">No recently viewed books yet.</p>
+<p class="empty-text">No recently viewed books yet.</p>
 
 <?php } ?>
 
