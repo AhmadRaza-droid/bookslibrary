@@ -229,34 +229,66 @@ function toggleChat(){
 
 function sendMessage(){
 
-    let input = document.getElementById("userInput");
-    let message = input.value.toLowerCase().trim();
-    let chatBody = document.getElementById("chat-body");
+let input = document.getElementById("userInput");
+let message = input.value.trim();
+let chatBody = document.getElementById("chat-body");
 
-    if(message === ""){
-        return;
-    }
+if(message==""){
+return;
+}
 
-    chatBody.innerHTML += `<div class="user-message">${input.value}</div>`;
-    chatBody.innerHTML += `<div class="bot-message" id="typing">Typing...</div>`;
-    chatBody.scrollTop = chatBody.scrollHeight;
+chatBody.innerHTML +=
+`<div class="user-message">${message}</div>`;
 
-    let reply = getBotReply(message);
+chatBody.innerHTML +=
+`<div class="bot-message" id="typing">
+Typing...
+</div>`;
 
-    setTimeout(() => {
+chatBody.scrollTop = chatBody.scrollHeight;
 
-        let typing = document.getElementById("typing");
+input.value="";
 
-        if(typing){
-            typing.remove();
-        }
+fetch("chatbot.php",{
+method:"POST",
+headers:{
+"Content-Type":"application/x-www-form-urlencoded"
+},
+body:"message="+encodeURIComponent(message)
+})
 
-        chatBody.innerHTML += `<div class="bot-message">${reply}</div>`;
-        chatBody.scrollTop = chatBody.scrollHeight;
+.then(response => response.text())
 
-    }, 1000);
+.then(reply => {
 
-    input.value = "";
+let typing = document.getElementById("typing");
+
+if(typing){
+typing.remove();
+}
+
+chatBody.innerHTML +=
+`<div class="bot-message">${reply}</div>`;
+
+chatBody.scrollTop = chatBody.scrollHeight;
+
+})
+
+.catch(() => {
+
+let typing = document.getElementById("typing");
+
+if(typing){
+typing.remove();
+}
+
+chatBody.innerHTML +=
+`<div class="bot-message">
+⚠ Error connecting to chatbot.
+</div>`;
+
+});
+
 }
 
 function getBotReply(message){
