@@ -33,7 +33,7 @@ $most_favorites = mysqli_query($conn,
 <html>
 <head>
     <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=6000">
+    <link rel="stylesheet" href="style.css?v=7000">
 </head>
 
 <body>
@@ -50,7 +50,7 @@ $most_favorites = mysqli_query($conn,
 
 <section class="page-header">
     <h1>Admin Dashboard</h1>
-    <p>Manage books, users, reviews and analytics.</p>
+    <p>Manage books, users, reviews, messages and analytics.</p>
 </section>
 
 <div style="display:flex; gap:20px; margin:20px; flex-wrap:wrap;">
@@ -193,7 +193,7 @@ $most_favorites = mysqli_query($conn,
 
             <td>
                 <a href="delete_book.php?id=<?php echo $row['id']; ?>">
-                    <button>Delete</button>
+                    <button style="background:red; color:white;">Delete</button>
                 </a>
             </td>
 
@@ -216,15 +216,46 @@ $most_favorites = mysqli_query($conn,
             <th>Name</th>
             <th>Email</th>
             <th>Message</th>
+            <th>Reply</th>
+            <th>Action</th>
         </tr>
 
         <?php while($row = mysqli_fetch_assoc($messages)){ ?>
 
         <tr>
+
             <td><?php echo $row['id']; ?></td>
+
             <td><?php echo htmlspecialchars($row['name']); ?></td>
+
             <td><?php echo htmlspecialchars($row['email']); ?></td>
+
             <td><?php echo htmlspecialchars($row['message']); ?></td>
+
+            <td>
+                <?php
+                if(isset($row['reply']) && $row['reply'] != ""){
+                    echo htmlspecialchars($row['reply']);
+                } else {
+                    echo "No reply yet";
+                }
+                ?>
+            </td>
+
+            <td>
+                <form action="reply_message.php" method="POST">
+
+                    <input type="hidden" name="message_id" value="<?php echo $row['id']; ?>">
+
+                    <textarea name="reply" placeholder="Write reply..." required></textarea>
+
+                    <button type="submit" name="reply_submit">
+                        Reply
+                    </button>
+
+                </form>
+            </td>
+
         </tr>
 
         <?php } ?>
@@ -286,16 +317,35 @@ while($review = mysqli_fetch_assoc($reviews)){
 
         <tr>
             <th>ID</th>
+            <th>Profile</th>
             <th>Full Name</th>
             <th>Email</th>
+            <th>Action</th>
         </tr>
 
         <?php while($user = mysqli_fetch_assoc($all_users)){ ?>
 
         <tr>
             <td><?php echo $user['id']; ?></td>
+
+            <td>
+                <?php if(isset($user['profile_image']) && $user['profile_image'] != ""){ ?>
+                    <img src="<?php echo htmlspecialchars($user['profile_image']); ?>" width="50" height="50" style="border-radius:50%; object-fit:cover;">
+                <?php } else { ?>
+                    👤
+                <?php } ?>
+            </td>
+
             <td><?php echo htmlspecialchars($user['fullname']); ?></td>
+
             <td><?php echo htmlspecialchars($user['email']); ?></td>
+
+            <td>
+                <a href="delete_user.php?id=<?php echo $user['id']; ?>"
+                   onclick="return confirm('Are you sure you want to delete this user?');">
+                    <button style="background:red; color:white;">Delete</button>
+                </a>
+            </td>
         </tr>
 
         <?php } ?>

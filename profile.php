@@ -33,7 +33,7 @@ $recentlyViewed = mysqli_query($conn,
 <html>
 <head>
     <title>My Profile</title>
-    <link rel="stylesheet" href="style.css?v=6000">
+    <link rel="stylesheet" href="style.css?v=7000">
 </head>
 
 <body>
@@ -60,6 +60,28 @@ $recentlyViewed = mysqli_query($conn,
 <div class="form-box profile-box">
 
 <h2>My Profile</h2>
+
+<?php if(isset($user['profile_image']) && $user['profile_image'] != ""){ ?>
+
+    <img src="<?php echo htmlspecialchars($user['profile_image']); ?>"
+         alt="Profile Picture"
+         style="width:120px;height:120px;border-radius:50%;object-fit:cover;margin:15px;border:3px solid #061b33;">
+
+<?php } else { ?>
+
+    <div style="font-size:75px;margin:10px;">👤</div>
+
+<?php } ?>
+
+<form action="upload_profile_image.php" method="POST" enctype="multipart/form-data" style="margin-bottom:20px;">
+
+    <input type="file" name="profile_image" accept="image/*" required>
+
+    <button type="submit" name="upload_image">
+        Upload Profile Picture
+    </button>
+
+</form>
 
 <p><b>Name:</b> <?php echo htmlspecialchars($user['fullname']); ?></p>
 <p><b>Email:</b> <?php echo htmlspecialchars($user['email']); ?></p>
