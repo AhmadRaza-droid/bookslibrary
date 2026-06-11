@@ -249,7 +249,7 @@ chatBody.scrollTop = chatBody.scrollHeight;
 
 input.value="";
 
-fetch("chatbot.php",{
+fetch("chat_response.php",{
 method:"POST",
 headers:{
 "Content-Type":"application/x-www-form-urlencoded"
@@ -257,7 +257,12 @@ headers:{
 body:"message="+encodeURIComponent(message)
 })
 
-.then(response => response.text())
+.then(response => {
+    if(!response.ok){
+        throw new Error("Server error");
+    }
+    return response.text();
+})
 
 .then(reply => {
 
