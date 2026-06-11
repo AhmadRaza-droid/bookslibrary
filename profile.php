@@ -33,7 +33,7 @@ $recentlyViewed = mysqli_query($conn,
 <html>
 <head>
     <title>My Profile</title>
-    <link rel="stylesheet" href="style.css?v=5000">
+    <link rel="stylesheet" href="style.css?v=6000">
 </head>
 
 <body>
@@ -115,6 +115,12 @@ $recentlyViewed = mysqli_query($conn,
 
 <?php if(mysqli_num_rows($recentlyViewed) > 0){ ?>
 
+<a href="clear_history.php">
+    <button class="remove-btn" style="margin-bottom:15px;">
+        Clear All History
+    </button>
+</a>
+
 <?php while($book = mysqli_fetch_assoc($recentlyViewed)){ ?>
 
 <div class="profile-book-card">
@@ -125,6 +131,10 @@ $recentlyViewed = mysqli_query($conn,
 
     <a href="view_book.php?id=<?php echo $book['id']; ?>" target="_blank">
         <button>Continue Reading</button>
+    </a>
+
+    <a href="remove_history.php?book_id=<?php echo $book['id']; ?>">
+        <button class="remove-btn">Remove History</button>
     </a>
 
 </div>
