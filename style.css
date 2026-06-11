@@ -622,3 +622,30 @@ table{
 }
 
 }
+/* PROFILE DARK MODE FIX */
+
+body.dark-mode .form-box{
+    background:#111827 !important;
+    color:white !important;
+}
+
+body.dark-mode .form-box div{
+    background:#1f2937 !important;
+    color:white !important;
+}
+
+body.dark-mode .form-box div h3,
+body.dark-mode .form-box div p,
+body.dark-mode .form-box div strong{
+    color:white !important;
+}
+
+body.dark-mode .form-box a button{
+    background:#ffc72c !important;
+    color:#061b33 !important;
+}
+
+body.dark-mode .form-box a[href*="remove_favorite"] button{
+    background:#dc2626 !important;
+    color:white !important;
+}
