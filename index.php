@@ -13,6 +13,11 @@ $topRated = mysqli_query($conn,
  GROUP BY books.id
  ORDER BY avg_rating DESC
  LIMIT 4");
+
+$chatBooks = mysqli_query($conn,
+"SELECT title, author, category
+ FROM books
+ LIMIT 200");
 ?>
 
 <!DOCTYPE html>
@@ -23,7 +28,7 @@ $topRated = mysqli_query($conn,
 
 <title>Library Management System</title>
 
-<link rel="stylesheet" href="style.css?v=2300">
+<link rel="stylesheet" href="style.css?v=2400">
 </head>
 
 <body>
@@ -203,7 +208,7 @@ $topRated = mysqli_query($conn,
     <div class="chat-body" id="chat-body">
 
         <div class="bot-message">
-            Hello 👋 Ask me anything about books, downloads, login, admin or this website.
+            Hello 👋 Tell me a book name or category like programming, science, islamic, urdu, novel, history or horror.
         </div>
 
     </div>
@@ -222,6 +227,16 @@ $topRated = mysqli_query($conn,
 </div>
 
 <script>
+let bookData = [
+<?php while($chat = mysqli_fetch_assoc($chatBooks)){ ?>
+{
+title: "<?php echo addslashes($chat['title']); ?>",
+author: "<?php echo addslashes($chat['author']); ?>",
+category: "<?php echo addslashes($chat['category']); ?>"
+},
+<?php } ?>
+];
+
 function toggleChat(){
     let bot = document.getElementById("chatbot");
     bot.style.display = (bot.style.display === "flex") ? "none" : "flex";
@@ -229,105 +244,44 @@ function toggleChat(){
 
 function sendMessage(){
 
-let input = document.getElementById("userInput");
-let message = input.value.trim();
-let chatBody = document.getElementById("chat-body");
+    let input = document.getElementById("userInput");
+    let message = input.value.toLowerCase().trim();
+    let chatBody = document.getElementById("chat-body");
 
-if(message==""){
-return;
-}
-
-chatBody.innerHTML +=
-`<div class="user-message">${message}</div>`;
-
-chatBody.innerHTML +=
-`<div class="bot-message" id="typing">
-Typing...
-</div>`;
-
-chatBody.scrollTop = chatBody.scrollHeight;
-
-input.value="";
-
-fetch("chat_response.php",{
-method:"POST",
-headers:{
-"Content-Type":"application/x-www-form-urlencoded"
-},
-body:"message="+encodeURIComponent(message)
-})
-
-.then(response => {
-    if(!response.ok){
-        throw new Error("Server error");
+    if(message === ""){
+        return;
     }
-    return response.text();
-})
 
-.then(reply => {
+    chatBody.innerHTML += `<div class="user-message">${input.value}</div>`;
+    chatBody.innerHTML += `<div class="bot-message" id="typing">Typing...</div>`;
+    chatBody.scrollTop = chatBody.scrollHeight;
 
-let typing = document.getElementById("typing");
+    let reply = getBotReply(message);
 
-if(typing){
-typing.remove();
-}
+    setTimeout(() => {
 
-chatBody.innerHTML +=
-`<div class="bot-message">${reply}</div>`;
+        let typing = document.getElementById("typing");
 
-chatBody.scrollTop = chatBody.scrollHeight;
+        if(typing){
+            typing.remove();
+        }
 
-})
+        chatBody.innerHTML += `<div class="bot-message">${reply}</div>`;
+        chatBody.scrollTop = chatBody.scrollHeight;
 
-.catch(() => {
+    }, 700);
 
-let typing = document.getElementById("typing");
-
-if(typing){
-typing.remove();
-}
-
-chatBody.innerHTML +=
-`<div class="bot-message">
-⚠ Error connecting to chatbot.
-</div>`;
-
-});
-
+    input.value = "";
 }
 
 function getBotReply(message){
 
     if(message.includes("hello") || message.includes("hi") || message.includes("salam")){
-        return "👋 Hello! I am your AI Library Assistant. How can I help you?";
+        return "👋 Hello! Tell me which book or category you want.";
     }
 
-    if(message.includes("book") || message.includes("library") || message.includes("read")){
-        return "📚 Open the Books page to search, read and download books online.";
-    }
-
-    if(message.includes("download") || message.includes("epub")){
-        return "⬇ Press Download EPUB under any book to download it.";
-    }
-
-    if(message.includes("search") || message.includes("find")){
-        return "🔍 Use the search bar and category filter on the Books page.";
-    }
-
-    if(message.includes("category") || message.includes("filter")){
-        return "📂 You can filter books by programming, science, adventure, history, horror, novel and more.";
-    }
-
-    if(message.includes("favorite") || message.includes("wishlist")){
-        return "❤️ Login first, then press Favorite under any book. Your favorites show on Profile.";
-    }
-
-    if(message.includes("review") || message.includes("rating")){
-        return "⭐ Logged-in users can rate books and write reviews on the Books page.";
-    }
-
-    if(message.includes("recent") || message.includes("history")){
-        return "🕒 Recently viewed books appear in your Profile after you open a book.";
+    if(message.includes("download")){
+        return "⬇ Open the Books page and press Download EPUB under any book.";
     }
 
     if(message.includes("login")){
@@ -338,23 +292,102 @@ function getBotReply(message){
         return "📝 Use the Register page to create a new account.";
     }
 
+    if(message.includes("favorite")){
+        return "❤️ Login first, then press Favorite under any book. Favorite books show in your Profile.";
+    }
+
+    if(message.includes("review") || message.includes("rating")){
+        return "⭐ You can rate books and write reviews on the Books page.";
+    }
+
     if(message.includes("admin")){
-        return "🛡 The Admin Panel allows admin to manage books, users, reviews and analytics.";
-    }
-
-    if(message.includes("contact") || message.includes("message") || message.includes("help")){
-        return "📞 Use the Contact page to send a message to the library team.";
-    }
-
-    if(message.includes("developer") || message.includes("created") || message.includes("made")){
-        return "👨‍💻 This website is developed by Ahmad Raza.";
+        return "🛡 Admin can manage books, users, reviews and analytics from Admin Panel.";
     }
 
     if(message.includes("dark")){
         return "🌙 Press the Dark button in the navbar to switch theme.";
     }
 
-    return "🤖 Ask me about books, search, downloads, favorites, reviews, login, admin, profile or website features.";
+    if(message.includes("recent")){
+        return "🆕 Recently Added Books are shown on the homepage. Recently viewed books are shown in your Profile.";
+    }
+
+    let categoryWords = [
+        "programming",
+        "coding",
+        "science",
+        "islamic",
+        "islam",
+        "urdu",
+        "novel",
+        "history",
+        "horror",
+        "detective",
+        "business",
+        "adventure",
+        "philosophy",
+        "movie"
+    ];
+
+    for(let i=0; i<categoryWords.length; i++){
+
+        if(message.includes(categoryWords[i])){
+
+            let category = categoryWords[i];
+
+            if(category === "coding"){
+                category = "programming";
+            }
+
+            if(category === "islam"){
+                category = "islamic";
+            }
+
+            return recommendByCategory(category);
+        }
+    }
+
+    let matches = bookData.filter(book =>
+        book.title.toLowerCase().includes(message) ||
+        book.author.toLowerCase().includes(message) ||
+        book.category.toLowerCase().includes(message)
+    );
+
+    if(matches.length > 0){
+
+        let reply = "📚 Recommended Books:<br><br>";
+
+        matches.slice(0,5).forEach(book => {
+            reply += "• " + book.title + " - " + book.author + "<br>";
+        });
+
+        reply += "<br><a href='books.php'>Open Books Page</a>";
+
+        return reply;
+    }
+
+    return "🤖 Tell me a book name or category like programming, science, islamic, urdu, novel, history or horror.";
+}
+
+function recommendByCategory(category){
+
+    let matches = bookData.filter(book =>
+        book.category.toLowerCase().includes(category)
+    );
+
+    if(matches.length === 0){
+        return "😢 No books found in " + category + " category.";
+    }
+
+    let reply = "📚 Recommended " + category + " books:<br><br>";
+
+    matches.slice(0,5).forEach(book => {
+        reply += "• " + book.title + " - " + book.author + "<br>";
+    });
+
+    reply += "<br><a href='books.php?category=" + category + "'>View all " + category + " books</a>";
+
+    return reply;
 }
 </script>
 
