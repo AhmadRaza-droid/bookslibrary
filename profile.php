@@ -33,7 +33,7 @@ $recentlyViewed = mysqli_query($conn,
 <html>
 <head>
     <title>My Profile</title>
-    <link rel="stylesheet" href="style.css?v=7000">
+    <link rel="stylesheet" href="style.css?v=8000">
 </head>
 
 <body>
@@ -73,7 +73,7 @@ $recentlyViewed = mysqli_query($conn,
 
 <?php } ?>
 
-<form action="upload_profile_image.php" method="POST" enctype="multipart/form-data" style="margin-bottom:20px;">
+<form action="upload/profile/upload_profile_image.php" method="POST" enctype="multipart/form-data" style="margin-bottom:20px;">
 
     <input type="file" name="profile_image" accept="image/*" required>
 
