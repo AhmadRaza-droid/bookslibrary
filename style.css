@@ -622,25 +622,31 @@ table{
 }
 
 }
-/* PROFILE DARK MODE FIX */
+/* FINAL PROFILE DARK FIX */
 
-body.dark-mode .form-box{
+body.dark-mode .form-box > div{
+    background:#111827 !important;
+    border:1px solid #374151 !important;
+}
+
+body.dark-mode .form-box > div h3,
+body.dark-mode .form-box > div p,
+body.dark-mode .form-box > div strong{
+    color:white !important;
+}
+
+body.dark-mode .form-box div[style]{
     background:#111827 !important;
     color:white !important;
 }
 
-body.dark-mode .form-box div{
-    background:#1f2937 !important;
+body.dark-mode .form-box div[style] h3,
+body.dark-mode .form-box div[style] p,
+body.dark-mode .form-box div[style] strong{
     color:white !important;
 }
 
-body.dark-mode .form-box div h3,
-body.dark-mode .form-box div p,
-body.dark-mode .form-box div strong{
-    color:white !important;
-}
-
-body.dark-mode .form-box a button{
+body.dark-mode .form-box button{
     background:#ffc72c !important;
     color:#061b33 !important;
 }
