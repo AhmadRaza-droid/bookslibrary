@@ -14,6 +14,8 @@ $result = mysqli_query($conn,
 
 $user = mysqli_fetch_assoc($result);
 
+$user_email = $user['email'];
+
 $favorites = mysqli_query($conn,
 "SELECT books.*
  FROM favorites
@@ -27,13 +29,18 @@ $recentlyViewed = mysqli_query($conn,
  WHERE recently_viewed.user_id='$user_id'
  ORDER BY recently_viewed.viewed_at DESC
  LIMIT 5");
+
+$myMessages = mysqli_query($conn,
+"SELECT * FROM messages
+ WHERE email='$user_email'
+ ORDER BY id DESC");
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
     <title>My Profile</title>
-    <link rel="stylesheet" href="style.css?v=8000">
+    <link rel="stylesheet" href="style.css?v=9000">
 </head>
 
 <body>
@@ -166,6 +173,40 @@ $recentlyViewed = mysqli_query($conn,
 <?php } else { ?>
 
 <p class="empty-text">No recently viewed books yet.</p>
+
+<?php } ?>
+
+<h2 class="profile-heading">📩 My Messages & Admin Replies</h2>
+
+<?php if(mysqli_num_rows($myMessages) > 0){ ?>
+
+<?php while($msg = mysqli_fetch_assoc($myMessages)){ ?>
+
+<div class="profile-book-card">
+
+    <p><strong>Your Message:</strong></p>
+
+    <p><?php echo htmlspecialchars($msg['message']); ?></p>
+
+    <p><strong>Admin Reply:</strong></p>
+
+    <?php if(isset($msg['reply']) && $msg['reply'] != ""){ ?>
+
+        <p><?php echo htmlspecialchars($msg['reply']); ?></p>
+
+    <?php } else { ?>
+
+        <p>No reply yet.</p>
+
+    <?php } ?>
+
+</div>
+
+<?php } ?>
+
+<?php } else { ?>
+
+<p class="empty-text">No messages sent yet.</p>
 
 <?php } ?>
 
