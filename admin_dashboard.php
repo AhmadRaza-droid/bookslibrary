@@ -315,7 +315,22 @@ while($review = mysqli_fetch_assoc($reviews)){
     <td><?php echo htmlspecialchars($req['book_name']); ?></td>
     <td><?php echo htmlspecialchars($req['category']); ?></td>
     <td><?php echo htmlspecialchars($req['message']); ?></td>
-    <td><?php echo htmlspecialchars($req['status']); ?></td>
+   <td>
+<form action="update_request_status.php" method="POST">
+
+    <input type="hidden" name="request_id" value="<?php echo $req['id']; ?>">
+
+    <select name="status">
+        <option value="Pending" <?php if($req['status']=="Pending") echo "selected"; ?>>Pending</option>
+        <option value="Approved" <?php if($req['status']=="Approved") echo "selected"; ?>>Approved</option>
+        <option value="Added" <?php if($req['status']=="Added") echo "selected"; ?>>Added</option>
+        <option value="Rejected" <?php if($req['status']=="Rejected") echo "selected"; ?>>Rejected</option>
+    </select>
+
+    <button type="submit" name="update_status">Update</button>
+
+</form>
+</td>
 </tr>
 <?php } ?>
 
