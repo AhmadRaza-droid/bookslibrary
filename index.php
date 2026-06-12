@@ -371,29 +371,69 @@ function getBotReply(message){
 
 function recommendByCategory(category){
 
-    let matches = bookData.filter(book =>
-        book.category.toLowerCase().includes(category)
-    );
+    let searchWords = [category];
 
-    if(matches.length === 0){
-        return "😢 No books found in " + category + " category.";
+    if(category === "programming"){
+        searchWords = [
+            "programming",
+            "coding",
+            "computer",
+            "assembly",
+            "software",
+            "java",
+            "python",
+            "c++",
+            "data structure",
+            "algorithm"
+        ];
     }
 
-    let reply = "📚 Recommended " + category + " books:<br><br>";
+    if(category === "science"){
+        searchWords = [
+            "science",
+            "physics",
+            "chemistry",
+            "biology",
+            "computer"
+        ];
+    }
+
+    if(category === "islamic"){
+        searchWords = [
+            "islamic",
+            "islam",
+            "quran",
+            "hadith",
+            "muslim"
+        ];
+    }
+
+    let matches = bookData.filter(book => {
+
+        let title = book.title.toLowerCase();
+        let author = book.author.toLowerCase();
+        let cat = book.category.toLowerCase();
+
+        return searchWords.some(word =>
+            title.includes(word) ||
+            author.includes(word) ||
+            cat.includes(word)
+        );
+    });
+
+    if(matches.length === 0){
+        return "😢 No books found. Try another word like computer, assembly, science, history, novel or horror.";
+    }
+
+    let reply = "📚 Recommended Books:<br><br>";
 
     matches.slice(0,5).forEach(book => {
         reply += "• " + book.title + " - " + book.author + "<br>";
     });
 
-    reply += "<br><a href='books.php?category=" + category + "'>View all " + category + " books</a>";
+    reply += "<br><a href='books.php'>Open Books Page</a>";
 
     return reply;
-}
-</script>
-
-<script>
-if(localStorage.getItem("theme") === "dark"){
-    document.body.classList.add("dark-mode");
 }
 
 function toggleDarkMode(){
