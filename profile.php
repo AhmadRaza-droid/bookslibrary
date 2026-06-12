@@ -34,13 +34,32 @@ $myMessages = mysqli_query($conn,
 "SELECT * FROM messages
  WHERE email='$user_email'
  ORDER BY id DESC");
+
+$notifications = mysqli_query($conn,
+"SELECT * FROM notifications
+ ORDER BY id DESC
+ LIMIT 5");
+
+$readingProgress = mysqli_query($conn,
+"SELECT reading_progress.*, books.title
+ FROM reading_progress
+ JOIN books ON reading_progress.book_id = books.id
+ WHERE reading_progress.user_id='$user_id'
+ ORDER BY reading_progress.updated_at DESC");
+
+$bookmarks = mysqli_query($conn,
+"SELECT bookmarks.*, books.title
+ FROM bookmarks
+ JOIN books ON bookmarks.book_id = books.id
+ WHERE bookmarks.user_id='$user_id'
+ ORDER BY bookmarks.id DESC");
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
     <title>My Profile</title>
-    <link rel="stylesheet" href="style.css?v=9000">
+    <link rel="stylesheet" href="style.css?v=10000">
 </head>
 
 <body>
@@ -105,6 +124,26 @@ $myMessages = mysqli_query($conn,
 <a href="logout.php">
     <button>Logout</button>
 </a>
+
+<h2 class="profile-heading">🔔 Notifications</h2>
+
+<?php if(mysqli_num_rows($notifications) > 0){ ?>
+
+<?php while($note = mysqli_fetch_assoc($notifications)){ ?>
+
+<div class="profile-book-card">
+    <h3><?php echo htmlspecialchars($note['title']); ?></h3>
+    <p><?php echo htmlspecialchars($note['message']); ?></p>
+</div>
+
+<?php } ?>
+
+<?php } else { ?>
+
+<p class="empty-text">No notifications yet.</p>
+
+<?php } ?>
+
 <h2 class="profile-heading">📚 Request a Book</h2>
 
 <form action="request_book.php" method="POST">
@@ -188,6 +227,58 @@ $myMessages = mysqli_query($conn,
 <?php } else { ?>
 
 <p class="empty-text">No recently viewed books yet.</p>
+
+<?php } ?>
+
+<h2 class="profile-heading">📖 Reading Progress</h2>
+
+<?php if(mysqli_num_rows($readingProgress) > 0){ ?>
+
+<?php while($progress = mysqli_fetch_assoc($readingProgress)){ ?>
+
+<div class="profile-book-card">
+
+    <h3><?php echo htmlspecialchars($progress['title']); ?></h3>
+
+    <p><strong>Progress:</strong> <?php echo (int)$progress['progress']; ?>%</p>
+
+    <a href="read_book.php?id=<?php echo $progress['book_id']; ?>">
+        <button>Continue Book</button>
+    </a>
+
+</div>
+
+<?php } ?>
+
+<?php } else { ?>
+
+<p class="empty-text">No reading progress yet.</p>
+
+<?php } ?>
+
+<h2 class="profile-heading">🔖 My Bookmarks</h2>
+
+<?php if(mysqli_num_rows($bookmarks) > 0){ ?>
+
+<?php while($bm = mysqli_fetch_assoc($bookmarks)){ ?>
+
+<div class="profile-book-card">
+
+    <h3><?php echo htmlspecialchars($bm['title']); ?></h3>
+
+    <p><?php echo htmlspecialchars($bm['note']); ?></p>
+
+    <a href="read_book.php?id=<?php echo $bm['book_id']; ?>">
+        <button>Open Book</button>
+    </a>
+
+</div>
+
+<?php } ?>
+
+<?php } else { ?>
+
+<p class="empty-text">No bookmarks yet.</p>
 
 <?php } ?>
 
