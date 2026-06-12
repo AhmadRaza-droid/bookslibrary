@@ -27,20 +27,25 @@ $most_favorites = mysqli_query($conn,
  GROUP BY books.id
  ORDER BY total DESC
  LIMIT 5");
+
+$book_requests = mysqli_query($conn,
+"SELECT book_requests.*, users.fullname, users.email
+ FROM book_requests
+ JOIN users ON book_requests.user_id = users.id
+ ORDER BY book_requests.id DESC");
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
     <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=7000">
+    <link rel="stylesheet" href="style.css?v=8000">
 </head>
 
 <body>
 
 <nav>
     <div class="logo">📖 Admin Panel</div>
-
     <ul>
         <li><a href="index.php">Website</a></li>
         <li><a href="admin_logout.php">Logout</a></li>
@@ -50,7 +55,7 @@ $most_favorites = mysqli_query($conn,
 
 <section class="page-header">
     <h1>Admin Dashboard</h1>
-    <p>Manage books, users, reviews, messages and analytics.</p>
+    <p>Manage books, users, reviews, messages, requests and analytics.</p>
 </section>
 
 <div style="display:flex; gap:20px; margin:20px; flex-wrap:wrap;">
@@ -77,7 +82,6 @@ $most_favorites = mysqli_query($conn,
 
     <div style="background:#ffc72c; color:#061b33; padding:20px; border-radius:10px; width:250px;">
         <h2>Auto Import</h2>
-
         <a href="auto_scrape_books.php">
             <button style="margin-top:10px; padding:12px 18px; border:none; border-radius:8px; background:#061b33; color:white; cursor:pointer;">
                 Auto Import Books
@@ -102,7 +106,6 @@ $most_favorites = mysqli_query($conn,
     <td><?php echo (int)$row['downloads']; ?></td>
 </tr>
 <?php } ?>
-
 </table>
 </section>
 
@@ -121,40 +124,27 @@ $most_favorites = mysqli_query($conn,
     <td><?php echo (int)$row['total']; ?></td>
 </tr>
 <?php } ?>
-
 </table>
 </section>
 
 <section class="table-section">
-
     <h2>Add New Book by Link</h2>
 
     <form action="add_book.php" method="POST">
-
         <input type="text" name="title" placeholder="Book Title" required>
-
         <input type="text" name="author" placeholder="Author Name" required>
-
         <textarea name="description" placeholder="Book Description" required></textarea>
-
         <input type="text" name="cover_image_url" placeholder="Cover Image URL" required>
-
         <input type="text" name="read_link" placeholder="Read Link" required>
-
         <input type="text" name="download_epub_link" placeholder="Download EPUB Link" required>
-
         <button type="submit">Add Book</button>
-
     </form>
-
 </section>
 
 <section class="table-section">
-
     <h2>All Books</h2>
 
     <table border="1" cellpadding="10">
-
         <tr>
             <th>ID</th>
             <th>Cover</th>
@@ -166,9 +156,7 @@ $most_favorites = mysqli_query($conn,
         </tr>
 
         <?php while($row = mysqli_fetch_assoc($books)){ ?>
-
         <tr>
-
             <td><?php echo $row['id']; ?></td>
 
             <td>
@@ -176,19 +164,14 @@ $most_favorites = mysqli_query($conn,
             </td>
 
             <td><?php echo htmlspecialchars($row['title']); ?></td>
-
             <td><?php echo htmlspecialchars($row['author']); ?></td>
 
             <td>
-                <a href="<?php echo htmlspecialchars($row['read_link']); ?>" target="_blank">
-                    Read
-                </a>
+                <a href="<?php echo htmlspecialchars($row['read_link']); ?>" target="_blank">Read</a>
             </td>
 
             <td>
-                <a href="<?php echo htmlspecialchars($row['download_epub_link']); ?>" target="_blank">
-                    EPUB
-                </a>
+                <a href="<?php echo htmlspecialchars($row['download_epub_link']); ?>" target="_blank">EPUB</a>
             </td>
 
             <td>
@@ -196,21 +179,15 @@ $most_favorites = mysqli_query($conn,
                     <button style="background:red; color:white;">Delete</button>
                 </a>
             </td>
-
         </tr>
-
         <?php } ?>
-
     </table>
-
 </section>
 
 <section class="table-section">
-
     <h2>User Messages</h2>
 
     <table border="1" cellpadding="10">
-
         <tr>
             <th>ID</th>
             <th>Name</th>
@@ -221,15 +198,10 @@ $most_favorites = mysqli_query($conn,
         </tr>
 
         <?php while($row = mysqli_fetch_assoc($messages)){ ?>
-
         <tr>
-
             <td><?php echo $row['id']; ?></td>
-
             <td><?php echo htmlspecialchars($row['name']); ?></td>
-
             <td><?php echo htmlspecialchars($row['email']); ?></td>
-
             <td><?php echo htmlspecialchars($row['message']); ?></td>
 
             <td>
@@ -244,32 +216,20 @@ $most_favorites = mysqli_query($conn,
 
             <td>
                 <form action="reply_message.php" method="POST">
-
                     <input type="hidden" name="message_id" value="<?php echo $row['id']; ?>">
-
                     <textarea name="reply" placeholder="Write reply..." required></textarea>
-
-                    <button type="submit" name="reply_submit">
-                        Reply
-                    </button>
-
+                    <button type="submit" name="reply_submit">Reply</button>
                 </form>
             </td>
-
         </tr>
-
         <?php } ?>
-
     </table>
-
 </section>
 
 <section class="table-section">
-
 <h2>Book Reviews</h2>
 
 <table border="1" cellpadding="10">
-
 <tr>
     <th>ID</th>
     <th>User</th>
@@ -304,17 +264,43 @@ while($review = mysqli_fetch_assoc($reviews)){
 </tr>
 
 <?php } ?>
-
 </table>
-
 </section>
 
 <section class="table-section">
 
+<h2>📚 Book Requests</h2>
+
+<table border="1" cellpadding="10">
+<tr>
+    <th>ID</th>
+    <th>User</th>
+    <th>Email</th>
+    <th>Book Name</th>
+    <th>Category</th>
+    <th>Message</th>
+    <th>Status</th>
+</tr>
+
+<?php while($req = mysqli_fetch_assoc($book_requests)){ ?>
+<tr>
+    <td><?php echo $req['id']; ?></td>
+    <td><?php echo htmlspecialchars($req['fullname']); ?></td>
+    <td><?php echo htmlspecialchars($req['email']); ?></td>
+    <td><?php echo htmlspecialchars($req['book_name']); ?></td>
+    <td><?php echo htmlspecialchars($req['category']); ?></td>
+    <td><?php echo htmlspecialchars($req['message']); ?></td>
+    <td><?php echo htmlspecialchars($req['status']); ?></td>
+</tr>
+<?php } ?>
+
+</table>
+</section>
+
+<section class="table-section">
     <h2>Registered Users</h2>
 
     <table border="1" cellpadding="10">
-
         <tr>
             <th>ID</th>
             <th>Profile</th>
@@ -324,7 +310,6 @@ while($review = mysqli_fetch_assoc($reviews)){
         </tr>
 
         <?php while($user = mysqli_fetch_assoc($all_users)){ ?>
-
         <tr>
             <td><?php echo $user['id']; ?></td>
 
@@ -337,7 +322,6 @@ while($review = mysqli_fetch_assoc($reviews)){
             </td>
 
             <td><?php echo htmlspecialchars($user['fullname']); ?></td>
-
             <td><?php echo htmlspecialchars($user['email']); ?></td>
 
             <td>
@@ -347,11 +331,8 @@ while($review = mysqli_fetch_assoc($reviews)){
                 </a>
             </td>
         </tr>
-
         <?php } ?>
-
     </table>
-
 </section>
 
 <script>

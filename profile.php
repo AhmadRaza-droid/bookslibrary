@@ -105,6 +105,21 @@ $myMessages = mysqli_query($conn,
 <a href="logout.php">
     <button>Logout</button>
 </a>
+<h2 class="profile-heading">📚 Request a Book</h2>
+
+<form action="request_book.php" method="POST">
+
+    <input type="text" name="book_name" placeholder="Enter book name" required>
+
+    <input type="text" name="category" placeholder="Category e.g. Programming, Science">
+
+    <textarea name="message" placeholder="Write details..."></textarea>
+
+    <button type="submit" name="request_book">
+        Send Request
+    </button>
+
+</form>
 
 <h2 class="profile-heading">❤️ My Favorite Books</h2>
 
