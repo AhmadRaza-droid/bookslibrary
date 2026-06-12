@@ -38,6 +38,12 @@ $myMessages = mysqli_query($conn,
  WHERE email='$user_email'
  ORDER BY id DESC");
 
+$myRequests = mysqli_query($conn,
+"SELECT *
+ FROM book_requests
+ WHERE user_id='$user_id'
+ ORDER BY id DESC");
+
 $notifications = mysqli_query($conn,
 "SELECT * FROM notifications
  ORDER BY id DESC
@@ -62,7 +68,7 @@ $bookmarks = mysqli_query($conn,
 <html>
 <head>
     <title>My Profile</title>
-    <link rel="stylesheet" href="style.css?v=10000">
+    <link rel="stylesheet" href="style.css?v=11000">
 </head>
 
 <body>
@@ -215,7 +221,7 @@ $bookmarks = mysqli_query($conn,
 
     <p><strong>Author:</strong> <?php echo htmlspecialchars($book['author']); ?></p>
 
-   <a href="read_book.php?id=<?php echo $book['id']; ?>">
+    <a href="read_book.php?id=<?php echo $book['id']; ?>">
         <button>Continue Reading</button>
     </a>
 
@@ -282,6 +288,37 @@ $bookmarks = mysqli_query($conn,
 <?php } else { ?>
 
 <p class="empty-text">No bookmarks yet.</p>
+
+<?php } ?>
+
+<h2 class="profile-heading">📚 My Book Requests</h2>
+
+<?php if(mysqli_num_rows($myRequests) > 0){ ?>
+
+<?php while($req = mysqli_fetch_assoc($myRequests)){ ?>
+
+<div class="profile-book-card">
+
+    <h3><?php echo htmlspecialchars($req['book_name']); ?></h3>
+
+    <p><strong>Category:</strong> <?php echo htmlspecialchars($req['category']); ?></p>
+
+    <p><strong>Message:</strong> <?php echo htmlspecialchars($req['message']); ?></p>
+
+    <p>
+        <strong>Status:</strong>
+        <span style="color:green;font-weight:bold;">
+            <?php echo htmlspecialchars($req['status']); ?>
+        </span>
+    </p>
+
+</div>
+
+<?php } ?>
+
+<?php } else { ?>
+
+<p class="empty-text">No book requests yet.</p>
 
 <?php } ?>
 
