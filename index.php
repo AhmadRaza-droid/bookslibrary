@@ -15,9 +15,9 @@ $topRated = mysqli_query($conn,
  LIMIT 4");
 
 $chatBooks = mysqli_query($conn,
-"SELECT title, author, category
+"SELECT title, author, description, category
  FROM books
- LIMIT 200");
+ LIMIT 1000");
 ?>
 
 <!DOCTYPE html>
@@ -232,7 +232,8 @@ let bookData = [
 {
 title: "<?php echo addslashes($chat['title']); ?>",
 author: "<?php echo addslashes($chat['author']); ?>",
-category: "<?php echo addslashes($chat['category']); ?>"
+description: "<?php echo addslashes($chat['description'] ?? ''); ?>",
+category: "<?php echo addslashes($chat['category'] ?? ''); ?>"
 },
 <?php } ?>
 ];
@@ -259,7 +260,6 @@ function sendMessage(){
     let reply = getBotReply(message);
 
     setTimeout(() => {
-
         let typing = document.getElementById("typing");
 
         if(typing){
@@ -268,7 +268,6 @@ function sendMessage(){
 
         chatBody.innerHTML += `<div class="bot-message">${reply}</div>`;
         chatBody.scrollTop = chatBody.scrollHeight;
-
     }, 700);
 
     input.value = "";
@@ -277,7 +276,7 @@ function sendMessage(){
 function getBotReply(message){
 
     if(message.includes("hello") || message.includes("hi") || message.includes("salam")){
-        return "👋 Hello! Tell me which book or category you want.";
+        return "👋 Hello! Tell me a book name or category like horror, novel, science, adventure, detective, history, children, fantasy or poetry.";
     }
 
     if(message.includes("download")){
@@ -301,131 +300,76 @@ function getBotReply(message){
     }
 
     if(message.includes("admin")){
-        return "🛡 Admin can manage books, users, reviews and analytics from Admin Panel.";
+        return "🛡 Admin can manage books, users, reviews, requests and analytics from Admin Panel.";
     }
 
     if(message.includes("dark")){
         return "🌙 Press the Dark button in the navbar to switch theme.";
     }
 
-    if(message.includes("recent")){
-        return "🆕 Recently Added Books are shown on the homepage. Recently viewed books are shown in your Profile.";
-    }
+    let categories = {
+        horror: ["horror","vampire","dracula","frankenstein","ghost","gothic","terror","fear","dark","mystery"],
+        novel: ["novel","fiction","story","classic","moby","pride","love","family"],
+        science: ["science","scientist","physics","chemistry","biology","invisible","time machine"],
+        adventure: ["adventure","sea","island","treasure","journey","travel","pirate"],
+        detective: ["detective","sherlock","holmes","crime","case","mystery"],
+        history: ["history","historical","war","revolution","empire"],
+        children: ["children","child","alice","wonderland","animal","family"],
+        fantasy: ["fantasy","wonderland","dream","strange","magic"],
+        poetry: ["poetry","poem","poems"],
+        romance: ["romance","love","marriage"],
+        programming: ["programming","coding","computer","assembly","software","java","python","algorithm"]
+    };
 
-    let categoryWords = [
-        "programming",
-        "coding",
-        "science",
-        "islamic",
-        "islam",
-        "urdu",
-        "novel",
-        "history",
-        "horror",
-        "detective",
-        "business",
-        "adventure",
-        "philosophy",
-        "movie"
-    ];
-
-    for(let i=0; i<categoryWords.length; i++){
-
-        if(message.includes(categoryWords[i])){
-
-            let category = categoryWords[i];
-
-            if(category === "coding"){
-                category = "programming";
-            }
-
-            if(category === "islam"){
-                category = "islamic";
-            }
-
-            return recommendByCategory(category);
+    for(let cat in categories){
+        if(message.includes(cat)){
+            return recommendByWords(cat, categories[cat]);
         }
     }
 
-    let matches = bookData.filter(book =>
-        book.title.toLowerCase().includes(message) ||
-        book.author.toLowerCase().includes(message) ||
-        book.category.toLowerCase().includes(message)
-    );
-
-    if(matches.length > 0){
-
-        let reply = "📚 Recommended Books:<br><br>";
-
-        matches.slice(0,5).forEach(book => {
-            reply += "• " + book.title + " - " + book.author + "<br>";
-        });
-
-        reply += "<br><a href='books.php'>Open Books Page</a>";
-
-        return reply;
-    }
-
-    return "🤖 Tell me a book name or category like programming, science, islamic, urdu, novel, history or horror.";
-}
-
-function recommendByCategory(category){
-
-    let searchWords = [category];
-
-    if(category === "programming"){
-        searchWords = [
-            "programming",
-            "coding",
-            "computer",
-            "assembly",
-            "software",
-            "java",
-            "python",
-            "c++",
-            "data structure",
-            "algorithm"
-        ];
-    }
-
-    if(category === "science"){
-        searchWords = [
-            "science",
-            "physics",
-            "chemistry",
-            "biology",
-            "computer"
-        ];
-    }
-
-    if(category === "islamic"){
-        searchWords = [
-            "islamic",
-            "islam",
-            "quran",
-            "hadith",
-            "muslim"
-        ];
-    }
+    let words = message.split(" ").filter(w => w.length > 2);
 
     let matches = bookData.filter(book => {
+        let text = (
+            book.title + " " +
+            book.author + " " +
+            book.description + " " +
+            book.category
+        ).toLowerCase();
 
-        let title = book.title.toLowerCase();
-        let author = book.author.toLowerCase();
-        let cat = book.category.toLowerCase();
+        return words.some(word => text.includes(word));
+    });
 
-        return searchWords.some(word =>
-            title.includes(word) ||
-            author.includes(word) ||
-            cat.includes(word)
-        );
+    if(matches.length > 0){
+        return makeReply(matches, "📚 Recommended Books");
+    }
+
+    return "😢 No matching books found. Try Dracula, Frankenstein, Sherlock, horror, novel, adventure, detective, science, children or fantasy.";
+}
+
+function recommendByWords(category, words){
+
+    let matches = bookData.filter(book => {
+        let text = (
+            book.title + " " +
+            book.author + " " +
+            book.description + " " +
+            book.category
+        ).toLowerCase();
+
+        return words.some(word => text.includes(word));
     });
 
     if(matches.length === 0){
-        return "😢 No books found. Try another word like computer, assembly, science, history, novel or horror.";
+        return "😢 No books found for " + category + ". Try another word like novel, adventure, detective, science or children.";
     }
 
-    let reply = "📚 Recommended Books:<br><br>";
+    return makeReply(matches, "📚 Recommended " + category + " books");
+}
+
+function makeReply(matches, heading){
+
+    let reply = heading + ":<br><br>";
 
     matches.slice(0,5).forEach(book => {
         reply += "• " + book.title + " - " + book.author + "<br>";
