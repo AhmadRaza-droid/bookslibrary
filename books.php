@@ -45,7 +45,7 @@ $result = mysqli_query($conn, "SELECT * FROM books $where LIMIT $limit OFFSET $o
 <html>
 <head>
     <title>Books</title>
-    <link rel="stylesheet" href="style.css?v=1700">
+    <link rel="stylesheet" href="style.css?v=1800">
 </head>
 
 <body>
@@ -79,8 +79,20 @@ $result = mysqli_query($conn, "SELECT * FROM books $where LIMIT $limit OFFSET $o
 
 <input type="text"
        name="search"
+       id="searchInput"
+       autocomplete="off"
        placeholder="Search books by title, author or description..."
        value="<?php echo htmlspecialchars($search); ?>">
+
+<div id="suggestions"
+style="background:white;
+border:1px solid #ddd;
+border-radius:8px;
+margin-top:5px;
+text-align:left;
+position:relative;
+z-index:999;">
+</div>
 
 <select name="category"
 style="width:100%; padding:14px; margin-top:12px; border-radius:10px; border:2px solid #ddd;">
@@ -267,6 +279,31 @@ if($totalReviews > 0){
 </div>
 
 <script>
+let searchInput = document.getElementById("searchInput");
+let suggestionsBox = document.getElementById("suggestions");
+
+searchInput.addEventListener("keyup", function(){
+
+    let q = this.value;
+
+    if(q.length < 2){
+        suggestionsBox.innerHTML = "";
+        return;
+    }
+
+    fetch("search_suggestions.php?q=" + encodeURIComponent(q))
+    .then(response => response.text())
+    .then(data => {
+        suggestionsBox.innerHTML = data;
+    });
+
+});
+
+function selectSuggestion(title){
+    searchInput.value = title;
+    suggestionsBox.innerHTML = "";
+}
+
 if(localStorage.getItem("theme") === "dark"){
     document.body.classList.add("dark-mode");
 }
