@@ -225,6 +225,31 @@ $book_requests = mysqli_query($conn,
         <?php } ?>
     </table>
 </section>
+<section class="table-section">
+
+<h2>🔔 Send Notification</h2>
+
+<form action="send_notification.php" method="POST">
+
+    <input type="text"
+           name="title"
+           placeholder="Notification Title"
+           required>
+
+    <textarea
+        name="message"
+        placeholder="Write notification..."
+        required>
+    </textarea>
+
+    <button type="submit"
+            name="send_notification">
+        Send Notification
+    </button>
+
+</form>
+
+</section>
 
 <section class="table-section">
 <h2>Book Reviews</h2>

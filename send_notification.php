@@ -8,14 +8,15 @@ if(!isset($_SESSION['admin'])){
 }
 
 if(isset($_POST['send_notification'])){
-    $title = mysqli_real_escape_string($conn, $_POST['title']);
-    $message = mysqli_real_escape_string($conn, $_POST['message']);
+
+    $title = mysqli_real_escape_string($conn,$_POST['title']);
+    $message = mysqli_real_escape_string($conn,$_POST['message']);
 
     mysqli_query($conn,
     "INSERT INTO notifications(title,message)
      VALUES('$title','$message')");
-
-    header("Location: admin_dashboard.php");
-    exit();
 }
+
+header("Location: admin_dashboard.php");
+exit();
 ?>
