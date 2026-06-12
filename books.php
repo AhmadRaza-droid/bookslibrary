@@ -168,7 +168,7 @@ if($totalReviews > 0){
 
 <div class="book-buttons">
 
-<a href="view_book.php?id=<?php echo $row['id']; ?>" target="_blank">
+<a href="read_book.php?id=<?php echo $row['id']; ?>">
     <button>Read Book</button>
 </a>
 

@@ -173,7 +173,7 @@ $myMessages = mysqli_query($conn,
 
     <p><strong>Author:</strong> <?php echo htmlspecialchars($book['author']); ?></p>
 
-    <a href="view_book.php?id=<?php echo $book['id']; ?>" target="_blank">
+   <a href="read_book.php?id=<?php echo $book['id']; ?>">
         <button>Continue Reading</button>
     </a>
 
