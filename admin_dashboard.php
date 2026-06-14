@@ -7,11 +7,28 @@ if(!isset($_SESSION['admin'])){
     exit();
 }
 
+// Handle reply message
+if(isset($_POST['reply_submit'])){
+    $message_id = $_POST['message_id'];
+    $reply = mysqli_real_escape_string($conn, $_POST['reply']);
+    mysqli_query($conn, "UPDATE messages SET reply='$reply' WHERE id='$message_id'");
+    echo "<script>alert('Reply sent successfully!'); window.location='?page=messages';</script>";
+    exit();
+}
+
+// Handle send notification
+if(isset($_POST['send_notification'])){
+    $title = mysqli_real_escape_string($conn, $_POST['title']);
+    $message = mysqli_real_escape_string($conn, $_POST['message']);
+    mysqli_query($conn, "INSERT INTO notifications (title, message, created_at) VALUES ('$title', '$message', NOW())");
+    echo "<script>alert('Notification sent to all users!');</script>";
+}
+
 // Get current page from URL
 $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
 
 $books = mysqli_query($conn, "SELECT * FROM books");
-$messages = mysqli_query($conn, "SELECT * FROM messages");
+$messages = mysqli_query($conn, "SELECT * FROM messages ORDER BY id DESC");
 $all_users = mysqli_query($conn, "SELECT * FROM users");
 
 $total_users = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM users"));
@@ -53,7 +70,6 @@ $book_requests = mysqli_query($conn,
             font-family: Arial, sans-serif;
             background: #f4f6f9;
         }
-        /* ========== LEFT SIDE MENU STYLES ========== */
         .side-menu {
             position: fixed;
             left: 0;
@@ -91,12 +107,10 @@ $book_requests = mysqli_query($conn,
             background: rgba(255,255,255,0.15);
             border-left-color: #ffc72c;
         }
-        /* Main Content */
         .main-content {
             margin-left: 260px;
             padding: 20px;
         }
-        /* Top Bar */
         .top-bar {
             background: white;
             padding: 15px 25px;
@@ -118,7 +132,6 @@ $book_requests = mysqli_query($conn,
             border-radius: 5px;
             cursor: pointer;
         }
-        /* Stats Cards */
         .stats-container {
             display: flex;
             gap: 20px;
@@ -185,7 +198,6 @@ $book_requests = mysqli_query($conn,
             margin: 5px;
             border: 1px solid #ddd;
             border-radius: 5px;
-            width: 200px;
         }
         .dark-mode {
             background: #1a1a2e;
@@ -216,16 +228,28 @@ $book_requests = mysqli_query($conn,
                 padding: 10px;
                 border-radius: 5px;
                 cursor: pointer;
+                color: white;
             }
         }
         .hamburger-mobile {
             display: none;
         }
+        .reply-box {
+            display: flex;
+            gap: 5px;
+        }
+        .reply-box input {
+            flex: 1;
+            margin: 0;
+        }
+        .reply-box button {
+            margin: 0;
+            padding: 8px 12px;
+        }
     </style>
 </head>
 <body>
 
-<!-- Mobile Hamburger -->
 <div class="hamburger-mobile" onclick="toggleMobileMenu()">☰</div>
 
 <!-- ========== LEFT SIDE MENU ========== -->
@@ -247,6 +271,12 @@ $book_requests = mysqli_query($conn,
     <a href="?page=messages" class="<?php echo $page == 'messages' ? 'active' : ''; ?>">
         💬 Messages
     </a>
+    <a href="?page=notifications" class="<?php echo $page == 'notifications' ? 'active' : ''; ?>">
+        🔔 Send Notification
+    </a>
+    <a href="?page=auto_import" class="<?php echo $page == 'auto_import' ? 'active' : ''; ?>">
+        📥 Auto Import
+    </a>
     <a href="?page=book_requests" class="<?php echo $page == 'book_requests' ? 'active' : ''; ?>">
         📝 Book Requests
     </a>
@@ -266,7 +296,6 @@ $book_requests = mysqli_query($conn,
     </div>
 
     <?php if($page == 'dashboard'): ?>
-    <!-- Dashboard Content -->
     <div class="stats-container">
         <div class="stat-card"><h2>Total Users</h2><h1><?php echo $total_users; ?></h1></div>
         <div class="stat-card"><h2>Total Books</h2><h1><?php echo $total_books; ?></h1></div>
@@ -276,19 +305,21 @@ $book_requests = mysqli_query($conn,
 
     <div class="table-section">
         <h2>Most Downloaded Books</h2>
-        <table><tr><th>Book</th><th>Downloads</th></tr>
-        <?php while($row = mysqli_fetch_assoc($most_downloaded)){ ?>
-        <tr><td><?php echo htmlspecialchars($row['title']); ?></td><td><?php echo $row['downloads']; ?></td></tr>
-        <?php } ?>
+        <table>
+            <tr><th>Book</th><th>Downloads</th></tr>
+            <?php while($row = mysqli_fetch_assoc($most_downloaded)){ ?>
+            <tr><td><?php echo htmlspecialchars($row['title']); ?></td><td><?php echo $row['downloads']; ?></td></tr>
+            <?php } ?>
         </table>
     </div>
 
     <div class="table-section">
         <h2>Most Favorited Books</h2>
-        <table><tr><th>Book</th><th>Favorites</th></tr>
-        <?php while($row = mysqli_fetch_assoc($most_favorites)){ ?>
-        <tr><td><?php echo htmlspecialchars($row['title']); ?></td><td><?php echo $row['total']; ?></td></tr>
-        <?php } ?>
+        <table>
+            <tr><th>Book</th><th>Favorites</th></tr>
+            <?php while($row = mysqli_fetch_assoc($most_favorites)){ ?>
+            <tr><td><?php echo htmlspecialchars($row['title']); ?></td><td><?php echo $row['total']; ?></td></tr>
+            <?php } ?>
         </table>
     </div>
 
@@ -297,7 +328,7 @@ $book_requests = mysqli_query($conn,
         <form action="add_book.php" method="POST">
             <input type="text" name="title" placeholder="Book Title" required>
             <input type="text" name="author" placeholder="Author" required>
-            <textarea name="description" placeholder="Description"></textarea>
+            <textarea name="description" placeholder="Description" rows="3"></textarea>
             <input type="text" name="cover_image_url" placeholder="Cover URL">
             <input type="text" name="read_link" placeholder="Read Link">
             <input type="text" name="download_epub_link" placeholder="Download Link">
@@ -354,23 +385,44 @@ $book_requests = mysqli_query($conn,
     <div class="table-section">
         <h2>💬 User Messages</h2>
         <table>
-            <tr><th>ID</th><th>Name</th><th>Email</th><th>Message</th><th>Reply</th></tr>
+            <tr><th>ID</th><th>Name</th><th>Email</th><th>Message</th><th>Reply</th><th>Action</th></tr>
             <?php while($row = mysqli_fetch_assoc($messages)){ ?>
-            <tr>
-                <td><?php echo $row['id']; ?></td>
-                <td><?php echo htmlspecialchars($row['name']); ?></td>
-                <td><?php echo htmlspecialchars($row['email']); ?></td>
-                <td><?php echo htmlspecialchars($row['message']); ?></td>
-                <td>
-                    <form action="reply_message.php" method="POST">
-                        <input type="hidden" name="message_id" value="<?php echo $row['id']; ?>">
-                        <input type="text" name="reply" placeholder="Reply">
-                        <button type="submit">Send</button>
-                    </form>
-                </td>
-            </tr>
+            <form method="POST" action="">
+                <input type="hidden" name="message_id" value="<?php echo $row['id']; ?>">
+                <tr>
+                    <td><?php echo $row['id']; ?></td>
+                    <td><?php echo htmlspecialchars($row['name']); ?></td>
+                    <td><?php echo htmlspecialchars($row['email']); ?></td>
+                    <td><?php echo htmlspecialchars($row['message']); ?></td>
+                    <td width="200">
+                        <input type="text" name="reply" value="<?php echo htmlspecialchars($row['reply'] ?? ''); ?>" placeholder="Type reply..." style="width:100%">
+                    </td>
+                    <td><button type="submit" name="reply_submit" class="btn-green">Send</button></td>
+                </tr>
+            </form>
             <?php } ?>
         </table>
+    </div>
+    <?php endif; ?>
+
+    <?php if($page == 'notifications'): ?>
+    <div class="table-section">
+        <h2>🔔 Send Notification to All Users</h2>
+        <form method="POST" action="">
+            <input type="text" name="title" placeholder="Notification Title" required style="width:100%; margin-bottom:10px;">
+            <textarea name="message" placeholder="Write notification message here..." rows="5" required style="width:100%; margin-bottom:10px;"></textarea>
+            <button type="submit" name="send_notification">📢 Send Notification</button>
+        </form>
+    </div>
+    <?php endif; ?>
+
+    <?php if($page == 'auto_import'): ?>
+    <div class="table-section">
+        <h2>📥 Auto Import Books</h2>
+        <p>Click the button below to automatically import books from external source.</p>
+        <a href="auto_scrape_books.php">
+            <button class="btn-green">🚀 Auto Import Books</button>
+        </a>
     </div>
     <?php endif; ?>
 
@@ -378,26 +430,28 @@ $book_requests = mysqli_query($conn,
     <div class="table-section">
         <h2>📝 Book Requests</h2>
         <table>
-            <tr><th>ID</th><th>User</th><th>Book Name</th><th>Status</th><th>Action</th></tr>
+            <tr><th>ID</th><th>User</th><th>Email</th><th>Book Name</th><th>Category</th><th>Message</th><th>Status</th><th>Action</th></tr>
             <?php while($req = mysqli_fetch_assoc($book_requests)){ ?>
-            <tr>
-                <td><?php echo $req['id']; ?></td>
-                <td><?php echo htmlspecialchars($req['fullname']); ?></td>
-                <td><?php echo htmlspecialchars($req['book_name']); ?></td>
-                <td><?php echo $req['status']; ?></td>
-                <td>
-                    <form action="update_request_status.php" method="POST">
-                        <input type="hidden" name="request_id" value="<?php echo $req['id']; ?>">
+            <form method="POST" action="update_request_status.php">
+                <input type="hidden" name="request_id" value="<?php echo $req['id']; ?>">
+                <tr>
+                    <td><?php echo $req['id']; ?></td>
+                    <td><?php echo htmlspecialchars($req['fullname']); ?></td>
+                    <td><?php echo htmlspecialchars($req['email']); ?></td>
+                    <td><?php echo htmlspecialchars($req['book_name']); ?></td>
+                    <td><?php echo htmlspecialchars($req['category']); ?></td>
+                    <td><?php echo htmlspecialchars($req['message']); ?></td>
+                    <td>
                         <select name="status">
                             <option <?php echo $req['status']=='Pending'?'selected':''; ?>>Pending</option>
                             <option <?php echo $req['status']=='Approved'?'selected':''; ?>>Approved</option>
                             <option <?php echo $req['status']=='Added'?'selected':''; ?>>Added</option>
                             <option <?php echo $req['status']=='Rejected'?'selected':''; ?>>Rejected</option>
                         </select>
-                        <button type="submit">Update</button>
-                    </form>
-                </td>
-            </tr>
+                    </td>
+                    <td><button type="submit" name="update_status">Update</button></td>
+                </tr>
+            </form>
             <?php } ?>
         </table>
     </div>
