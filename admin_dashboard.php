@@ -40,6 +40,44 @@ $book_requests = mysqli_query($conn,
 <head>
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="style.css?v=8000">
+    <style>
+        .learning-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .learning-card h3 {
+            margin: 0 0 20px 0;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .learning-links {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .learning-links a {
+            background: rgba(255,255,255,0.2);
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .learning-links a:hover {
+            background: rgba(255,255,255,0.4);
+            transform: translateY(-3px);
+        }
+    </style>
 </head>
 
 <body>
@@ -57,6 +95,25 @@ $book_requests = mysqli_query($conn,
     <h1>Admin Dashboard</h1>
     <p>Manage books, users, reviews, messages, requests and analytics.</p>
 </section>
+
+<!-- ========== 3 LINES ADDED HERE - LEARNING SUPPORT ========== -->
+<div class="learning-card">
+    <h3>
+        <span>🎓</span> LEARNING SUPPORT
+    </h3>
+    <div class="learning-links">
+        <a href="academic_advisor.php">
+            📘 Academic Advisor
+        </a>
+        <a href="peer_tutoring.php">
+            🤝 Peer Tutoring Program
+        </a>
+        <a href="student_undertaking.php">
+            📋 Student Undertaking
+        </a>
+    </div>
+</div>
+<!-- ========== END OF 3 LINES ========== -->
 
 <div style="display:flex; gap:20px; margin:20px; flex-wrap:wrap;">
 
@@ -225,30 +282,25 @@ $book_requests = mysqli_query($conn,
         <?php } ?>
     </table>
 </section>
-<section class="table-section">
 
+<section class="table-section">
 <h2>🔔 Send Notification</h2>
 
 <form action="send_notification.php" method="POST">
-
     <input type="text"
            name="title"
            placeholder="Notification Title"
            required>
-
     <textarea
         name="message"
         placeholder="Write notification..."
         required>
     </textarea>
-
     <button type="submit"
             name="send_notification">
         Send Notification
     </button>
-
 </form>
-
 </section>
 
 <section class="table-section">
@@ -274,7 +326,6 @@ $reviews = mysqli_query($conn,
 
 while($review = mysqli_fetch_assoc($reviews)){
 ?>
-
 <tr>
 <td><?php echo $review['id']; ?></td>
 <td><?php echo htmlspecialchars($review['fullname']); ?></td>
@@ -287,13 +338,11 @@ while($review = mysqli_fetch_assoc($reviews)){
 </a>
 </td>
 </tr>
-
 <?php } ?>
 </table>
 </section>
 
 <section class="table-section">
-
 <h2>📚 Book Requests</h2>
 
 <table border="1" cellpadding="10">
@@ -315,25 +364,20 @@ while($review = mysqli_fetch_assoc($reviews)){
     <td><?php echo htmlspecialchars($req['book_name']); ?></td>
     <td><?php echo htmlspecialchars($req['category']); ?></td>
     <td><?php echo htmlspecialchars($req['message']); ?></td>
-   <td>
+    <td>
 <form action="update_request_status.php" method="POST">
-
     <input type="hidden" name="request_id" value="<?php echo $req['id']; ?>">
-
     <select name="status">
         <option value="Pending" <?php if($req['status']=="Pending") echo "selected"; ?>>Pending</option>
         <option value="Approved" <?php if($req['status']=="Approved") echo "selected"; ?>>Approved</option>
         <option value="Added" <?php if($req['status']=="Added") echo "selected"; ?>>Added</option>
         <option value="Rejected" <?php if($req['status']=="Rejected") echo "selected"; ?>>Rejected</option>
     </select>
-
     <button type="submit" name="update_status">Update</button>
-
 </form>
 </td>
 </tr>
 <?php } ?>
-
 </table>
 </section>
 
