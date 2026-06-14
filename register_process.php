@@ -2,13 +2,6 @@
 include 'config.php';
 session_start();
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-require 'PHPMailer/src/Exception.php';
-require 'PHPMailer/src/PHPMailer.php';
-require 'PHPMailer/src/SMTP.php';
-
 $email = mysqli_real_escape_string($conn, $_POST['email']);
 $fullname = mysqli_real_escape_string($conn, $_POST['fullname']);
 $password = $_POST['password'];
@@ -34,35 +27,25 @@ $insert_query = "INSERT INTO users(fullname, email, password, otp, is_verified)
 
 if(mysqli_query($conn, $insert_query)){
     
-    // Send OTP via SMTP
-    $mail = new PHPMailer(true);
+    // Simple mail (InfinityFree pe kaam karta hai)
+    $to = $email;
+    $subject = "Your OTP Code";
+    $message = "Hello $fullname,\n\nYour OTP code is: $otp\n\nEnter this code to verify your account.\n\nThank you!";
+    $headers = "From: no-reply@" . $_SERVER['HTTP_HOST'];
     
-    try {
-        $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com'; // Change to your SMTP
-        $mail->SMTPAuth = true;
-        $mail->Username = 'your-email@gmail.com'; // Your email
-        $mail->Password = 'your-app-password'; // Your app password
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
-        
-        $mail->setFrom('your-email@gmail.com', 'Website Name');
-        $mail->addAddress($email, $fullname);
-        
-        $mail->isHTML(true);
-        $mail->Subject = 'Your OTP Verification Code';
-        $mail->Body = "Hello $fullname,<br><br>Your OTP is: <b>$otp</b><br><br>Thank you for registering!";
-        
-        $mail->send();
+    if(mail($to, $subject, $message, $headers)){
         header("Location: verify_otp.php?email=" . urlencode($email));
-        exit();
-        
-    } catch(Exception $e) {
-        echo "OTP sent failed! But your OTP is: $otp <br>";
-        echo "Error: " . $mail->ErrorInfo;
+    } else {
+        // Agar mail fail ho to screen pe OTP dikhao
+        echo "<script>alert('Demo Mode - Your OTP is: $otp'); window.location='verify_otp.php?email=$email&demo_otp=$otp';</script>";
     }
+    exit();
     
 } else {
-    echo "<script>alert('Registration failed! Try again.'); window.location='register.php';</script>";
+    if(mysqli_errno($conn) == 1062){
+        echo "<script>alert('Email already exists!'); window.location='register.php';</script>";
+    } else {
+        echo "<script>alert('Registration failed!'); window.location='register.php';</script>";
+    }
 }
 ?>
