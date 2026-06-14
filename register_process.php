@@ -27,17 +27,24 @@ $insert_query = "INSERT INTO users(fullname, email, password, otp, is_verified)
 
 if(mysqli_query($conn, $insert_query)){
     
-    // Simple mail (InfinityFree pe kaam karta hai)
+    // Set session for OTP expiry (10 minutes)
+    $_SESSION['otp_time'] = time();
+    $_SESSION['temp_email'] = $email;
+    
+    // Send OTP via simple mail
     $to = $email;
-    $subject = "Your OTP Code";
-    $message = "Hello $fullname,\n\nYour OTP code is: $otp\n\nEnter this code to verify your account.\n\nThank you!";
-    $headers = "From: no-reply@" . $_SERVER['HTTP_HOST'];
+    $subject = "Your OTP Code - Book's Library";
+    $message = "Hello $fullname,\n\nYour OTP code is: $otp\n\nThis code is valid for 10 minutes.\n\nEnter this code to verify your account.\n\nThank you for registering!\n\n- Book's Library Team";
+    $headers = "From: noreply@" . $_SERVER['HTTP_HOST'];
     
     if(mail($to, $subject, $message, $headers)){
         header("Location: verify_otp.php?email=" . urlencode($email));
     } else {
         // Agar mail fail ho to screen pe OTP dikhao
-        echo "<script>alert('Demo Mode - Your OTP is: $otp'); window.location='verify_otp.php?email=$email&demo_otp=$otp';</script>";
+        echo "<script>
+            alert('Demo Mode - Your OTP is: $otp\\n\\nWe could not send email. Please use this OTP to verify.');
+            window.location='verify_otp.php?email=$email&demo_otp=$otp';
+        </script>";
     }
     exit();
     
@@ -45,7 +52,7 @@ if(mysqli_query($conn, $insert_query)){
     if(mysqli_errno($conn) == 1062){
         echo "<script>alert('Email already exists!'); window.location='register.php';</script>";
     } else {
-        echo "<script>alert('Registration failed!'); window.location='register.php';</script>";
+        echo "<script>alert('Registration failed: " . mysqli_error($conn) . "'); window.location='register.php';</script>";
     }
 }
 ?>
