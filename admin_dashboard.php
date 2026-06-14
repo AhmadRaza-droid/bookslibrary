@@ -40,47 +40,132 @@ $book_requests = mysqli_query($conn,
 <head>
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="style.css?v=8000">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        .learning-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 25px;
-            border-radius: 15px;
-            margin: 20px;
-            color: white;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        .learning-card h3 {
-            margin: 0 0 20px 0;
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .learning-links {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        .learning-links a {
-            background: rgba(255,255,255,0.2);
-            padding: 12px 25px;
+        /* ========== 3 DOTS HAMBURGER MENU STYLES ========== */
+        .hamburger {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 45px;
+            height: 45px;
+            background: #0b1f3a;
             border-radius: 8px;
-            text-decoration: none;
-            color: white;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            display: inline-flex;
+            cursor: pointer;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
-        .learning-links a:hover {
-            background: rgba(255,255,255,0.4);
-            transform: translateY(-3px);
+        .hamburger span {
+            width: 22px;
+            height: 3px;
+            background: white;
+            border-radius: 3px;
+            transition: 0.3s;
+        }
+        .menu-panel {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 280px;
+            height: 100%;
+            background: linear-gradient(180deg, #0b1f3a 0%, #1a3a5c 100%);
+            color: white;
+            z-index: 1000;
+            transition: 0.3s;
+            padding-top: 70px;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.3);
+            overflow-y: auto;
+        }
+        .menu-panel.open {
+            right: 0;
+        }
+        .menu-panel a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 25px;
+            color: white;
+            text-decoration: none;
+            font-size: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: 0.2s;
+        }
+        .menu-panel a:hover {
+            background: rgba(255,255,255,0.1);
+            padding-left: 35px;
+        }
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: white;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+        .overlay.show {
+            display: block;
         }
     </style>
 </head>
 
 <body>
+
+<!-- ========== 3 DOTS HAMBURGER BUTTON ========== -->
+<div class="hamburger" onclick="toggleMenu()">
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+
+<!-- ========== MENU PANEL (REMOVED Academic Advisor, Peer Tutoring, Student Undertaking) ========== -->
+<div class="menu-panel" id="menuPanel">
+    <button class="close-btn" onclick="toggleMenu()">✕</button>
+    
+    <a href="admin_dashboard.php">
+        🏠 Dashboard
+    </a>
+    <a href="index.php">
+        🌐 Website
+    </a>
+    <a href="all_books.php">
+        📚 All Books
+    </a>
+    <a href="all_users.php">
+        👥 All Users
+    </a>
+    <a href="all_messages.php">
+        💬 Messages
+    </a>
+    <a href="book_requests.php">
+        📝 Book Requests
+    </a>
+    <a href="reviews.php">
+        ⭐ Reviews
+    </a>
+    <a href="admin_logout.php">
+        🚪 Logout
+    </a>
+</div>
+
+<!-- ========== OVERLAY ========== -->
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
 
 <nav>
     <div class="logo">📖 Admin Panel</div>
@@ -95,25 +180,6 @@ $book_requests = mysqli_query($conn,
     <h1>Admin Dashboard</h1>
     <p>Manage books, users, reviews, messages, requests and analytics.</p>
 </section>
-
-<!-- ========== 3 LINES ADDED HERE - LEARNING SUPPORT ========== -->
-<div class="learning-card">
-    <h3>
-        <span>🎓</span> LEARNING SUPPORT
-    </h3>
-    <div class="learning-links">
-        <a href="academic_advisor.php">
-            📘 Academic Advisor
-        </a>
-        <a href="peer_tutoring.php">
-            🤝 Peer Tutoring Program
-        </a>
-        <a href="student_undertaking.php">
-            📋 Student Undertaking
-        </a>
-    </div>
-</div>
-<!-- ========== END OF 3 LINES ========== -->
 
 <div style="display:flex; gap:20px; margin:20px; flex-wrap:wrap;">
 
@@ -215,22 +281,17 @@ $book_requests = mysqli_query($conn,
         <?php while($row = mysqli_fetch_assoc($books)){ ?>
         <tr>
             <td><?php echo $row['id']; ?></td>
-
             <td>
                 <img src="<?php echo htmlspecialchars($row['cover_image_url']); ?>" width="60">
             </td>
-
             <td><?php echo htmlspecialchars($row['title']); ?></td>
             <td><?php echo htmlspecialchars($row['author']); ?></td>
-
             <td>
                 <a href="<?php echo htmlspecialchars($row['read_link']); ?>" target="_blank">Read</a>
             </td>
-
             <td>
                 <a href="<?php echo htmlspecialchars($row['download_epub_link']); ?>" target="_blank">EPUB</a>
             </td>
-
             <td>
                 <a href="delete_book.php?id=<?php echo $row['id']; ?>">
                     <button style="background:red; color:white;">Delete</button>
@@ -260,7 +321,6 @@ $book_requests = mysqli_query($conn,
             <td><?php echo htmlspecialchars($row['name']); ?></td>
             <td><?php echo htmlspecialchars($row['email']); ?></td>
             <td><?php echo htmlspecialchars($row['message']); ?></td>
-
             <td>
                 <?php
                 if(isset($row['reply']) && $row['reply'] != ""){
@@ -270,7 +330,6 @@ $book_requests = mysqli_query($conn,
                 }
                 ?>
             </td>
-
             <td>
                 <form action="reply_message.php" method="POST">
                     <input type="hidden" name="message_id" value="<?php echo $row['id']; ?>">
@@ -327,16 +386,16 @@ $reviews = mysqli_query($conn,
 while($review = mysqli_fetch_assoc($reviews)){
 ?>
 <tr>
-<td><?php echo $review['id']; ?></td>
-<td><?php echo htmlspecialchars($review['fullname']); ?></td>
-<td><?php echo htmlspecialchars($review['title']); ?></td>
-<td><?php echo $review['rating']; ?> ⭐</td>
-<td><?php echo htmlspecialchars($review['review']); ?></td>
-<td>
-<a href="delete_review.php?id=<?php echo $review['id']; ?>">
-<button style="background:red; color:white;">Delete</button>
-</a>
-</td>
+    <td><?php echo $review['id']; ?></td>
+    <td><?php echo htmlspecialchars($review['fullname']); ?></td>
+    <td><?php echo htmlspecialchars($review['title']); ?></td>
+    <td><?php echo $review['rating']; ?> ⭐</td>
+    <td><?php echo htmlspecialchars($review['review']); ?></td>
+    <td>
+        <a href="delete_review.php?id=<?php echo $review['id']; ?>">
+            <button style="background:red; color:white;">Delete</button>
+        </a>
+    </td>
 </tr>
 <?php } ?>
 </table>
@@ -346,37 +405,37 @@ while($review = mysqli_fetch_assoc($reviews)){
 <h2>📚 Book Requests</h2>
 
 <table border="1" cellpadding="10">
-<tr>
-    <th>ID</th>
-    <th>User</th>
-    <th>Email</th>
-    <th>Book Name</th>
-    <th>Category</th>
-    <th>Message</th>
-    <th>Status</th>
-</tr>
+    <tr>
+        <th>ID</th>
+        <th>User</th>
+        <th>Email</th>
+        <th>Book Name</th>
+        <th>Category</th>
+        <th>Message</th>
+        <th>Status</th>
+    </tr>
 
 <?php while($req = mysqli_fetch_assoc($book_requests)){ ?>
-<tr>
-    <td><?php echo $req['id']; ?></td>
-    <td><?php echo htmlspecialchars($req['fullname']); ?></td>
-    <td><?php echo htmlspecialchars($req['email']); ?></td>
-    <td><?php echo htmlspecialchars($req['book_name']); ?></td>
-    <td><?php echo htmlspecialchars($req['category']); ?></td>
-    <td><?php echo htmlspecialchars($req['message']); ?></td>
-    <td>
-<form action="update_request_status.php" method="POST">
-    <input type="hidden" name="request_id" value="<?php echo $req['id']; ?>">
-    <select name="status">
-        <option value="Pending" <?php if($req['status']=="Pending") echo "selected"; ?>>Pending</option>
-        <option value="Approved" <?php if($req['status']=="Approved") echo "selected"; ?>>Approved</option>
-        <option value="Added" <?php if($req['status']=="Added") echo "selected"; ?>>Added</option>
-        <option value="Rejected" <?php if($req['status']=="Rejected") echo "selected"; ?>>Rejected</option>
-    </select>
-    <button type="submit" name="update_status">Update</button>
-</form>
-</td>
-</tr>
+    <tr>
+        <td><?php echo $req['id']; ?></td>
+        <td><?php echo htmlspecialchars($req['fullname']); ?></td>
+        <td><?php echo htmlspecialchars($req['email']); ?></td>
+        <td><?php echo htmlspecialchars($req['book_name']); ?></td>
+        <td><?php echo htmlspecialchars($req['category']); ?></td>
+        <td><?php echo htmlspecialchars($req['message']); ?></td>
+        <td>
+            <form action="update_request_status.php" method="POST">
+                <input type="hidden" name="request_id" value="<?php echo $req['id']; ?>">
+                <select name="status">
+                    <option value="Pending" <?php if($req['status']=="Pending") echo "selected"; ?>>Pending</option>
+                    <option value="Approved" <?php if($req['status']=="Approved") echo "selected"; ?>>Approved</option>
+                    <option value="Added" <?php if($req['status']=="Added") echo "selected"; ?>>Added</option>
+                    <option value="Rejected" <?php if($req['status']=="Rejected") echo "selected"; ?>>Rejected</option>
+                </select>
+                <button type="submit" name="update_status">Update</button>
+            </form>
+        </td>
+    </tr>
 <?php } ?>
 </table>
 </section>
@@ -396,7 +455,6 @@ while($review = mysqli_fetch_assoc($reviews)){
         <?php while($user = mysqli_fetch_assoc($all_users)){ ?>
         <tr>
             <td><?php echo $user['id']; ?></td>
-
             <td>
                 <?php if(isset($user['profile_image']) && $user['profile_image'] != ""){ ?>
                     <img src="<?php echo htmlspecialchars($user['profile_image']); ?>" width="50" height="50" style="border-radius:50%; object-fit:cover;">
@@ -404,10 +462,8 @@ while($review = mysqli_fetch_assoc($reviews)){
                     👤
                 <?php } ?>
             </td>
-
             <td><?php echo htmlspecialchars($user['fullname']); ?></td>
             <td><?php echo htmlspecialchars($user['email']); ?></td>
-
             <td>
                 <a href="delete_user.php?id=<?php echo $user['id']; ?>"
                    onclick="return confirm('Are you sure you want to delete this user?');">
@@ -420,13 +476,27 @@ while($review = mysqli_fetch_assoc($reviews)){
 </section>
 
 <script>
+function toggleMenu() {
+    const menu = document.getElementById('menuPanel');
+    const overlay = document.getElementById('overlay');
+    menu.classList.toggle('open');
+    overlay.classList.toggle('show');
+}
+
+// Close menu on escape key
+document.addEventListener('keydown', function(e) {
+    if(e.key === 'Escape') {
+        document.getElementById('menuPanel').classList.remove('open');
+        document.getElementById('overlay').classList.remove('show');
+    }
+});
+
 if(localStorage.getItem("theme") === "dark"){
     document.body.classList.add("dark-mode");
 }
 
 function toggleDarkMode(){
     document.body.classList.toggle("dark-mode");
-
     if(document.body.classList.contains("dark-mode")){
         localStorage.setItem("theme", "dark");
     }
