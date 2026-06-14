@@ -1,49 +1,30 @@
 <?php
-
 include 'config.php';
 
-$fullname = mysqli_real_escape_string($conn, $_POST['fullname']);
-$email = mysqli_real_escape_string($conn, $_POST['email']);
+$email = $_POST['email'];
+$fullname = $_POST['fullname'];
 $password = $_POST['password'];
 $confirm_password = $_POST['confirm_password'];
 
 if($password != $confirm_password){
-    echo "<script>
-            alert('Passwords do not match');
-            window.location.href='register.php';
-          </script>";
-    exit();
+    die("<script>alert('Passwords do not match'); window.location='register.php';</script>");
 }
 
-$check = mysqli_query($conn,
-"SELECT * FROM users WHERE email='$email'");
+$otp = rand(100000,999999);
 
-if(mysqli_num_rows($check) > 0){
+// TEMP SAVE USER (unverified)
+mysqli_query($conn, "
+INSERT INTO users(fullname,email,password,otp,is_verified)
+VALUES('$fullname','$email','$password','$otp',0)
+");
 
-    echo "<script>
-            alert('Email already registered');
-            window.location.href='register.php';
-          </script>";
-    exit();
-}
+// SEND OTP EMAIL
+$subject = "Your OTP Code";
+$message = "Your OTP is: $otp";
 
-$query = "INSERT INTO users(fullname,email,password)
-          VALUES('$fullname','$email','$password')";
+mail($email, $subject, $message);
 
-$result = mysqli_query($conn,$query);
-
-if($result){
-
-    echo "<script>
-            alert('Registration Successful');
-            window.location.href='login.php';
-          </script>";
-
-}else{
-
-    echo "<script>
-            alert('Registration Failed');
-            window.location.href='register.php';
-          </script>";
-}
+// redirect
+header("Location: verify_otp.php?email=$email");
+exit();
 ?>
