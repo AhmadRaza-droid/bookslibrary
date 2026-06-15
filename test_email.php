@@ -13,12 +13,12 @@ try {
     $mail->Host = 'smtp.gmail.com';
     $mail->SMTPAuth = true;
     $mail->Username = 'universitylibrary172@gmail.com';
-    $mail->Password = 'vmrtxjtzpvobfyr';  // Apna app password
+    $mail->Password = 'zuepxvysbxrcdef';  // Naya app password
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port = 587;
     
     $mail->setFrom('universitylibrary172@gmail.com', 'Test');
-    $mail->addAddress('universitylibrary172@gmail.com'); // Apne hi email pe bhejo test ke liye
+    $mail->addAddress('universitylibrary172@gmail.com');  // Apne email pe test
     $mail->Subject = 'Test Email';
     $mail->Body = 'This is a test email from InfinityFree!';
     

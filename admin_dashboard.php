@@ -17,9 +17,9 @@ require 'phpmailer/src/SMTP.php';
 // ========== SMTP SETTINGS - FORGET PASSWORD WALI SETTINGS ==========
 $smtp_host = 'smtp.gmail.com';
 $smtp_email = 'universitylibrary172@gmail.com';
-$smtp_password = 'vmrtxjtzpvobfyr';  // Forget password wala same password
+$smtp_password = 'zuepxvysbxrocdef';  // Forget password wala same password
 
-// Delete message
+// Delete message - FIXED
 if(isset($_GET['delete_message'])){
     $id = $_GET['delete_message'];
     mysqli_query($conn, "DELETE FROM messages WHERE id='$id'");

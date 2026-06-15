@@ -32,7 +32,7 @@ if(isset($_POST['send'])){
             $mail->SMTPAuth = true;
 
             $mail->Username = 'universitylibrary172@gmail.com';
-            $mail->Password = 'vmrntxjtzpvobfyr';
+            $mail->Password = 'zuepxvysbxrocdef';
 
             $mail->SMTPSecure = 'tls';
             $mail->Port = 587;
