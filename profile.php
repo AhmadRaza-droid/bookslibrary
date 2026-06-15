@@ -70,18 +70,48 @@ $bookmarks = mysqli_query($conn,
     <title>My Profile</title>
     <link rel="stylesheet" href="style.css?v=11000">
     <style>
-        .clear-history-btn {
-            background: #dc3545;
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-bottom: 15px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .clear-history-btn:hover {
-            background: #c82333;
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            overflow-x: hidden;
         }
+        
+        .form-section {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .profile-box {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            max-height: 80vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+        
+        .profile-box::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .profile-box::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .profile-box::-webkit-scrollbar-thumb {
+            background: #0b1f3a;
+            border-radius: 10px;
+        }
+        
         .clear-all-btn {
             background: #dc3545;
             color: white;
@@ -94,14 +124,77 @@ $bookmarks = mysqli_query($conn,
             margin: 15px 0;
             width: 100%;
         }
+        
         .clear-all-btn:hover {
             background: #c82333;
             transform: scale(1.02);
         }
+        
         .warning-text {
             color: #dc3545;
             font-size: 12px;
-            margin-top: 5px;
+            margin-top: -10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .profile-heading {
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0b1f3a;
+            color: #0b1f3a;
+        }
+        
+        .profile-book-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #0b1f3a;
+        }
+        
+        .empty-text {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        button, .btn {
+            background: #0b1f3a;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .remove-btn {
+            background: #dc3545;
+        }
+        
+        .dark-mode {
+            background: #1a1a2e;
+        }
+        
+        .dark-mode .profile-box {
+            background: #16213e;
+            color: white;
+        }
+        
+        .dark-mode .profile-book-card {
+            background: #1a1a3a;
+        }
+        
+        .dark-mode .profile-heading {
+            border-bottom-color: #ffc72c;
+        }
+        
+        @media (max-width: 768px) {
+            .profile-box {
+                max-height: 85vh;
+            }
         }
     </style>
 </head>
@@ -110,16 +203,13 @@ $bookmarks = mysqli_query($conn,
 
 <nav>
     <div class="logo">📖 Library Management System</div>
-
     <ul>
         <li><a href="index.php">Home</a></li>
         <li><a href="books.php">Books</a></li>
         <li><a class="active" href="profile.php">Profile</a></li>
-
         <?php if(isset($_SESSION['email']) && $_SESSION['email'] == "universitylibrary172@gmail.com"){ ?>
             <li><a href="admin_dashboard.php">Admin Panel</a></li>
         <?php } ?>
-
         <li><a href="logout.php">Logout</a></li>
         <li><button onclick="toggleDarkMode()" class="dark-btn">🌙 Dark</button></li>
     </ul>
@@ -131,35 +221,26 @@ $bookmarks = mysqli_query($conn,
 
 <h2>My Profile</h2>
 
-<!-- ========== CLEAR ALL ACTIVITY BUTTON - ADDED AT TOP ========== -->
-<form action="clear_all_history.php" method="POST" onsubmit="return confirm('⚠️ WARNING: This will delete ALL your:\n\n• Recently Viewed History\n• Reading Progress\n• Bookmarks\n• Favorite Books\n\nThis action CANNOT be undone!\n\nAre you sure you want to continue?');">
+<!-- ========== CLEAR ALL ACTIVITY BUTTON - AB NOTIFICATIONS KE UPAR ========== -->
+<form action="clear_all_history.php" method="POST" onsubmit="return confirm('⚠️ WARNING: This will delete ALL your:\n\n• Notifications\n• Reading History\n• Reading Progress\n• Bookmarks\n• Favorite Books\n• Book Requests\n• Messages\n\nThis action CANNOT be undone!\n\nAre you sure you want to continue?');">
     <button type="submit" class="clear-all-btn">
         🗑️ Clear All My Activity
     </button>
 </form>
-<p class="warning-text">⚠️ This will delete your reading history, progress, bookmarks, and favorites</p>
-<!-- =============================================================== -->
+<p class="warning-text">⚠️ This will delete notifications, history, progress, bookmarks, favorites, requests & messages</p>
+<!-- ========================================================================= -->
 
 <?php if(isset($user['profile_image']) && $user['profile_image'] != ""){ ?>
-
     <img src="<?php echo htmlspecialchars($user['profile_image']); ?>"
          alt="Profile Picture"
          style="width:120px;height:120px;border-radius:50%;object-fit:cover;margin:15px;border:3px solid #061b33;">
-
 <?php } else { ?>
-
     <div style="font-size:75px;margin:10px;">👤</div>
-
 <?php } ?>
 
 <form action="upload_profile_image.php" method="POST" enctype="multipart/form-data" style="margin-bottom:20px;">
-
     <input type="file" name="profile_image" accept="image/*" required>
-
-    <button type="submit" name="upload_image">
-        Upload Profile Picture
-    </button>
-
+    <button type="submit" name="upload_image">Upload Profile Picture</button>
 </form>
 
 <p><b>Name:</b> <?php echo htmlspecialchars($user['fullname']); ?></p>
@@ -167,231 +248,130 @@ $bookmarks = mysqli_query($conn,
 <p><b>Password:</b> ********</p>
 
 <br>
-
-<a href="change_password.php">
-    <button>Change Password</button>
-</a>
-
+<a href="change_password.php"><button>Change Password</button></a>
 <br><br>
+<a href="logout.php"><button>Logout</button></a>
 
-<a href="logout.php">
-    <button>Logout</button>
-</a>
-
+<!-- 🔔 NOTIFICATIONS SECTION -->
 <h2 class="profile-heading">🔔 Notifications</h2>
 
 <?php if(mysqli_num_rows($notifications) > 0){ ?>
-
-<?php while($note = mysqli_fetch_assoc($notifications)){ ?>
-
-<div class="profile-book-card">
-    <h3><?php echo htmlspecialchars($note['title']); ?></h3>
-    <p><?php echo htmlspecialchars($note['message']); ?></p>
-</div>
-
-<?php } ?>
-
+    <?php while($note = mysqli_fetch_assoc($notifications)){ ?>
+        <div class="profile-book-card">
+            <h3><?php echo htmlspecialchars($note['title']); ?></h3>
+            <p><?php echo htmlspecialchars($note['message']); ?></p>
+        </div>
+    <?php } ?>
 <?php } else { ?>
-
-<p class="empty-text">No notifications yet.</p>
-
+    <p class="empty-text">No notifications yet.</p>
 <?php } ?>
 
+<!-- 📚 Request a Book -->
 <h2 class="profile-heading">📚 Request a Book</h2>
 
 <form action="request_book.php" method="POST">
-
     <input type="text" name="book_name" placeholder="Enter book name" required>
-
     <input type="text" name="category" placeholder="Category e.g. Programming, Science">
-
     <textarea name="message" placeholder="Write details..."></textarea>
-
-    <button type="submit" name="request_book">
-        Send Request
-    </button>
-
+    <button type="submit" name="request_book">Send Request</button>
 </form>
 
+<!-- ❤️ Favorite Books -->
 <h2 class="profile-heading">❤️ My Favorite Books</h2>
 
 <?php if(mysqli_num_rows($favorites) > 0){ ?>
-
-<?php while($book = mysqli_fetch_assoc($favorites)){ ?>
-
-<div class="profile-book-card">
-
-    <h3><?php echo htmlspecialchars($book['title']); ?></h3>
-
-    <p><strong>Author:</strong> <?php echo htmlspecialchars($book['author']); ?></p>
-
-    <?php if(isset($book['category']) && $book['category'] != ""){ ?>
-        <p><strong>Category:</strong> <?php echo htmlspecialchars($book['category']); ?></p>
+    <?php while($book = mysqli_fetch_assoc($favorites)){ ?>
+        <div class="profile-book-card">
+            <h3><?php echo htmlspecialchars($book['title']); ?></h3>
+            <p><strong>Author:</strong> <?php echo htmlspecialchars($book['author']); ?></p>
+            <a href="books.php"><button>View Book</button></a>
+            <a href="remove_favorite.php?book_id=<?php echo $book['id']; ?>"><button class="remove-btn">Remove Favorite</button></a>
+        </div>
     <?php } ?>
-
-    <a href="books.php">
-        <button>View Book</button>
-    </a>
-
-    <a href="remove_favorite.php?book_id=<?php echo $book['id']; ?>">
-        <button class="remove-btn">Remove Favorite</button>
-    </a>
-
-</div>
-
-<?php } ?>
-
 <?php } else { ?>
-
-<p class="empty-text">No favorite books yet 😢</p>
-
+    <p class="empty-text">No favorite books yet 😢</p>
 <?php } ?>
 
+<!-- 🕒 Recently Viewed -->
 <h2 class="profile-heading">🕒 Recently Viewed Books</h2>
 
 <?php if(mysqli_num_rows($recentlyViewed) > 0){ ?>
-
-<?php while($book = mysqli_fetch_assoc($recentlyViewed)){ ?>
-
-<div class="profile-book-card">
-
-    <h3><?php echo htmlspecialchars($book['title']); ?></h3>
-
-    <p><strong>Author:</strong> <?php echo htmlspecialchars($book['author']); ?></p>
-
-    <a href="read_book.php?id=<?php echo $book['id']; ?>">
-        <button>Continue Reading</button>
-    </a>
-
-    <a href="remove_history.php?book_id=<?php echo $book['id']; ?>">
-        <button class="remove-btn">Remove History</button>
-    </a>
-
-</div>
-
-<?php } ?>
-
+    <?php while($book = mysqli_fetch_assoc($recentlyViewed)){ ?>
+        <div class="profile-book-card">
+            <h3><?php echo htmlspecialchars($book['title']); ?></h3>
+            <p><strong>Author:</strong> <?php echo htmlspecialchars($book['author']); ?></p>
+            <a href="read_book.php?id=<?php echo $book['id']; ?>"><button>Continue Reading</button></a>
+            <a href="remove_history.php?book_id=<?php echo $book['id']; ?>"><button class="remove-btn">Remove History</button></a>
+        </div>
+    <?php } ?>
 <?php } else { ?>
-
-<p class="empty-text">No recently viewed books yet.</p>
-
+    <p class="empty-text">No recently viewed books yet.</p>
 <?php } ?>
 
+<!-- 📖 Reading Progress -->
 <h2 class="profile-heading">📖 Reading Progress</h2>
 
 <?php if(mysqli_num_rows($readingProgress) > 0){ ?>
-
-<?php while($progress = mysqli_fetch_assoc($readingProgress)){ ?>
-
-<div class="profile-book-card">
-
-    <h3><?php echo htmlspecialchars($progress['title']); ?></h3>
-
-    <p><strong>Progress:</strong> <?php echo (int)$progress['progress']; ?>%</p>
-
-    <a href="read_book.php?id=<?php echo $progress['book_id']; ?>">
-        <button>Continue Book</button>
-    </a>
-
-</div>
-
-<?php } ?>
-
+    <?php while($progress = mysqli_fetch_assoc($readingProgress)){ ?>
+        <div class="profile-book-card">
+            <h3><?php echo htmlspecialchars($progress['title']); ?></h3>
+            <p><strong>Progress:</strong> <?php echo (int)$progress['progress']; ?>%</p>
+            <a href="read_book.php?id=<?php echo $progress['book_id']; ?>"><button>Continue Book</button></a>
+        </div>
+    <?php } ?>
 <?php } else { ?>
-
-<p class="empty-text">No reading progress yet.</p>
-
+    <p class="empty-text">No reading progress yet.</p>
 <?php } ?>
 
+<!-- 🔖 Bookmarks -->
 <h2 class="profile-heading">🔖 My Bookmarks</h2>
 
 <?php if(mysqli_num_rows($bookmarks) > 0){ ?>
-
-<?php while($bm = mysqli_fetch_assoc($bookmarks)){ ?>
-
-<div class="profile-book-card">
-
-    <h3><?php echo htmlspecialchars($bm['title']); ?></h3>
-
-    <p><?php echo htmlspecialchars($bm['note']); ?></p>
-
-    <a href="read_book.php?id=<?php echo $bm['book_id']; ?>">
-        <button>Open Book</button>
-    </a>
-
-</div>
-
-<?php } ?>
-
+    <?php while($bm = mysqli_fetch_assoc($bookmarks)){ ?>
+        <div class="profile-book-card">
+            <h3><?php echo htmlspecialchars($bm['title']); ?></h3>
+            <p><?php echo htmlspecialchars($bm['note']); ?></p>
+            <a href="read_book.php?id=<?php echo $bm['book_id']; ?>"><button>Open Book</button></a>
+        </div>
+    <?php } ?>
 <?php } else { ?>
-
-<p class="empty-text">No bookmarks yet.</p>
-
+    <p class="empty-text">No bookmarks yet.</p>
 <?php } ?>
 
+<!-- 📚 Book Requests History -->
 <h2 class="profile-heading">📚 My Book Requests</h2>
 
 <?php if(mysqli_num_rows($myRequests) > 0){ ?>
-
-<?php while($req = mysqli_fetch_assoc($myRequests)){ ?>
-
-<div class="profile-book-card">
-
-    <h3><?php echo htmlspecialchars($req['book_name']); ?></h3>
-
-    <p><strong>Category:</strong> <?php echo htmlspecialchars($req['category']); ?></p>
-
-    <p><strong>Message:</strong> <?php echo htmlspecialchars($req['message']); ?></p>
-
-    <p>
-        <strong>Status:</strong>
-        <span style="color:green;font-weight:bold;">
-            <?php echo htmlspecialchars($req['status']); ?>
-        </span>
-    </p>
-
-</div>
-
-<?php } ?>
-
+    <?php while($req = mysqli_fetch_assoc($myRequests)){ ?>
+        <div class="profile-book-card">
+            <h3><?php echo htmlspecialchars($req['book_name']); ?></h3>
+            <p><strong>Category:</strong> <?php echo htmlspecialchars($req['category']); ?></p>
+            <p><strong>Message:</strong> <?php echo htmlspecialchars($req['message']); ?></p>
+            <p><strong>Status:</strong> <span style="color:green;font-weight:bold;"><?php echo htmlspecialchars($req['status']); ?></span></p>
+        </div>
+    <?php } ?>
 <?php } else { ?>
-
-<p class="empty-text">No book requests yet.</p>
-
+    <p class="empty-text">No book requests yet.</p>
 <?php } ?>
 
+<!-- 📩 Messages -->
 <h2 class="profile-heading">📩 My Messages & Admin Replies</h2>
 
 <?php if(mysqli_num_rows($myMessages) > 0){ ?>
-
-<?php while($msg = mysqli_fetch_assoc($myMessages)){ ?>
-
-<div class="profile-book-card">
-
-    <p><strong>Your Message:</strong></p>
-
-    <p><?php echo htmlspecialchars($msg['message']); ?></p>
-
-    <p><strong>Admin Reply:</strong></p>
-
-    <?php if(isset($msg['reply']) && $msg['reply'] != ""){ ?>
-
-        <p><?php echo htmlspecialchars($msg['reply']); ?></p>
-
-    <?php } else { ?>
-
-        <p>No reply yet.</p>
-
+    <?php while($msg = mysqli_fetch_assoc($myMessages)){ ?>
+        <div class="profile-book-card">
+            <p><strong>Your Message:</strong></p>
+            <p><?php echo htmlspecialchars($msg['message']); ?></p>
+            <p><strong>Admin Reply:</strong></p>
+            <?php if(isset($msg['reply']) && $msg['reply'] != ""){ ?>
+                <p><?php echo htmlspecialchars($msg['reply']); ?></p>
+            <?php } else { ?>
+                <p>No reply yet.</p>
+            <?php } ?>
+        </div>
     <?php } ?>
-
-</div>
-
-<?php } ?>
-
 <?php } else { ?>
-
-<p class="empty-text">No messages sent yet.</p>
-
+    <p class="empty-text">No messages sent yet.</p>
 <?php } ?>
 
 </div>
@@ -405,7 +385,6 @@ if(localStorage.getItem("theme") === "dark"){
 
 function toggleDarkMode(){
     document.body.classList.toggle("dark-mode");
-
     if(document.body.classList.contains("dark-mode")){
         localStorage.setItem("theme", "dark");
     }
