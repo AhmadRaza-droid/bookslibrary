@@ -93,7 +93,7 @@ $bookmarks = mysqli_query($conn,
             border-radius: 15px;
             padding: 25px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            max-height: 80vh;
+            max-height: 85vh;
             overflow-y: auto;
             scrollbar-width: thin;
         }
@@ -121,7 +121,7 @@ $bookmarks = mysqli_query($conn,
             cursor: pointer;
             font-size: 16px;
             font-weight: bold;
-            margin: 15px 0;
+            margin: 20px 0;
             width: 100%;
         }
         
@@ -133,8 +133,8 @@ $bookmarks = mysqli_query($conn,
         .warning-text {
             color: #dc3545;
             font-size: 12px;
-            margin-top: -10px;
-            margin-bottom: 15px;
+            margin-top: -15px;
+            margin-bottom: 20px;
             text-align: center;
         }
         
@@ -221,15 +221,6 @@ $bookmarks = mysqli_query($conn,
 
 <h2>My Profile</h2>
 
-<!-- ========== CLEAR ALL ACTIVITY BUTTON - AB NOTIFICATIONS KE UPAR ========== -->
-<form action="clear_all_history.php" method="POST" onsubmit="return confirm('⚠️ WARNING: This will delete ALL your:\n\n• Notifications\n• Reading History\n• Reading Progress\n• Bookmarks\n• Favorite Books\n• Book Requests\n• Messages\n\nThis action CANNOT be undone!\n\nAre you sure you want to continue?');">
-    <button type="submit" class="clear-all-btn">
-        🗑️ Clear All My Activity
-    </button>
-</form>
-<p class="warning-text">⚠️ This will delete notifications, history, progress, bookmarks, favorites, requests & messages</p>
-<!-- ========================================================================= -->
-
 <?php if(isset($user['profile_image']) && $user['profile_image'] != ""){ ?>
     <img src="<?php echo htmlspecialchars($user['profile_image']); ?>"
          alt="Profile Picture"
@@ -251,6 +242,15 @@ $bookmarks = mysqli_query($conn,
 <a href="change_password.php"><button>Change Password</button></a>
 <br><br>
 <a href="logout.php"><button>Logout</button></a>
+
+<!-- ========== CLEAR ALL ACTIVITY BUTTON - NOTIFICATIONS KE BILKUL UPAR ========== -->
+<form action="clear_all_history.php" method="POST" onsubmit="return confirm('⚠️ WARNING: This will delete ALL your:\n\n• Notifications\n• Reading History\n• Reading Progress\n• Bookmarks\n• Favorite Books\n• Book Requests\n• Messages\n\nThis action CANNOT be undone!\n\nAre you sure you want to continue?');">
+    <button type="submit" class="clear-all-btn">
+        🗑️ Clear All My Activity
+    </button>
+</form>
+<p class="warning-text">⚠️ This will delete notifications, history, progress, bookmarks, favorites, requests & messages</p>
+<!-- ============================================================================= -->
 
 <!-- 🔔 NOTIFICATIONS SECTION -->
 <h2 class="profile-heading">🔔 Notifications</h2>
