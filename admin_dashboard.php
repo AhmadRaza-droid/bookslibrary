@@ -7,27 +7,27 @@ if(!isset($_SESSION['admin'])){
     exit();
 }
 
-// PHPMailer
-require 'PHPMailer/src/Exception.php';
-require 'PHPMailer/src/PHPMailer.php';
-require 'PHPMailer/src/SMTP.php';
-
 use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
-// SMTP Settings (Same as forget password - jo chal raha hai)
+require 'phpmailer/src/Exception.php';
+require 'phpmailer/src/PHPMailer.php';
+require 'phpmailer/src/SMTP.php';
+
+// ========== SMTP SETTINGS - FORGET PASSWORD WALI SETTINGS ==========
 $smtp_host = 'smtp.gmail.com';
 $smtp_email = 'universitylibrary172@gmail.com';
-$smtp_password = 'vmrtxjtzpvobfyr';
+$smtp_password = 'vmrtxjtzpvobfyr';  // Forget password wala same password
 
 // Delete message
 if(isset($_GET['delete_message'])){
     $id = $_GET['delete_message'];
     mysqli_query($conn, "DELETE FROM messages WHERE id='$id'");
-    echo "<script>alert('Message deleted!'); window.location='?page=messages';</script>";
+    echo "<script>alert('Message deleted successfully!'); window.location='?page=messages';</script>";
     exit();
 }
+
+// Rest of your code continues...
 
 // Handle reply message
 if(isset($_POST['reply_submit'])){
