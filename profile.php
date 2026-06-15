@@ -69,6 +69,20 @@ $bookmarks = mysqli_query($conn,
 <head>
     <title>My Profile</title>
     <link rel="stylesheet" href="style.css?v=11000">
+    <style>
+        .clear-history-btn {
+            background: #dc3545;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+        .clear-history-btn:hover {
+            background: #c82333;
+        }
+    </style>
 </head>
 
 <body>
@@ -108,7 +122,7 @@ $bookmarks = mysqli_query($conn,
 
 <?php } ?>
 
-<form action="upload/profile/upload_profile_image.php" method="POST" enctype="multipart/form-data" style="margin-bottom:20px;">
+<form action="upload_profile_image.php" method="POST" enctype="multipart/form-data" style="margin-bottom:20px;">
 
     <input type="file" name="profile_image" accept="image/*" required>
 
@@ -207,11 +221,11 @@ $bookmarks = mysqli_query($conn,
 
 <?php if(mysqli_num_rows($recentlyViewed) > 0){ ?>
 
-<a href="clear_history.php">
-    <button class="remove-btn" style="margin-bottom:15px;">
-        Clear All History
+<form action="clear_history.php" method="POST" onsubmit="return confirm('Are you sure you want to clear ALL your reading history? This action cannot be undone.');">
+    <button type="submit" name="clear_history" class="clear-history-btn">
+        🗑️ Clear All History
     </button>
-</a>
+</form>
 
 <?php while($book = mysqli_fetch_assoc($recentlyViewed)){ ?>
 
