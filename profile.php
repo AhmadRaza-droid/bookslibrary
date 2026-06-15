@@ -82,6 +82,27 @@ $bookmarks = mysqli_query($conn,
         .clear-history-btn:hover {
             background: #c82333;
         }
+        .clear-all-btn {
+            background: #dc3545;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 15px 0;
+            width: 100%;
+        }
+        .clear-all-btn:hover {
+            background: #c82333;
+            transform: scale(1.02);
+        }
+        .warning-text {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+        }
     </style>
 </head>
 
@@ -109,6 +130,15 @@ $bookmarks = mysqli_query($conn,
 <div class="form-box profile-box">
 
 <h2>My Profile</h2>
+
+<!-- ========== CLEAR ALL ACTIVITY BUTTON - ADDED AT TOP ========== -->
+<form action="clear_all_history.php" method="POST" onsubmit="return confirm('⚠️ WARNING: This will delete ALL your:\n\n• Recently Viewed History\n• Reading Progress\n• Bookmarks\n• Favorite Books\n\nThis action CANNOT be undone!\n\nAre you sure you want to continue?');">
+    <button type="submit" class="clear-all-btn">
+        🗑️ Clear All My Activity
+    </button>
+</form>
+<p class="warning-text">⚠️ This will delete your reading history, progress, bookmarks, and favorites</p>
+<!-- =============================================================== -->
 
 <?php if(isset($user['profile_image']) && $user['profile_image'] != ""){ ?>
 
@@ -220,12 +250,6 @@ $bookmarks = mysqli_query($conn,
 <h2 class="profile-heading">🕒 Recently Viewed Books</h2>
 
 <?php if(mysqli_num_rows($recentlyViewed) > 0){ ?>
-
-<form action="clear_history.php" method="POST" onsubmit="return confirm('Are you sure you want to clear ALL your reading history? This action cannot be undone.');">
-    <button type="submit" name="clear_history" class="clear-history-btn">
-        🗑️ Clear All History
-    </button>
-</form>
 
 <?php while($book = mysqli_fetch_assoc($recentlyViewed)){ ?>
 
