@@ -2,7 +2,12 @@
 include 'session_timeout.php';
 include 'config.php';
 
-// PHPMailer - APNE PATHS KE ACCORDING CHANGE KARO
+if(!isset($_SESSION['admin'])){
+    header("Location: admin_login.php");
+    exit();
+}
+
+// PHPMailer
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
@@ -11,21 +16,16 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
-if(!isset($_SESSION['admin'])){
-    header("Location: admin_login.php");
-    exit();
-}
-
-// ========== SMTP SETTINGS - APNI DETAILS DALO ==========
-$smtp_host = 'smtp.gmail.com';        // Apna SMTP host
-$smtp_email = 'universitylibrary172@gmail.com; // Apna email
-$smtp_password = 'vmrntxjtzpvobfyr'; // Apna app password
+// SMTP Settings (Same as forget password - jo chal raha hai)
+$smtp_host = 'smtp.gmail.com';
+$smtp_email = 'universitylibrary172@gmail.com';
+$smtp_password = 'vmrtxjtzpvobfyr';
 
 // Delete message
 if(isset($_GET['delete_message'])){
     $id = $_GET['delete_message'];
     mysqli_query($conn, "DELETE FROM messages WHERE id='$id'");
-    echo "<script>alert('Message deleted successfully!'); window.location='?page=messages';</script>";
+    echo "<script>alert('Message deleted!'); window.location='?page=messages';</script>";
     exit();
 }
 
