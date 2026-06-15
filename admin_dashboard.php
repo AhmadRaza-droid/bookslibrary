@@ -7,6 +7,7 @@ if(!isset($_SESSION['admin'])){
     exit();
 }
 
+// PHPMailer - EXACT SAME AS FORGOT PASSWORD
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -14,10 +15,10 @@ require 'phpmailer/src/Exception.php';
 require 'phpmailer/src/PHPMailer.php';
 require 'phpmailer/src/SMTP.php';
 
-// ========== SMTP SETTINGS - FORGET PASSWORD WALI SETTINGS ==========
+// ========== SMTP SETTINGS - EXACT COPY FROM FORGOT PASSWORD ==========
 $smtp_host = 'smtp.gmail.com';
 $smtp_email = 'universitylibrary172@gmail.com';
-$smtp_password = 'zuepxvysbxrocdef';  // Forget password wala same password
+$smtp_password = 'zuepxvysbxrocdef';  // ← EXACT same working password
 
 // Delete message - FIXED
 if(isset($_GET['delete_message'])){
@@ -26,8 +27,6 @@ if(isset($_GET['delete_message'])){
     echo "<script>alert('Message deleted successfully!'); window.location='?page=messages';</script>";
     exit();
 }
-
-// Rest of your code continues...
 
 // Handle reply message
 if(isset($_POST['reply_submit'])){
@@ -45,7 +44,7 @@ if(isset($_POST['reply_submit'])){
             $mail->SMTPAuth = true;
             $mail->Username = $smtp_email;
             $mail->Password = $smtp_password;
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->SMTPSecure = 'tls';
             $mail->Port = 587;
             $mail->setFrom($smtp_email, 'Admin - Book Library');
             $mail->addAddress($msg['email'], $msg['name']);
@@ -81,7 +80,6 @@ if(isset($_POST['send_notification'])){
     $total_users = mysqli_num_rows($users);
     $sent_count = 0;
     
-    // Send email to each user
     while($user = mysqli_fetch_assoc($users)){
         $mail = new PHPMailer(true);
         try {
@@ -90,7 +88,7 @@ if(isset($_POST['send_notification'])){
             $mail->SMTPAuth = true;
             $mail->Username = $smtp_email;
             $mail->Password = $smtp_password;
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->SMTPSecure = 'tls';
             $mail->Port = 587;
             $mail->setFrom($smtp_email, 'Book Library');
             $mail->addAddress($user['email'], $user['fullname']);
@@ -383,10 +381,12 @@ $book_requests = mysqli_query($conn,
 
     <div class="table-section">
         <h2>Most Favorited Books</h2>
-        <table>
+        <tr>
             <tr><th>Book Title</th><th>Favorites</th></tr>
             <?php while($row = mysqli_fetch_assoc($most_favorites)){ ?>
-            <td><?php echo htmlspecialchars($row['title']); ?></td><td><?php echo $row['total']; ?></td></tr>
+            <tr><td><?php echo htmlspecialchars($row['title']); ?></td>
+                    <td><?php echo $row['total']; ?></td>
+                </tr>
             <?php } ?>
         </table>
     </div>
@@ -503,7 +503,7 @@ $book_requests = mysqli_query($conn,
             </tr>
             <?php } ?>
             <?php if(mysqli_num_rows($notifications) == 0){ ?>
-            <td><td colspan="4" style="text-align:center;">No notifications sent yet</td></tr>
+            <tr><td colspan="4" style="text-align:center;">No notifications sent yet</td></tr>
             <?php } ?>
         </table>
     </div>
@@ -565,7 +565,8 @@ $book_requests = mysqli_query($conn,
                 <td><?php echo htmlspecialchars($review['title']); ?></td>
                 <td><?php echo $review['rating']; ?> ⭐</td>
                 <td><?php echo htmlspecialchars($review['review']); ?></td>
-                <td><a href="delete_review.php?id=<?php echo $review['id']; ?>"><button class="red">Delete</button></a></td>
+                <td><a href="delete_review.php?id=<?php echo $review['id']; ?>"><button class="red">Delete</button></a>
+                <td>
             </tr>
             <?php } ?>
         </table>
