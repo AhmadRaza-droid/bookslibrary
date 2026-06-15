@@ -7,6 +7,14 @@ if(!isset($_SESSION['admin'])){
     exit();
 }
 
+// Delete message
+if(isset($_GET['delete_message'])){
+    $id = $_GET['delete_message'];
+    mysqli_query($conn, "DELETE FROM messages WHERE id='$id'");
+    echo "<script>alert('Message deleted successfully!'); window.location='?page=messages';</script>";
+    exit();
+}
+
 // Handle reply message
 if(isset($_POST['reply_submit'])){
     $message_id = $_POST['message_id'];
@@ -16,12 +24,31 @@ if(isset($_POST['reply_submit'])){
     exit();
 }
 
-// Handle send notification
+// Handle send notification (Email + Database)
 if(isset($_POST['send_notification'])){
     $title = mysqli_real_escape_string($conn, $_POST['title']);
-    $message = mysqli_real_escape_string($conn, $_POST['message']);
-    mysqli_query($conn, "INSERT INTO notifications (title, message, created_at) VALUES ('$title', '$message', NOW())");
-    echo "<script>alert('Notification sent to all users!');</script>";
+    $message_body = mysqli_real_escape_string($conn, $_POST['message']);
+    
+    // Save to database
+    mysqli_query($conn, "INSERT INTO notifications (title, message, created_at) VALUES ('$title', '$message_body', NOW())");
+    
+    // Get all user emails
+    $users = mysqli_query($conn, "SELECT email, fullname FROM users");
+    
+    // Send email to each user
+    $sent_count = 0;
+    while($user = mysqli_fetch_assoc($users)){
+        $to = $user['email'];
+        $subject = $title;
+        $email_message = "Dear " . $user['fullname'] . ",\n\n" . $message_body . "\n\nThank you,\nAdmin Team";
+        $headers = "From: noreply@" . $_SERVER['HTTP_HOST'];
+        
+        if(mail($to, $subject, $email_message, $headers)){
+            $sent_count++;
+        }
+    }
+    
+    echo "<script>alert('Notification sent to $sent_count users via email and saved to database!');</script>";
 }
 
 // Get current page from URL
@@ -30,6 +57,7 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
 $books = mysqli_query($conn, "SELECT * FROM books");
 $messages = mysqli_query($conn, "SELECT * FROM messages ORDER BY id DESC");
 $all_users = mysqli_query($conn, "SELECT * FROM users");
+$notifications = mysqli_query($conn, "SELECT * FROM notifications ORDER BY id DESC");
 
 $total_users = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM users"));
 $total_books = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM books"));
@@ -242,9 +270,13 @@ $book_requests = mysqli_query($conn,
             flex: 1;
             margin: 0;
         }
-        .reply-box button {
-            margin: 0;
-            padding: 8px 12px;
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .action-buttons button {
+            padding: 5px 10px;
+            font-size: 12px;
         }
     </style>
 </head>
@@ -397,7 +429,10 @@ $book_requests = mysqli_query($conn,
                     <td width="200">
                         <input type="text" name="reply" value="<?php echo htmlspecialchars($row['reply'] ?? ''); ?>" placeholder="Type reply..." style="width:100%">
                     </td>
-                    <td><button type="submit" name="reply_submit" class="btn-green">Send</button></td>
+                    <td class="action-buttons">
+                        <button type="submit" name="reply_submit" class="btn-green">Reply</button>
+                        <a href="?page=messages&delete_message=<?php echo $row['id']; ?>" onclick="return confirm('Delete this message?')"><button type="button" class="red">Delete</button></a>
+                    </td>
                 </tr>
             </form>
             <?php } ?>
@@ -408,11 +443,30 @@ $book_requests = mysqli_query($conn,
     <?php if($page == 'notifications'): ?>
     <div class="table-section">
         <h2>🔔 Send Notification to All Users</h2>
+        <p style="color: #28a745; margin-bottom: 15px;">✅ Notification will be sent to all registered users via EMAIL and saved to database!</p>
         <form method="POST" action="">
             <input type="text" name="title" placeholder="Notification Title" required style="width:100%; margin-bottom:10px;">
             <textarea name="message" placeholder="Write notification message here..." rows="5" required style="width:100%; margin-bottom:10px;"></textarea>
-            <button type="submit" name="send_notification">📢 Send Notification</button>
+            <button type="submit" name="send_notification" class="btn-green">📢 Send Notification (Email + Database)</button>
         </form>
+    </div>
+
+    <div class="table-section">
+        <h2>📋 Previous Notifications</h2>
+        <table>
+            <tr><th>ID</th><th>Title</th><th>Message</th><th>Sent Date</th></tr>
+            <?php while($notif = mysqli_fetch_assoc($notifications)){ ?>
+            <tr>
+                <td><?php echo $notif['id']; ?></td>
+                <td><?php echo htmlspecialchars($notif['title']); ?></td>
+                <td><?php echo htmlspecialchars($notif['message']); ?></td>
+                <td><?php echo $notif['created_at']; ?></td>
+            </tr>
+            <?php } ?>
+            <?php if(mysqli_num_rows($notifications) == 0){ ?>
+            <td>colspan="4" style="text-align:center;">No notifications sent yet</td>
+            <?php } ?>
+        </table>
     </div>
     <?php endif; ?>
 
