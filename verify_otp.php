@@ -2,41 +2,67 @@
 session_start();
 include 'config.php';
 
-// Check if user came from registration
-if(!isset($_SESSION['temp_email'])){
+// Check if user came from registration OR forgot password
+if(!isset($_SESSION['temp_email']) && !isset($_SESSION['reset_email'])){
     echo "<script>
-            alert('Session expired. Please register again.');
-            window.location.href='register.php';
+            alert('Session expired. Please try again.');
+            window.location.href='login.php';
           </script>";
     exit();
 }
 
-$email = $_SESSION['temp_email'];
+// Get email from session (registration or forgot password)
+if(isset($_SESSION['temp_email'])){
+    $email = $_SESSION['temp_email'];
+    $type = 'registration';
+} else if(isset($_SESSION['reset_email'])){
+    $email = $_SESSION['reset_email'];
+    $type = 'reset';
+}
 
 if(isset($_POST['verify'])){
     $entered_otp = trim($_POST['otp']);
     
-    // Check OTP in database
-    $query = "SELECT * FROM users WHERE email='$email' AND otp='$entered_otp' AND is_verified=0";
-    $result = mysqli_query($conn, $query);
-    
-    if(mysqli_num_rows($result) > 0){
-        // Update user as verified
-        mysqli_query($conn, "UPDATE users SET is_verified=1, otp=NULL, otp_expiry=NULL WHERE email='$email'");
+    if($type == 'registration'){
+        // Registration OTP verification
+        $query = "SELECT * FROM users WHERE email='$email' AND otp='$entered_otp' AND is_verified=0";
+        $result = mysqli_query($conn, $query);
         
-        unset($_SESSION['temp_email']);
+        if(mysqli_num_rows($result) > 0){
+            mysqli_query($conn, "UPDATE users SET is_verified=1, otp=NULL, otp_expiry=NULL WHERE email='$email'");
+            unset($_SESSION['temp_email']);
+            echo "<script>
+                    alert('✅ Email verified successfully! Please login.');
+                    window.location.href='login.php';
+                  </script>";
+            exit();
+        } else {
+            echo "<script>
+                    alert('❌ Invalid OTP! Please try again.');
+                    window.location.href='verify_otp.php';
+                  </script>";
+            exit();
+        }
+    } else if($type == 'reset'){
+        // Forgot Password OTP verification
+        $query = "SELECT * FROM users WHERE email='$email' AND otp='$entered_otp'";
+        $result = mysqli_query($conn, $query);
         
-        echo "<script>
-                alert('✅ Email verified successfully! Please login.');
-                window.location.href='login.php';
-              </script>";
-        exit();
-    } else {
-        echo "<script>
-                alert('❌ Invalid OTP! Please try again.');
-                window.location.href='verify_otp.php';
-              </script>";
-        exit();
+        if(mysqli_num_rows($result) > 0){
+            $_SESSION['otp_verified'] = true;
+            unset($_SESSION['reset_email']);
+            echo "<script>
+                    alert('✅ OTP Verified! Please reset your password.');
+                    window.location.href='reset_password.php';
+                  </script>";
+            exit();
+        } else {
+            echo "<script>
+                    alert('❌ Invalid OTP! Please try again.');
+                    window.location.href='verify_otp.php';
+                  </script>";
+            exit();
+        }
     }
 }
 ?>
@@ -44,7 +70,7 @@ if(isset($_POST['verify'])){
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Verify OTP - Book's Library</title>
+    <title>Verify OTP</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .form-section {
@@ -106,24 +132,37 @@ if(isset($_POST['verify'])){
         .form-box a:hover {
             text-decoration: underline;
         }
-        .resend-btn {
-            background: #0b1f3a !important;
-            margin-top: 10px;
-        }
-        .resend-btn:hover {
-            background: #1a3a5c !important;
-        }
         .email-display {
             background: #f4f6f9;
             padding: 10px;
             border-radius: 5px;
             margin: 15px 0;
         }
+        .dark-mode .form-box {
+            background: #16213e;
+            color: white;
+        }
+        .dark-mode .form-box h2 {
+            color: white;
+        }
+        .dark-mode .form-box input {
+            background: #1a1a3a;
+            color: white;
+            border-color: #333;
+        }
+        .dark-mode .form-box p {
+            color: #aaa;
+        }
+        .dark-mode .form-box a {
+            color: #ffc72c;
+        }
+        .dark-mode .email-display {
+            background: #1a1a3a;
+        }
     </style>
 </head>
 <body>
 
-<!-- Navigation -->
 <nav>
     <div class="logo">📖 Book's Library</div>
     <ul>
@@ -131,13 +170,14 @@ if(isset($_POST['verify'])){
         <li><a href="books.php">Books</a></li>
         <li><a href="login.php">Login</a></li>
         <li><a href="register.php">Register</a></li>
+        <li><button onclick="toggleDarkMode()" class="dark-btn">🌙 Dark</button></li>
     </ul>
 </nav>
 
 <section class="form-section">
     <div class="form-box">
 
-        <h2>🔐 Verify Your Email</h2>
+        <h2>🔐 Verify OTP</h2>
         
         <p>Enter the 6-digit OTP sent to</p>
         <div class="email-display">
@@ -152,25 +192,34 @@ if(isset($_POST['verify'])){
                    required>
             <br>
             <button type="submit" name="verify">
-                ✅ Verify Email
-            </button>
-        </form>
-
-        <br>
-
-        <!-- Resend OTP Form -->
-        <form method="POST" action="resend_otp.php">
-            <button type="submit" name="resend" class="resend-btn">
-                📩 Resend OTP
+                ✅ Verify OTP
             </button>
         </form>
 
         <p style="margin-top: 20px;">
-            <a href="register.php">← Back to Register</a>
+            <a href="<?php echo ($type == 'registration') ? 'register.php' : 'forgot_password.php'; ?>">
+                ← Back
+            </a>
         </p>
 
     </div>
 </section>
+
+<script>
+if(localStorage.getItem("theme") === "dark"){
+    document.body.classList.add("dark-mode");
+}
+
+function toggleDarkMode(){
+    document.body.classList.toggle("dark-mode");
+    if(document.body.classList.contains("dark-mode")){
+        localStorage.setItem("theme", "dark");
+    }
+    else{
+        localStorage.setItem("theme", "light");
+    }
+}
+</script>
 
 </body>
 </html>
