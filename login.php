@@ -7,47 +7,27 @@ if(isset($_POST['login'])){
     $email = mysqli_real_escape_string($conn, $_POST['email']);
     $password = $_POST['password'];
 
-    // Get user from database
-    $query = "SELECT * FROM users WHERE email='$email'";
+    // Simple query with plain password
+    $query = "SELECT * FROM users WHERE email='$email' AND password='$password'";
     $result = mysqli_query($conn, $query);
 
     if(mysqli_num_rows($result) > 0){
 
         $user = mysqli_fetch_assoc($result);
 
-        // ========== CHECK 1: OTP VERIFIED? ==========
-        if($user['is_verified'] == 0){
-            echo "<script>
-                    alert('⚠️ Please verify your email first! Check your inbox for OTP.');
-                    window.location.href='verify_otp.php';
-                  </script>";
-            exit();
-        }
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['fullname'] = $user['fullname'];
+        $_SESSION['email'] = $user['email'];
 
-        // ========== CHECK 2: PASSWORD VERIFY ==========
-        if(password_verify($password, $user['password'])){
-
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['fullname'] = $user['fullname'];
-            $_SESSION['email'] = $user['email'];
-
-            echo "<script>
-                    alert('✅ Login Successful');
-                    window.location.href='index.php';
-                  </script>";
-            exit();
-
-        } else {
-            echo "<script>
-                    alert('❌ Invalid Password');
-                    window.location.href='login.php';
-                  </script>";
-            exit();
-        }
+        echo "<script>
+                alert('✅ Login Successful');
+                window.location.href='index.php';
+              </script>";
+        exit();
 
     } else {
         echo "<script>
-                alert('❌ Email not found');
+                alert('❌ Invalid Email or Password');
                 window.location.href='login.php';
               </script>";
         exit();

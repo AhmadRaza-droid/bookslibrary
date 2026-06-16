@@ -1,14 +1,6 @@
 <?php
-session_start();  // ✅ Pehle line
+session_start();
 include 'config.php';
-
-// PHPMailer
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-require 'phpmailer/src/Exception.php';
-require 'phpmailer/src/PHPMailer.php';
-require 'phpmailer/src/SMTP.php';
 
 if(isset($_POST['register'])){
     $fullname = mysqli_real_escape_string($conn, $_POST['fullname']);
@@ -29,61 +21,18 @@ if(isset($_POST['register'])){
         exit();
     }
 
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-    $otp = rand(100000, 999999);
-    $otp_expiry = date('Y-m-d H:i:s', strtotime('+10 minutes'));
-
-    $query = "INSERT INTO users(fullname, email, password, otp, otp_expiry, is_verified) 
-              VALUES('$fullname', '$email', '$hashed_password', '$otp', '$otp_expiry', 0)";
+    // ✅ SIMPLE PASSWORD - NO HASH
+    $query = "INSERT INTO users(fullname, email, password, is_verified) 
+              VALUES('$fullname', '$email', '$password', 1)";  // is_verified = 1 by default
 
     $result = mysqli_query($conn, $query);
 
     if ($result) {
-        // ✅ YAHAN SESSION SET KARO - IMPORTANT!
-        $_SESSION['temp_email'] = $email;
-        
-        // Send OTP via SMTP
-        $mail = new PHPMailer(true);
-        
-        try {
-            $mail->isSMTP();
-            $mail->Host = 'smtp.gmail.com';
-            $mail->SMTPAuth = true;
-            $mail->Username = 'universitylibrary172@gmail.com';
-            $mail->Password = 'zuepxvysbxrocdef';
-            $mail->SMTPSecure = 'tls';
-            $mail->Port = 587;
-            $mail->setFrom('universitylibrary172@gmail.com', 'Book Library');
-            $mail->addAddress($email, $fullname);
-            $mail->isHTML(true);
-            $mail->Subject = 'Verify Your Email - OTP Code';
-            $mail->Body = "
-                <div style='font-family: Arial; padding: 20px;'>
-                    <h2 style='color: #0b1f3a;'>Email Verification</h2>
-                    <p>Hello <strong>$fullname</strong>,</p>
-                    <p>Your OTP code is:</p>
-                    <h1 style='color: #28a745; font-size: 40px;'>$otp</h1>
-                    <p>This OTP is valid for <strong>10 minutes</strong>.</p>
-                    <hr>
-                    <small>📚 Book's Library Team</small>
-                </div>
-            ";
-            $mail->send();
-            
-            echo "<script>
-                    alert('✅ Registration Successful! OTP sent to your email.');
-                    window.location.href='verify_otp.php';
-                  </script>";
-            exit();
-            
-        } catch(Exception $e) {
-            echo "<script>
-                    alert('⚠️ Registration Successful but OTP email failed! Please contact admin.');
-                    window.location.href='login.php';
-                  </script>";
-            exit();
-        }
-        
+        echo "<script>
+                alert('✅ Registration Successful! Please login.');
+                window.location.href='login.php';
+              </script>";
+        exit();
     } else {
         echo "<script>alert('❌ Registration Failed'); window.location.href='register.php';</script>";
         exit();
