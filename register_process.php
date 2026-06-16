@@ -1,5 +1,5 @@
 <?php
-session_start();
+session_start();  // ✅ Pehle line
 include 'config.php';
 
 // PHPMailer
@@ -16,13 +16,11 @@ if(isset($_POST['register'])){
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
 
-    // Check if passwords match
     if ($password != $confirm_password) {
         echo "<script>alert('Passwords do not match'); window.location.href='register.php';</script>";
         exit();
     }
 
-    // Check if email already exists
     $check_query = "SELECT id FROM users WHERE email = '$email'";
     $check_result = mysqli_query($conn, $check_query);
 
@@ -31,20 +29,19 @@ if(isset($_POST['register'])){
         exit();
     }
 
-    // Hash password
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-    
-    // Generate OTP
     $otp = rand(100000, 999999);
     $otp_expiry = date('Y-m-d H:i:s', strtotime('+10 minutes'));
 
-    // Insert user with OTP (is_verified = 0)
     $query = "INSERT INTO users(fullname, email, password, otp, otp_expiry, is_verified) 
               VALUES('$fullname', '$email', '$hashed_password', '$otp', '$otp_expiry', 0)";
 
     $result = mysqli_query($conn, $query);
 
     if ($result) {
+        // ✅ YAHAN SESSION SET KARO - IMPORTANT!
+        $_SESSION['temp_email'] = $email;
+        
         // Send OTP via SMTP
         $mail = new PHPMailer(true);
         
@@ -73,17 +70,23 @@ if(isset($_POST['register'])){
             ";
             $mail->send();
             
-            $_SESSION['temp_email'] = $email;
-            echo "<script>alert('Registration Successful! OTP sent to your email. Please verify.'); window.location.href='verify_otp.php';</script>";
+            echo "<script>
+                    alert('✅ Registration Successful! OTP sent to your email.');
+                    window.location.href='verify_otp.php';
+                  </script>";
             exit();
             
         } catch(Exception $e) {
-            echo "<script>alert('Registration Successful but OTP email failed! Please contact admin.'); window.location.href='login.php';</script>";
+            echo "<script>
+                    alert('⚠️ Registration Successful but OTP email failed! Please contact admin.');
+                    window.location.href='login.php';
+                  </script>";
             exit();
         }
         
     } else {
-        echo "<script>alert('Registration Failed: " . mysqli_error($conn) . "'); window.location.href='register.php';</script>";
+        echo "<script>alert('❌ Registration Failed'); window.location.href='register.php';</script>";
+        exit();
     }
 }
 ?>
