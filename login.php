@@ -7,6 +7,7 @@ if(isset($_POST['login'])){
     $email = mysqli_real_escape_string($conn, $_POST['email']);
     $password = $_POST['password'];
 
+    // Get user from database
     $query = "SELECT * FROM users WHERE email='$email'";
     $result = mysqli_query($conn, $query);
 
@@ -14,7 +15,7 @@ if(isset($_POST['login'])){
 
         $user = mysqli_fetch_assoc($result);
 
-        // Check if email is verified
+        // ========== CHECK 1: OTP VERIFIED? ==========
         if($user['is_verified'] == 0){
             echo "<script>
                     alert('⚠️ Please verify your email first! Check your inbox for OTP.');
@@ -23,7 +24,7 @@ if(isset($_POST['login'])){
             exit();
         }
 
-        // Verify hashed password
+        // ========== CHECK 2: PASSWORD VERIFY ==========
         if(password_verify($password, $user['password'])){
 
             $_SESSION['user_id'] = $user['id'];
@@ -59,6 +60,86 @@ if(isset($_POST['login'])){
 <head>
     <title>Login - Library Management System</title>
     <link rel="stylesheet" href="style.css?v=100">
+    <style>
+        .form-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            padding: 20px;
+        }
+        .form-box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 420px;
+        }
+        .form-box h2 {
+            text-align: center;
+            color: #0b1f3a;
+            margin-bottom: 25px;
+        }
+        .form-box input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+        .form-box input:focus {
+            outline: none;
+            border-color: #0b1f3a;
+        }
+        .form-box button {
+            width: 100%;
+            padding: 12px;
+            background: #0b1f3a;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .form-box button:hover {
+            background: #1a3a5c;
+        }
+        .form-box p {
+            text-align: center;
+            margin-top: 15px;
+            color: #666;
+        }
+        .form-box a {
+            color: #0b1f3a;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .form-box a:hover {
+            text-decoration: underline;
+        }
+        .dark-mode .form-box {
+            background: #16213e;
+            color: white;
+        }
+        .dark-mode .form-box h2 {
+            color: white;
+        }
+        .dark-mode .form-box input {
+            background: #1a1a3a;
+            color: white;
+            border-color: #333;
+        }
+        .dark-mode .form-box p {
+            color: #aaa;
+        }
+        .dark-mode .form-box a {
+            color: #ffc72c;
+        }
+    </style>
 </head>
 
 <body>
