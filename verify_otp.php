@@ -2,50 +2,72 @@
 session_start();
 include 'config.php';
 
-// Debug - check session
-if(!isset($_SESSION['temp_email'])){
-    // Try to get email from database if session missing
-    if(isset($_SESSION['user_id'])){
-        $uid = $_SESSION['user_id'];
-        $q = mysqli_query($conn, "SELECT email FROM users WHERE id='$uid'");
-        if($row = mysqli_fetch_assoc($q)){
-            $_SESSION['temp_email'] = $row['email'];
-        }
-    }
-    
-    // If still no session, redirect to register
-    if(!isset($_SESSION['temp_email'])){
-        echo "<script>
-                alert('Session expired. Please register again.');
-                window.location.href='register.php';
-              </script>";
-        exit();
-    }
+// Check if user came from registration OR forgot password
+if(!isset($_SESSION['temp_email']) && !isset($_SESSION['reset_email'])){
+    echo "<script>
+            alert('Session expired. Please try again.');
+            window.location.href='login.php';
+          </script>";
+    exit();
 }
 
-$email = $_SESSION['temp_email'];
+// Get email from session (registration or forgot password)
+if(isset($_SESSION['temp_email'])){
+    $email = $_SESSION['temp_email'];
+    $type = 'registration';
+} else if(isset($_SESSION['reset_email'])){
+    $email = $_SESSION['reset_email'];
+    $type = 'reset';
+}
 
 if(isset($_POST['verify'])){
     $entered_otp = trim($_POST['otp']);
     
-    $query = "SELECT * FROM users WHERE email='$email' AND otp='$entered_otp' AND is_verified=0";
-    $result = mysqli_query($conn, $query);
-    
-    if(mysqli_num_rows($result) > 0){
-        mysqli_query($conn, "UPDATE users SET is_verified=1, otp=NULL, otp_expiry=NULL WHERE email='$email'");
-        unset($_SESSION['temp_email']);
+    if($type == 'registration'){
+        // ========== REGISTRATION OTP VERIFICATION ==========
+        $query = "SELECT * FROM users WHERE email='$email' AND otp='$entered_otp' AND is_verified=0";
+        $result = mysqli_query($conn, $query);
         
-        echo "<script>
-                alert('✅ Email verified successfully! Please login.');
-                window.location.href='login.php';
-              </script>";
-        exit();
-    } else {
-        echo "<script>
-                alert('❌ Invalid OTP! Please try again.');
-                window.location.href='verify_otp.php';
-              </script>";
-        exit();
+        if(mysqli_num_rows($result) > 0){
+            mysqli_query($conn, "UPDATE users SET is_verified=1, otp=NULL, otp_expiry=NULL WHERE email='$email'");
+            unset($_SESSION['temp_email']);
+            
+            echo "<script>
+                    alert('✅ Email verified successfully! Please login.');
+                    window.location.href='login.php';
+                  </script>";
+            exit();
+        } else {
+            echo "<script>
+                    alert('❌ Invalid OTP! Please try again.');
+                    window.location.href='verify_otp.php';
+                  </script>";
+            exit();
+        }
+        // ===================================================
+        
+    } else if($type == 'reset'){
+        // ========== FORGOT PASSWORD OTP VERIFICATION ==========
+        $query = "SELECT * FROM users WHERE email='$email' AND otp='$entered_otp'";
+        $result = mysqli_query($conn, $query);
+        
+        if(mysqli_num_rows($result) > 0){
+            $_SESSION['otp_verified'] = true;
+            unset($_SESSION['reset_email']);
+            
+            echo "<script>
+                    alert('✅ OTP Verified! Please reset your password.');
+                    window.location.href='forgot_password.php?step=reset';
+                  </script>";
+            exit();
+        } else {
+            echo "<script>
+                    alert('❌ Invalid OTP! Please try again.');
+                    window.location.href='verify_otp.php';
+                  </script>";
+            exit();
+        }
+        // ===================================================
     }
 }
 ?>
@@ -159,7 +181,7 @@ if(isset($_POST['verify'])){
 
 <section class="form-section">
     <div class="form-box">
-        <h2>🔐 Verify Your Email</h2>
+        <h2>🔐 Verify OTP</h2>
         <p>Enter the 6-digit OTP sent to</p>
         <div class="email-display">
             <strong><?php echo htmlspecialchars($email); ?></strong>
@@ -167,10 +189,12 @@ if(isset($_POST['verify'])){
         <form method="POST">
             <input type="text" name="otp" placeholder="Enter OTP" maxlength="6" required>
             <br>
-            <button type="submit" name="verify">✅ Verify Email</button>
+            <button type="submit" name="verify">✅ Verify OTP</button>
         </form>
         <p style="margin-top: 20px;">
-            <a href="register.php">← Back to Register</a>
+            <a href="<?php echo ($type == 'registration') ? 'register.php' : 'forgot_password.php'; ?>">
+                ← Back
+            </a>
         </p>
     </div>
 </section>
