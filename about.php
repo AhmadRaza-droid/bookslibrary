@@ -89,33 +89,6 @@ if($result){
             font-size: 14px;
             margin-top: 10px;
         }
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        .stat-item {
-            text-align: center;
-            padding: 20px;
-            background: #f5f8ff;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-        .stat-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        .stat-item .number {
-            font-size: 32px;
-            font-weight: bold;
-            color: #0b1f3a;
-        }
-        .stat-item .label {
-            font-size: 14px;
-            color: #888;
-            margin-top: 5px;
-        }
         @keyframes fadeUp {
             from {
                 opacity: 0;
@@ -125,13 +98,6 @@ if($result){
                 opacity: 1;
                 transform: translateY(0);
             }
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        .pulse {
-            animation: pulse 2s infinite;
         }
         .dark-mode .about-card {
             background: #16213e;
@@ -156,15 +122,6 @@ if($result){
         .dark-mode .team-member:hover {
             background: #2a2a4e;
         }
-        .dark-mode .stat-item {
-            background: #1a1a3a;
-        }
-        .dark-mode .stat-item .number {
-            color: #ffc72c;
-        }
-        .dark-mode .stat-item .label {
-            color: #aaa;
-        }
         .dark-mode .version-badge {
             background: #ffc72c;
             color: #0b1f3a;
@@ -178,9 +135,6 @@ if($result){
             }
             .team-grid {
                 grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            }
-            .stats-row {
-                grid-template-columns: 1fr 1fr;
             }
         }
     </style>
@@ -228,36 +182,8 @@ if($result){
         <span class="version-badge">📌 Version <?php echo htmlspecialchars($settings['site_tagline'] ?? '2.0'); ?></span>
     </div>
 
-    <!-- Stats Card -->
-    <div class="about-card" style="animation-delay: 0.2s;">
-        <h2><span class="icon">📊</span> Library Stats</h2>
-        <div class="stats-row">
-            <div class="stat-item">
-                <div class="number pulse"><?php 
-                    $total_books = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM books"));
-                    echo $total_books; 
-                ?></div>
-                <div class="label">📚 Total Books</div>
-            </div>
-            <div class="stat-item">
-                <div class="number pulse"><?php 
-                    $total_users = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM users"));
-                    echo $total_users; 
-                ?></div>
-                <div class="label">👥 Total Users</div>
-            </div>
-            <div class="stat-item">
-                <div class="number pulse"><?php 
-                    $total_downloads = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM downloads"));
-                    echo $total_downloads; 
-                ?></div>
-                <div class="label">📥 Total Downloads</div>
-            </div>
-        </div>
-    </div>
-
     <!-- Developer Card -->
-    <div class="about-card" style="animation-delay: 0.4s;">
+    <div class="about-card" style="animation-delay: 0.2s;">
         <h2><span class="icon">👨‍💻</span> Developer</h2>
         <p style="font-size:18px; font-weight:bold; color:#0b1f3a;">
             Ahmad Raza
@@ -266,7 +192,7 @@ if($result){
     </div>
 
     <!-- Team Card -->
-    <div class="about-card" style="animation-delay: 0.6s;">
+    <div class="about-card" style="animation-delay: 0.4s;">
         <h2><span class="icon">🤝</span> Supporters & Contributors</h2>
         <div class="team-grid">
             <div class="team-member">
@@ -294,7 +220,7 @@ if($result){
                 <div class="role">Contributor</div>
             </div>
             <div class="team-member">
-                <div class="name">Khaleel</div>
+                <div class="name"> Muhammad Khaleel</div>
                 <div class="role">Contributor</div>
             </div>
         </div>
