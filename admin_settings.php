@@ -21,8 +21,10 @@ if(isset($_POST['update_settings'])){
 // Get all settings
 $settings = [];
 $result = mysqli_query($conn, "SELECT * FROM settings");
-while($row = mysqli_fetch_assoc($result)){
-    $settings[$row['setting_key']] = $row['setting_value'];
+if($result){
+    while($row = mysqli_fetch_assoc($result)){
+        $settings[$row['setting_key']] = $row['setting_value'];
+    }
 }
 ?>
 
@@ -45,6 +47,9 @@ while($row = mysqli_fetch_assoc($result)){
         .dark-mode .settings-form input, .dark-mode .settings-form textarea, .dark-mode .settings-form select {
             background: #1a1a3a; color: white; border-color: #333;
         }
+        .btn-green { background: #28a745; color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-size: 16px; width: 100%; }
+        .btn-green:hover { background: #218838; }
+        .dark-mode .settings-container h2 { color: white; }
     </style>
 </head>
 <body>
@@ -69,32 +74,32 @@ while($row = mysqli_fetch_assoc($result)){
         <form method="POST">
             <div class="form-group">
                 <label>🏠 Site Name</label>
-                <input type="text" name="site_name" value="<?php echo htmlspecialchars($settings['site_name'] ?? ''); ?>">
+                <input type="text" name="site_name" value="<?php echo htmlspecialchars($settings['site_name'] ?? 'Book\'s Library'); ?>">
             </div>
             
             <div class="form-group">
                 <label>📝 Site Tagline</label>
-                <input type="text" name="site_tagline" value="<?php echo htmlspecialchars($settings['site_tagline'] ?? ''); ?>">
+                <input type="text" name="site_tagline" value="<?php echo htmlspecialchars($settings['site_tagline'] ?? 'Read. Learn. Grow.'); ?>">
             </div>
             
             <div class="form-group">
                 <label>📧 Contact Email</label>
-                <input type="email" name="contact_email" value="<?php echo htmlspecialchars($settings['contact_email'] ?? ''); ?>">
+                <input type="email" name="contact_email" value="<?php echo htmlspecialchars($settings['contact_email'] ?? 'admin@bookslibrary.com'); ?>">
             </div>
             
             <div class="form-group">
                 <label>📞 Contact Phone</label>
-                <input type="text" name="contact_phone" value="<?php echo htmlspecialchars($settings['contact_phone'] ?? ''); ?>">
+                <input type="text" name="contact_phone" value="<?php echo htmlspecialchars($settings['contact_phone'] ?? '+92 300 1234567'); ?>">
             </div>
             
             <div class="form-group">
                 <label>📍 Address</label>
-                <textarea name="contact_address" rows="3"><?php echo htmlspecialchars($settings['contact_address'] ?? ''); ?></textarea>
+                <textarea name="contact_address" rows="3"><?php echo htmlspecialchars($settings['contact_address'] ?? 'Management & Technology University, Lahore'); ?></textarea>
             </div>
             
             <div class="form-group">
                 <label>📄 Footer Text</label>
-                <input type="text" name="footer_text" value="<?php echo htmlspecialchars($settings['footer_text'] ?? ''); ?>">
+                <input type="text" name="footer_text" value="<?php echo htmlspecialchars($settings['footer_text'] ?? '© 2026 Book\'s Library. All Rights Reserved.'); ?>">
             </div>
             
             <div class="form-group">
@@ -113,7 +118,7 @@ while($row = mysqli_fetch_assoc($result)){
                 </select>
             </div>
             
-            <button type="submit" name="update_settings" class="green" style="width:100%;padding:14px;font-size:16px;">💾 Save Settings</button>
+            <button type="submit" name="update_settings" class="btn-green">💾 Save Settings</button>
         </form>
     </div>
 </div>
