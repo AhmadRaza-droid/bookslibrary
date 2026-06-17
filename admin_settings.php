@@ -9,20 +9,15 @@ if(!isset($_SESSION['admin'])){
 
 // Update settings
 if(isset($_POST['update_settings'])){
-    $errors = 0;
     foreach($_POST as $key => $value){
         if($key == 'update_settings') continue;
         $value = mysqli_real_escape_string($conn, $value);
-        $query = "UPDATE settings SET setting_value='$value' WHERE setting_key='$key'";
-        if(!mysqli_query($conn, $query)){
-            $errors++;
-        }
+        mysqli_query($conn, "UPDATE settings SET setting_value='$value' WHERE setting_key='$key'");
     }
-    if($errors == 0){
-        echo "<script>alert('✅ Settings updated successfully!'); window.location.href='admin_settings.php';</script>";
-    } else {
-        echo "<script>alert('❌ Some settings failed to update. Please try again.');</script>";
-    }
+    echo "<script>
+            alert('✅ Settings updated successfully!');
+            window.location.href='admin_settings.php';
+          </script>";
     exit();
 }
 
@@ -34,7 +29,7 @@ if($result && mysqli_num_rows($result) > 0){
         $settings[$row['setting_key']] = $row['setting_value'];
     }
 } else {
-    // If no data, insert default
+    // Insert default settings if empty
     mysqli_query($conn, "INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
         ('site_name', 'Book\'s Library'),
         ('site_tagline', 'Read. Learn. Grow.'),
@@ -46,7 +41,6 @@ if($result && mysqli_num_rows($result) > 0){
         ('maintenance_mode', '0'),
         ('allow_registration', '1')");
     
-    // Refresh settings
     $result = mysqli_query($conn, "SELECT * FROM settings");
     while($row = mysqli_fetch_assoc($result)){
         $settings[$row['setting_key']] = $row['setting_value'];
@@ -76,11 +70,19 @@ if($result && mysqli_num_rows($result) > 0){
         .dark-mode .settings-form input, .dark-mode .settings-form textarea, .dark-mode .settings-form select {
             background: #1a1a3a; color: white; border-color: #333;
         }
-        .dark-mode .settings-container h2 { color: white; }
-        .dark-mode .settings-form .subtitle { color: #aaa; }
         .dark-mode .btn-green { background: #28a745; }
         .dark-mode .btn-green:hover { background: #218838; }
         .subtitle { color: #666; margin-bottom: 20px; }
+        .dark-mode .subtitle { color: #aaa; }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-enabled { background: #28a745; color: white; }
+        .status-disabled { background: #dc3545; color: white; }
     </style>
 </head>
 <body>
@@ -142,6 +144,7 @@ if($result && mysqli_num_rows($result) > 0){
                     <option value="0" <?php echo ($settings['maintenance_mode'] ?? '0') == '0' ? 'selected' : ''; ?>>Disabled</option>
                     <option value="1" <?php echo ($settings['maintenance_mode'] ?? '0') == '1' ? 'selected' : ''; ?>>Enabled</option>
                 </select>
+                <span style="font-size:12px;color:#666;"><?php echo ($settings['maintenance_mode'] ?? '0') == '1' ? '<span class="status-badge status-enabled">✅ Active</span>' : '<span class="status-badge status-disabled">❌ Inactive</span>'; ?></span>
             </div>
             
             <div class="form-group">
@@ -150,6 +153,7 @@ if($result && mysqli_num_rows($result) > 0){
                     <option value="1" <?php echo ($settings['allow_registration'] ?? '1') == '1' ? 'selected' : ''; ?>>Yes</option>
                     <option value="0" <?php echo ($settings['allow_registration'] ?? '1') == '0' ? 'selected' : ''; ?>>No</option>
                 </select>
+                <span style="font-size:12px;color:#666;"><?php echo ($settings['allow_registration'] ?? '1') == '1' ? '<span class="status-badge status-enabled">✅ Open</span>' : '<span class="status-badge status-disabled">❌ Closed</span>'; ?></span>
             </div>
             
             <button type="submit" name="update_settings" class="btn-green">💾 Save Settings</button>

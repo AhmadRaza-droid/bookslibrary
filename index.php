@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'config.php';
+include 'maintenance_check.php'; 
 
 // Search functionality
 $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';

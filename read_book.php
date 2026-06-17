@@ -1,6 +1,7 @@
 <?php
 include 'session_timeout.php';
 include 'config.php';
+include 'maintenance_check.php';
 
 if(!isset($_GET['id'])){
     header("Location: books.php");

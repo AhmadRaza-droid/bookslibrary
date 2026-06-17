@@ -1,9 +1,8 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
 include 'session_timeout.php';
 include 'config.php';
+include 'maintenance_check.php';
 
 if(!isset($_SESSION['user_id'])){
     header("Location: login.php");
