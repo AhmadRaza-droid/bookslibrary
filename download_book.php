@@ -2,6 +2,24 @@
 session_start();
 include 'config.php';
 
+// ========== CHECK AND CREATE DOWNLOADS TABLE IF NOT EXISTS ==========
+$table_check = mysqli_query($conn, "SHOW TABLES LIKE 'downloads'");
+if(mysqli_num_rows($table_check) == 0){
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS downloads (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        book_id INT NOT NULL,
+        book_title VARCHAR(255) NOT NULL,
+        download_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+}
+
+// ========== CHECK AND ADD download_count COLUMN IF NOT EXISTS ==========
+$column_check = mysqli_query($conn, "SHOW COLUMNS FROM books LIKE 'download_count'");
+if(mysqli_num_rows($column_check) == 0){
+    mysqli_query($conn, "ALTER TABLE books ADD COLUMN download_count INT DEFAULT 0");
+}
+
 if(isset($_GET['id'])){
 
     $book_id = mysqli_real_escape_string($conn, $_GET['id']);
@@ -16,7 +34,7 @@ if(isset($_GET['id'])){
         // Update download count
         mysqli_query($conn,
         "UPDATE books
-         SET downloads = downloads + 1
+         SET download_count = download_count + 1
          WHERE id='$book_id'");
 
         // Save download history if user logged in
