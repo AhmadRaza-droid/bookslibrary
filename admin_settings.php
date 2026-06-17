@@ -9,19 +9,45 @@ if(!isset($_SESSION['admin'])){
 
 // Update settings
 if(isset($_POST['update_settings'])){
+    $errors = 0;
     foreach($_POST as $key => $value){
         if($key == 'update_settings') continue;
         $value = mysqli_real_escape_string($conn, $value);
-        mysqli_query($conn, "UPDATE settings SET setting_value='$value' WHERE setting_key='$key'");
+        $query = "UPDATE settings SET setting_value='$value' WHERE setting_key='$key'";
+        if(!mysqli_query($conn, $query)){
+            $errors++;
+        }
     }
-    echo "<script>alert('✅ Settings updated successfully!'); window.location.href='admin_settings.php';</script>";
+    if($errors == 0){
+        echo "<script>alert('✅ Settings updated successfully!'); window.location.href='admin_settings.php';</script>";
+    } else {
+        echo "<script>alert('❌ Some settings failed to update. Please try again.');</script>";
+    }
     exit();
 }
 
 // Get all settings
 $settings = [];
 $result = mysqli_query($conn, "SELECT * FROM settings");
-if($result){
+if($result && mysqli_num_rows($result) > 0){
+    while($row = mysqli_fetch_assoc($result)){
+        $settings[$row['setting_key']] = $row['setting_value'];
+    }
+} else {
+    // If no data, insert default
+    mysqli_query($conn, "INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
+        ('site_name', 'Book\'s Library'),
+        ('site_tagline', 'Read. Learn. Grow.'),
+        ('site_logo', ''),
+        ('footer_text', '© 2026 Book\'s Library. All Rights Reserved.'),
+        ('contact_email', 'admin@bookslibrary.com'),
+        ('contact_phone', '+92 300 1234567'),
+        ('contact_address', 'Management & Technology University, Lahore'),
+        ('maintenance_mode', '0'),
+        ('allow_registration', '1')");
+    
+    // Refresh settings
+    $result = mysqli_query($conn, "SELECT * FROM settings");
     while($row = mysqli_fetch_assoc($result)){
         $settings[$row['setting_key']] = $row['setting_value'];
     }
@@ -40,16 +66,21 @@ if($result){
         .settings-form label { display: block; font-weight: bold; margin-bottom: 8px; color: #0b1f3a; }
         .settings-form input, .settings-form textarea, .settings-form select { 
             width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px;
+            box-sizing: border-box;
         }
         .settings-form input:focus, .settings-form textarea:focus { outline: none; border-color: #0b1f3a; }
+        .btn-green { background: #28a745; color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-size: 16px; width: 100%; }
+        .btn-green:hover { background: #218838; }
         .dark-mode .settings-form { background: #16213e; color: white; }
         .dark-mode .settings-form label { color: white; }
         .dark-mode .settings-form input, .dark-mode .settings-form textarea, .dark-mode .settings-form select {
             background: #1a1a3a; color: white; border-color: #333;
         }
-        .btn-green { background: #28a745; color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-size: 16px; width: 100%; }
-        .btn-green:hover { background: #218838; }
         .dark-mode .settings-container h2 { color: white; }
+        .dark-mode .settings-form .subtitle { color: #aaa; }
+        .dark-mode .btn-green { background: #28a745; }
+        .dark-mode .btn-green:hover { background: #218838; }
+        .subtitle { color: #666; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -71,6 +102,9 @@ if($result){
 
 <div class="settings-container">
     <div class="settings-form">
+        <h2 style="margin-bottom:5px;">Site Configuration</h2>
+        <p class="subtitle">Update your website settings below</p>
+        
         <form method="POST">
             <div class="form-group">
                 <label>🏠 Site Name</label>
