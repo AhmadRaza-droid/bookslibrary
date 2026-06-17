@@ -18,9 +18,78 @@ require 'phpmailer/src/SMTP.php';
 // ========== SMTP SETTINGS - EXACT COPY FROM FORGOT PASSWORD ==========
 $smtp_host = 'smtp.gmail.com';
 $smtp_email = 'universitylibrary172@gmail.com';
-$smtp_password = 'zuepxvysbxrocdef';  // ← EXACT same working password
+$smtp_password = 'zuepxvysbxrocdef';
 
-// Delete message - FIXED
+// ========== DELETE BOOK ==========
+if(isset($_GET['delete_book'])){
+    $id = $_GET['delete_book'];
+    mysqli_query($conn, "DELETE FROM books WHERE id='$id'");
+    echo "<script>alert('Book deleted successfully!'); window.location='?page=all_books';</script>";
+    exit();
+}
+
+// ========== DELETE USER ==========
+if(isset($_GET['delete_user'])){
+    $id = $_GET['delete_user'];
+    mysqli_query($conn, "DELETE FROM users WHERE id='$id'");
+    echo "<script>alert('User deleted successfully!'); window.location='?page=all_users';</script>";
+    exit();
+}
+
+// ========== ADD BOOK ==========
+if(isset($_POST['add_book'])){
+    $title = mysqli_real_escape_string($conn, $_POST['title']);
+    $author = mysqli_real_escape_string($conn, $_POST['author']);
+    $description = mysqli_real_escape_string($conn, $_POST['description']);
+    $category = mysqli_real_escape_string($conn, $_POST['category']);
+    $cover_image_url = mysqli_real_escape_string($conn, $_POST['cover_image_url']);
+    $read_link = mysqli_real_escape_string($conn, $_POST['read_link']);
+    $download_epub_link = mysqli_real_escape_string($conn, $_POST['download_epub_link']);
+    
+    $query = "INSERT INTO books (title, author, description, category, cover_image_url, read_link, download_epub_link) 
+              VALUES ('$title', '$author', '$description', '$category', '$cover_image_url', '$read_link', '$download_epub_link')";
+    
+    if(mysqli_query($conn, $query)){
+        echo "<script>alert('✅ Book added successfully!'); window.location='?page=all_books';</script>";
+    } else {
+        echo "<script>alert('❌ Error adding book: " . mysqli_error($conn) . "');</script>";
+    }
+    exit();
+}
+
+// ========== ADD CATEGORY ==========
+if(isset($_POST['add_category'])){
+    $category = mysqli_real_escape_string($conn, $_POST['category']);
+    mysqli_query($conn, "INSERT INTO categories (name) VALUES ('$category')");
+    echo "<script>alert('✅ Category added!'); window.location='?page=categories';</script>";
+    exit();
+}
+
+// ========== DELETE CATEGORY ==========
+if(isset($_GET['delete_category'])){
+    $id = $_GET['delete_category'];
+    mysqli_query($conn, "DELETE FROM categories WHERE id='$id'");
+    echo "<script>alert('Category deleted!'); window.location='?page=categories';</script>";
+    exit();
+}
+
+// ========== MAKE ADMIN ==========
+if(isset($_GET['make_admin'])){
+    $id = $_GET['make_admin'];
+    mysqli_query($conn, "UPDATE users SET is_admin=1 WHERE id='$id'");
+    echo "<script>alert('User is now Admin!'); window.location='?page=all_users';</script>";
+    exit();
+}
+
+// ========== REMOVE ADMIN ==========
+if(isset($_GET['remove_admin'])){
+    $id = $_GET['remove_admin'];
+    mysqli_query($conn, "UPDATE users SET is_admin=0 WHERE id='$id'");
+    echo "<script>alert('Admin rights removed!'); window.location='?page=all_users';</script>";
+    exit();
+}
+
+// Delete message
 if(isset($_GET['delete_message'])){
     $id = $_GET['delete_message'];
     mysqli_query($conn, "DELETE FROM messages WHERE id='$id'");
@@ -34,7 +103,6 @@ if(isset($_POST['reply_submit'])){
     $reply = mysqli_real_escape_string($conn, $_POST['reply']);
     mysqli_query($conn, "UPDATE messages SET reply='$reply' WHERE id='$message_id'");
     
-    // Send reply via email
     $msg = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM messages WHERE id='$message_id'"));
     if($msg){
         $mail = new PHPMailer(true);
@@ -72,10 +140,8 @@ if(isset($_POST['send_notification'])){
     $title = mysqli_real_escape_string($conn, $_POST['title']);
     $message_body = mysqli_real_escape_string($conn, $_POST['message']);
     
-    // Save to database
     mysqli_query($conn, "INSERT INTO notifications (title, message, created_at) VALUES ('$title', '$message_body', NOW())");
     
-    // Get all users
     $users = mysqli_query($conn, "SELECT email, fullname FROM users WHERE email != ''");
     $total_users = mysqli_num_rows($users);
     $sent_count = 0;
@@ -100,7 +166,7 @@ if(isset($_POST['send_notification'])){
                     <p>" . nl2br($message_body) . "</p>
                     <br>
                     <hr>
-                    <small style='color: #666;'>📚 Book's Library - Management & Technology University</small>
+                    <small style='color: #666;'>📚 Book's Library Team</small>
                 </div>
             ";
             $mail->AltBody = strip_tags($title . "\n\n" . $message_body);
@@ -115,19 +181,21 @@ if(isset($_POST['send_notification'])){
 // Get current page
 $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
 
-$books = mysqli_query($conn, "SELECT * FROM books");
+$books = mysqli_query($conn, "SELECT * FROM books ORDER BY id DESC");
 $messages = mysqli_query($conn, "SELECT * FROM messages ORDER BY id DESC");
-$all_users = mysqli_query($conn, "SELECT * FROM users");
+$all_users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
 $notifications = mysqli_query($conn, "SELECT * FROM notifications ORDER BY id DESC");
+$categories = mysqli_query($conn, "SELECT * FROM categories ORDER BY id DESC");
 
 $total_users = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM users"));
 $total_books = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM books"));
 $total_reviews = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM reviews"));
+$total_categories = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM categories"));
 
-$total_downloads_data = mysqli_fetch_assoc(mysqli_query($conn, "SELECT SUM(downloads) AS total FROM books"));
+$total_downloads_data = mysqli_fetch_assoc(mysqli_query($conn, "SELECT SUM(download_count) AS total FROM books"));
 $total_downloads = $total_downloads_data['total'] ?? 0;
 
-$most_downloaded = mysqli_query($conn, "SELECT title, downloads FROM books ORDER BY downloads DESC LIMIT 5");
+$most_downloaded = mysqli_query($conn, "SELECT title, download_count FROM books ORDER BY download_count DESC LIMIT 5");
 $most_favorites = mysqli_query($conn,
 "SELECT books.title, COUNT(favorites.id) AS total
  FROM favorites
@@ -150,190 +218,47 @@ $book_requests = mysqli_query($conn,
     <link rel="stylesheet" href="style.css?v=8000">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f4f6f9;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; }
         .side-menu {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 260px;
-            height: 100%;
+            position: fixed; left: 0; top: 0; width: 260px; height: 100%;
             background: linear-gradient(180deg, #0b1f3a 0%, #1a3a5c 100%);
-            color: white;
-            z-index: 100;
-            overflow-y: auto;
+            color: white; z-index: 100; overflow-y: auto;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
         }
-        .side-menu .logo {
-            padding: 25px 20px;
-            font-size: 22px;
-            font-weight: bold;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            text-align: center;
-        }
-        .side-menu a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 20px;
-            color: white;
-            text-decoration: none;
-            transition: 0.2s;
-            border-left: 3px solid transparent;
-        }
-        .side-menu a:hover {
-            background: rgba(255,255,255,0.1);
-            border-left-color: #ffc72c;
-        }
-        .side-menu a.active {
-            background: rgba(255,255,255,0.15);
-            border-left-color: #ffc72c;
-        }
-        .main-content {
-            margin-left: 260px;
-            padding: 20px;
-        }
-        .top-bar {
-            background: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .top-bar h2 {
-            color: #0b1f3a;
-        }
-        .dark-btn {
-            background: #0b1f3a;
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .stats-container {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-bottom: 30px;
-        }
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            width: 220px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .stat-card h2 {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-        .stat-card h1 {
-            color: #0b1f3a;
-            font-size: 32px;
-        }
-        .table-section {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            overflow-x: auto;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .table-section h2 {
-            margin-bottom: 15px;
-            color: #0b1f3a;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background: #0b1f3a;
-            color: white;
-        }
-        button, .btn {
-            background: #0b1f3a;
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button.red, .btn-red {
-            background: #dc3545;
-        }
-        button.green, .btn-green {
-            background: #28a745;
-        }
-        input, textarea, select {
-            padding: 10px;
-            margin: 5px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 5px;
-        }
-        .dark-mode {
-            background: #1a1a2e;
-            color: white;
-        }
-        .dark-mode .stat-card, 
-        .dark-mode .table-section, 
-        .dark-mode .top-bar {
-            background: #16213e;
-            color: white;
-        }
-        .dark-mode .stat-card h2,
-        .dark-mode .stat-card h1 {
-            color: white;
-        }
-        .hamburger-mobile {
-            display: none;
-        }
+        .side-menu .logo { padding: 25px 20px; font-size: 22px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .side-menu a { display: flex; align-items: center; gap: 12px; padding: 14px 20px; color: white; text-decoration: none; border-left: 3px solid transparent; }
+        .side-menu a:hover { background: rgba(255,255,255,0.1); border-left-color: #ffc72c; }
+        .side-menu a.active { background: rgba(255,255,255,0.15); border-left-color: #ffc72c; }
+        .main-content { margin-left: 260px; padding: 20px; }
+        .top-bar { background: white; padding: 15px 25px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .top-bar h2 { color: #0b1f3a; }
+        .dark-btn { background: #0b1f3a; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; }
+        .stats-container { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; width: 220px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .stat-card h2 { color: #666; font-size: 14px; margin-bottom: 10px; }
+        .stat-card h1 { color: #0b1f3a; font-size: 32px; }
+        .table-section { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .table-section h2 { margin-bottom: 15px; color: #0b1f3a; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #0b1f3a; color: white; }
+        button, .btn { background: #0b1f3a; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; }
+        button.red, .btn-red { background: #dc3545; }
+        button.green, .btn-green { background: #28a745; }
+        input, textarea, select { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }
+        .action-buttons { display: flex; gap: 5px; flex-wrap: wrap; }
+        .dark-mode { background: #1a1a2e; color: white; }
+        .dark-mode .stat-card, .dark-mode .table-section, .dark-mode .top-bar { background: #16213e; color: white; }
+        .dark-mode .stat-card h2, .dark-mode .stat-card h1 { color: white; }
+        .hamburger-mobile { display: none; }
         @media (max-width: 768px) {
-            .side-menu {
-                left: -260px;
-                transition: 0.3s;
-            }
-            .side-menu.open {
-                left: 0;
-            }
-            .main-content {
-                margin-left: 0;
-            }
-            .hamburger-mobile {
-                display: block;
-                position: fixed;
-                top: 15px;
-                left: 15px;
-                z-index: 101;
-                background: #0b1f3a;
-                padding: 10px;
-                border-radius: 5px;
-                cursor: pointer;
-                color: white;
-                font-size: 24px;
-            }
+            .side-menu { left: -260px; transition: 0.3s; }
+            .side-menu.open { left: 0; }
+            .main-content { margin-left: 0; }
+            .hamburger-mobile { display: block; position: fixed; top: 15px; left: 15px; z-index: 101; background: #0b1f3a; padding: 10px; border-radius: 5px; cursor: pointer; color: white; font-size: 24px; }
         }
+        .badge-admin { background: #ffc72c; color: #0b1f3a; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -345,12 +270,15 @@ $book_requests = mysqli_query($conn,
     <a href="?page=dashboard" class="<?php echo $page == 'dashboard' ? 'active' : ''; ?>">🏠 Dashboard</a>
     <a href="?page=website" class="<?php echo $page == 'website' ? 'active' : ''; ?>">🌐 Website</a>
     <a href="?page=all_books" class="<?php echo $page == 'all_books' ? 'active' : ''; ?>">📚 All Books</a>
+    <a href="?page=add_book" class="<?php echo $page == 'add_book' ? 'active' : ''; ?>">➕ Add Book</a>
+    <a href="?page=categories" class="<?php echo $page == 'categories' ? 'active' : ''; ?>">📂 Categories</a>
     <a href="?page=all_users" class="<?php echo $page == 'all_users' ? 'active' : ''; ?>">👥 All Users</a>
     <a href="?page=messages" class="<?php echo $page == 'messages' ? 'active' : ''; ?>">💬 Messages</a>
-    <a href="?page=notifications" class="<?php echo $page == 'notifications' ? 'active' : ''; ?>">🔔 Send Notification</a>
+    <a href="?page=notifications" class="<?php echo $page == 'notifications' ? 'active' : ''; ?>">🔔 Notifications</a>
     <a href="?page=auto_import" class="<?php echo $page == 'auto_import' ? 'active' : ''; ?>">📥 Auto Import</a>
     <a href="?page=book_requests" class="<?php echo $page == 'book_requests' ? 'active' : ''; ?>">📝 Book Requests</a>
     <a href="?page=reviews" class="<?php echo $page == 'reviews' ? 'active' : ''; ?>">⭐ Reviews</a>
+    <a href="admin_analytics.php">📊 Analytics</a>
     <a href="admin_logout.php">🚪 Logout</a>
 </div>
 
@@ -360,11 +288,12 @@ $book_requests = mysqli_query($conn,
         <button onclick="toggleDarkMode()" class="dark-btn">🌙 Dark Mode</button>
     </div>
 
-    <!-- DASHBOARD PAGE -->
+    <!-- ========== DASHBOARD PAGE ========== -->
     <?php if($page == 'dashboard'): ?>
     <div class="stats-container">
         <div class="stat-card"><h2>Total Users</h2><h1><?php echo $total_users; ?></h1></div>
         <div class="stat-card"><h2>Total Books</h2><h1><?php echo $total_books; ?></h1></div>
+        <div class="stat-card"><h2>Total Categories</h2><h1><?php echo $total_categories; ?></h1></div>
         <div class="stat-card"><h2>Total Reviews</h2><h1><?php echo $total_reviews; ?></h1></div>
         <div class="stat-card"><h2>Total Downloads</h2><h1><?php echo $total_downloads; ?></h1></div>
     </div>
@@ -374,38 +303,68 @@ $book_requests = mysqli_query($conn,
         <table>
             <tr><th>Book Title</th><th>Downloads</th></tr>
             <?php while($row = mysqli_fetch_assoc($most_downloaded)){ ?>
-            <tr><td><?php echo htmlspecialchars($row['title']); ?></td><td><?php echo $row['downloads']; ?></td></tr>
+            <tr><td><?php echo htmlspecialchars($row['title']); ?></td><td><?php echo $row['download_count']; ?></td></tr>
             <?php } ?>
         </table>
     </div>
 
     <div class="table-section">
         <h2>Most Favorited Books</h2>
-        <tr>
+        <table>
             <tr><th>Book Title</th><th>Favorites</th></tr>
             <?php while($row = mysqli_fetch_assoc($most_favorites)){ ?>
-            <tr><td><?php echo htmlspecialchars($row['title']); ?></td>
-                    <td><?php echo $row['total']; ?></td>
-                </tr>
+            <tr><td><?php echo htmlspecialchars($row['title']); ?></td><td><?php echo $row['total']; ?></td></tr>
             <?php } ?>
         </table>
     </div>
+    <?php endif; ?>
 
+    <!-- ========== ADD BOOK PAGE ========== -->
+    <?php if($page == 'add_book'): ?>
     <div class="table-section">
-        <h2>Add New Book</h2>
-        <form action="add_book.php" method="POST">
+        <h2>➕ Add New Book</h2>
+        <form method="POST" action="">
             <input type="text" name="title" placeholder="Book Title" required>
             <input type="text" name="author" placeholder="Author" required>
-            <textarea name="description" placeholder="Description" rows="3"></textarea>
-            <input type="text" name="cover_image_url" placeholder="Cover URL">
+            <select name="category">
+                <option value="">Select Category</option>
+                <?php 
+                $cats = mysqli_query($conn, "SELECT * FROM categories");
+                while($cat = mysqli_fetch_assoc($cats)){ ?>
+                    <option value="<?php echo htmlspecialchars($cat['name']); ?>"><?php echo htmlspecialchars($cat['name']); ?></option>
+                <?php } ?>
+            </select>
+            <textarea name="description" placeholder="Description" rows="4"></textarea>
+            <input type="text" name="cover_image_url" placeholder="Cover Image URL">
             <input type="text" name="read_link" placeholder="Read Link">
-            <input type="text" name="download_epub_link" placeholder="Download Link">
-            <button type="submit">Add Book</button>
+            <input type="text" name="download_epub_link" placeholder="Download EPUB Link">
+            <button type="submit" name="add_book" class="green">Add Book</button>
         </form>
     </div>
     <?php endif; ?>
 
-    <!-- WEBSITE PAGE -->
+    <!-- ========== CATEGORIES PAGE ========== -->
+    <?php if($page == 'categories'): ?>
+    <div class="table-section">
+        <h2>📂 Manage Categories</h2>
+        <form method="POST" action="" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+            <input type="text" name="category" placeholder="Category Name" required style="flex:1;min-width:200px;">
+            <button type="submit" name="add_category" class="green">Add Category</button>
+        </form>
+        <table>
+            <tr><th>ID</th><th>Category Name</th><th>Action</th></tr>
+            <?php while($cat = mysqli_fetch_assoc($categories)){ ?>
+            <tr>
+                <td><?php echo $cat['id']; ?></td>
+                <td><?php echo htmlspecialchars($cat['name']); ?></td>
+                <td><a href="?page=categories&delete_category=<?php echo $cat['id']; ?>" onclick="return confirm('Delete this category?')"><button class="red">Delete</button></a></td>
+            </tr>
+            <?php } ?>
+        </table>
+    </div>
+    <?php endif; ?>
+
+    <!-- ========== WEBSITE PAGE ========== -->
     <?php if($page == 'website'): ?>
     <div class="table-section">
         <h2>🌐 Website</h2>
@@ -414,45 +373,61 @@ $book_requests = mysqli_query($conn,
     </div>
     <?php endif; ?>
 
-    <!-- ALL BOOKS PAGE -->
+    <!-- ========== ALL BOOKS PAGE ========== -->
     <?php if($page == 'all_books'): ?>
     <div class="table-section">
-        <h2>📚 All Books</h2>
+        <h2>📚 All Books (<?php echo mysqli_num_rows($books); ?>)</h2>
         <table>
-            <tr><th>ID</th><th>Cover</th><th>Title</th><th>Author</th><th>Action</th></tr>
+            <tr><th>ID</th><th>Cover</th><th>Title</th><th>Author</th><th>Category</th><th>Downloads</th><th>Action</th></tr>
             <?php while($row = mysqli_fetch_assoc($books)){ ?>
             <tr>
                 <td><?php echo $row['id']; ?></td>
-                <td><img src="<?php echo htmlspecialchars($row['cover_image_url']); ?>" width="50"></td>
+                <td><img src="<?php echo htmlspecialchars($row['cover_image_url']); ?>" width="50" style="border-radius:5px;"></td>
                 <td><?php echo htmlspecialchars($row['title']); ?></td>
                 <td><?php echo htmlspecialchars($row['author']); ?></td>
-                <td><a href="delete_book.php?id=<?php echo $row['id']; ?>" onclick="return confirm('Delete this book?')"><button class="red">Delete</button></a></td>
+                <td><?php echo htmlspecialchars($row['category'] ?? 'N/A'); ?></td>
+                <td><?php echo $row['download_count'] ?? 0; ?></td>
+                <td><a href="?page=all_books&delete_book=<?php echo $row['id']; ?>" onclick="return confirm('Delete this book?')"><button class="red">Delete</button></a></td>
             </tr>
             <?php } ?>
         </table>
     </div>
     <?php endif; ?>
 
-    <!-- ALL USERS PAGE -->
+    <!-- ========== ALL USERS PAGE ========== -->
     <?php if($page == 'all_users'): ?>
     <div class="table-section">
-        <h2>👥 All Users</h2>
+        <h2>👥 All Users (<?php echo mysqli_num_rows($all_users); ?>)</h2>
         <table>
-            <tr><th>ID</th><th>Profile</th><th>Full Name</th><th>Email</th><th>Action</th></tr>
+            <tr><th>ID</th><th>Profile</th><th>Full Name</th><th>Email</th><th>Role</th><th>Action</th></tr>
             <?php while($user = mysqli_fetch_assoc($all_users)){ ?>
             <tr>
                 <td><?php echo $user['id']; ?></td>
                 <td><?php echo $user['profile_image'] ? '<img src="'.$user['profile_image'].'" width="40" style="border-radius:50%;">' : '👤'; ?></td>
                 <td><?php echo htmlspecialchars($user['fullname']); ?></td>
                 <td><?php echo htmlspecialchars($user['email']); ?></td>
-                <td><a href="delete_user.php?id=<?php echo $user['id']; ?>" onclick="return confirm('Delete this user?')"><button class="red">Delete</button></a></td>
+                <td>
+                    <?php if(isset($user['is_admin']) && $user['is_admin'] == 1){ ?>
+                        <span class="badge-admin">👑 Admin</span>
+                    <?php } else { ?>
+                        User
+                    <?php } ?>
+                </td>
+                <td class="action-buttons">
+                    <?php if(isset($user['is_admin']) && $user['is_admin'] == 1){ ?>
+                        <a href="?page=all_users&remove_admin=<?php echo $user['id']; ?>"><button style="background:#ffc72c;color:#0b1f3a;">Remove Admin</button></a>
+                    <?php } else { ?>
+                        <a href="?page=all_users&make_admin=<?php echo $user['id']; ?>"><button class="green">Make Admin</button></a>
+                    <?php } ?>
+                    <a href="?page=all_users&delete_user=<?php echo $user['id']; ?>" onclick="return confirm('Delete this user?')"><button class="red">Delete</button></a>
+                </td>
             </tr>
             <?php } ?>
         </table>
     </div>
     <?php endif; ?>
 
-    <!-- MESSAGES PAGE -->
+    <!-- ========== MESSAGES PAGE ========== -->
     <?php if($page == 'messages'): ?>
     <div class="table-section">
         <h2>💬 User Messages</h2>
@@ -478,52 +453,42 @@ $book_requests = mysqli_query($conn,
     </div>
     <?php endif; ?>
 
-    <!-- NOTIFICATIONS PAGE -->
+    <!-- ========== NOTIFICATIONS PAGE ========== -->
     <?php if($page == 'notifications'): ?>
     <div class="table-section">
         <h2>🔔 Send Notification</h2>
-        <p style="color: #28a745; margin-bottom: 15px;">✅ Notification will be sent via EMAIL to all users AND saved to database!</p>
+        <p style="color: #28a745; margin-bottom: 15px;">✅ Notification sent via EMAIL + saved to database!</p>
         <form method="POST" action="">
             <input type="text" name="title" placeholder="Notification Title" required style="width:100%; margin-bottom:10px;">
-            <textarea name="message" placeholder="Write notification message here..." rows="5" required style="width:100%; margin-bottom:10px;"></textarea>
+            <textarea name="message" placeholder="Write notification..." rows="5" required style="width:100%; margin-bottom:10px;"></textarea>
             <button type="submit" name="send_notification" class="green">📢 Send to All Users</button>
         </form>
     </div>
-
     <div class="table-section">
-        <h2>📋 Sent Notifications History</h2>
+        <h2>📋 Sent Notifications</h2>
         <table>
-            <tr><th>ID</th><th>Title</th><th>Message</th><th>Sent Date</th></tr>
+            <tr><th>ID</th><th>Title</th><th>Message</th><th>Date</th></tr>
             <?php while($notif = mysqli_fetch_assoc($notifications)){ ?>
-            <tr>
-                <td><?php echo $notif['id']; ?></td>
-                <td><?php echo htmlspecialchars($notif['title']); ?></td>
-                <td><?php echo htmlspecialchars($notif['message']); ?></td>
-                <td><?php echo $notif['created_at']; ?></td>
-            </tr>
-            <?php } ?>
-            <?php if(mysqli_num_rows($notifications) == 0){ ?>
-            <tr><td colspan="4" style="text-align:center;">No notifications sent yet</td></tr>
+            <tr><td><?php echo $notif['id']; ?></td><td><?php echo htmlspecialchars($notif['title']); ?></td><td><?php echo htmlspecialchars($notif['message']); ?></td><td><?php echo $notif['created_at']; ?></td></tr>
             <?php } ?>
         </table>
     </div>
     <?php endif; ?>
 
-    <!-- AUTO IMPORT PAGE -->
+    <!-- ========== AUTO IMPORT PAGE ========== -->
     <?php if($page == 'auto_import'): ?>
     <div class="table-section">
         <h2>📥 Auto Import Books</h2>
-        <p>Click the button below to automatically import books from external source.</p>
         <a href="auto_scrape_books.php"><button class="green">🚀 Auto Import Books</button></a>
     </div>
     <?php endif; ?>
 
-    <!-- BOOK REQUESTS PAGE -->
+    <!-- ========== BOOK REQUESTS PAGE ========== -->
     <?php if($page == 'book_requests'): ?>
     <div class="table-section">
-        <h2>📝 Book Requests from Users</h2>
+        <h2>📝 Book Requests</h2>
         <table>
-            <tr><th>ID</th><th>User</th><th>Email</th><th>Book Name</th><th>Category</th><th>Message</th><th>Status</th><th>Action</th></tr>
+            <tr><th>ID</th><th>User</th><th>Email</th><th>Book</th><th>Category</th><th>Status</th><th>Action</th></tr>
             <?php while($req = mysqli_fetch_assoc($book_requests)){ ?>
             <form method="POST" action="update_request_status.php">
                 <input type="hidden" name="request_id" value="<?php echo $req['id']; ?>">
@@ -533,7 +498,6 @@ $book_requests = mysqli_query($conn,
                     <td><?php echo htmlspecialchars($req['email']); ?></td>
                     <td><?php echo htmlspecialchars($req['book_name']); ?></td>
                     <td><?php echo htmlspecialchars($req['category']); ?></td>
-                    <td><?php echo htmlspecialchars($req['message']); ?></td>
                     <td>
                         <select name="status">
                             <option <?php echo $req['status']=='Pending'?'selected':''; ?>>Pending</option>
@@ -550,7 +514,7 @@ $book_requests = mysqli_query($conn,
     </div>
     <?php endif; ?>
 
-    <!-- REVIEWS PAGE -->
+    <!-- ========== REVIEWS PAGE ========== -->
     <?php if($page == 'reviews'): ?>
     <div class="table-section">
         <h2>⭐ Book Reviews</h2>
@@ -565,8 +529,7 @@ $book_requests = mysqli_query($conn,
                 <td><?php echo htmlspecialchars($review['title']); ?></td>
                 <td><?php echo $review['rating']; ?> ⭐</td>
                 <td><?php echo htmlspecialchars($review['review']); ?></td>
-                <td><a href="delete_review.php?id=<?php echo $review['id']; ?>"><button class="red">Delete</button></a>
-                <td>
+                <td><a href="delete_review.php?id=<?php echo $review['id']; ?>"><button class="red">Delete</button></a></td>
             </tr>
             <?php } ?>
         </table>
