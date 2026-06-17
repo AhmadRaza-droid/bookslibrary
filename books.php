@@ -51,7 +51,7 @@ $result = mysqli_query($conn, "SELECT * FROM books $where LIMIT $limit OFFSET $o
 <body>
 
 <nav>
-    <div class="logo">📖 Books Library</div>
+    <div class="logo">📖 Book's Library</div>
 
     <ul>
         <li><a href="index.php">Home</a></li>

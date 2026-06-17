@@ -217,7 +217,7 @@ $downloads = mysqli_query($conn,
 <body>
 
 <nav>
-    <div class="logo">📖 Library Management System</div>
+    <div class="logo">📖 Book's Library</div>
     <ul>
         <li><a href="index.php">Home</a></li>
         <li><a href="books.php">Books</a></li>
