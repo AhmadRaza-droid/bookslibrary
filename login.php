@@ -2,6 +2,14 @@
 session_start();
 include 'config.php';
 
+// ========== PHPMailer USE STATEMENTS - TOP PAR ==========
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require 'phpmailer/src/Exception.php';
+require 'phpmailer/src/PHPMailer.php';
+require 'phpmailer/src/SMTP.php';
+
 // ========== LOGIN ==========
 if(isset($_POST['login'])){
     $email = mysqli_real_escape_string($conn, $_POST['email']);
@@ -44,14 +52,7 @@ if(isset($_POST['send_otp'])){
         
         $_SESSION['reset_email'] = $email;
         
-        // Send OTP via email (using your SMTP)
-        use PHPMailer\PHPMailer\PHPMailer;
-        use PHPMailer\PHPMailer\Exception;
-        
-        require 'phpmailer/src/Exception.php';
-        require 'phpmailer/src/PHPMailer.php';
-        require 'phpmailer/src/SMTP.php';
-        
+        // Send OTP via email
         $mail = new PHPMailer(true);
         try {
             $mail->isSMTP();
@@ -66,9 +67,13 @@ if(isset($_POST['send_otp'])){
             $mail->isHTML(true);
             $mail->Subject = 'Password Reset OTP';
             $mail->Body = "
-                <h2>Password Reset OTP</h2>
-                <p>Your OTP is: <strong>$otp</strong></p>
-                <p>Valid for 10 minutes.</p>
+                <div style='font-family: Arial; padding: 20px;'>
+                    <h2 style='color: #0b1f3a;'>Password Reset OTP</h2>
+                    <p>Your OTP is: <strong>$otp</strong></p>
+                    <p>Valid for 10 minutes.</p>
+                    <hr>
+                    <small>📚 Book's Library Team</small>
+                </div>
             ";
             $mail->send();
             
@@ -78,7 +83,7 @@ if(isset($_POST['send_otp'])){
                   </script>";
             exit();
         } catch(Exception $e) {
-            echo "<script>alert('❌ Failed to send OTP. Please try again.');</script>";
+            echo "<script>alert('❌ Failed to send OTP. Please try again. Error: " . $mail->ErrorInfo . "');</script>";
         }
     } else {
         echo "<script>alert('❌ Email not found!');</script>";
