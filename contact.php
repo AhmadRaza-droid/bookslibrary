@@ -2,6 +2,14 @@
 session_start();
 include 'config.php';
 
+// PHPMailer
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require 'phpmailer/src/Exception.php';
+require 'phpmailer/src/PHPMailer.php';
+require 'phpmailer/src/SMTP.php';
+
 // Get settings from database
 $settings = [];
 $result = mysqli_query($conn, "SELECT * FROM settings");
@@ -17,9 +25,61 @@ if(isset($_POST['send_message'])){
     $email = mysqli_real_escape_string($conn, $_POST['email']);
     $message = mysqli_real_escape_string($conn, $_POST['message']);
     
+    // Save to database
     $query = "INSERT INTO messages (name, email, message) VALUES ('$name', '$email', '$message')";
     if(mysqli_query($conn, $query)){
-        echo "<script>alert('✅ Message sent successfully!'); window.location.href='contact.php';</script>";
+        
+        // ========== SEND EMAIL TO ADMIN ==========
+        $mail = new PHPMailer(true);
+        try {
+            // SMTP Settings
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'universitylibrary172@gmail.com';
+            $mail->Password = 'zuepxvysbxrocdef';
+            $mail->SMTPSecure = 'tls';
+            $mail->Port = 587;
+            $mail->setFrom('universitylibrary172@gmail.com', 'Book Library');
+            
+            // Admin email (from settings or default)
+            $admin_email = $settings['contact_email'] ?? 'universitylibrary172@gmail.com';
+            $mail->addAddress($admin_email, 'Admin');
+            $mail->addReplyTo($email, $name);
+            
+            $mail->isHTML(true);
+            $mail->Subject = '📩 New Message from ' . $name;
+            $mail->Body = "
+                <div style='font-family: Arial; padding: 20px; max-width: 600px;'>
+                    <h2 style='color: #0b1f3a;'>📩 New Contact Message</h2>
+                    <hr>
+                    <p><strong>👤 Name:</strong> $name</p>
+                    <p><strong>📧 Email:</strong> $email</p>
+                    <p><strong>💬 Message:</strong></p>
+                    <div style='background: #f5f5f5; padding: 15px; border-radius: 8px;'>
+                        " . nl2br($message) . "
+                    </div>
+                    <hr>
+                    <small style='color: #666;'>📚 Book's Library Team</small>
+                </div>
+            ";
+            $mail->AltBody = "New Message from $name\nEmail: $email\nMessage: $message";
+            
+            $mail->send();
+            
+            echo "<script>
+                    alert('✅ Message sent successfully! We will get back to you soon.');
+                    window.location.href='contact.php';
+                  </script>";
+            
+        } catch(Exception $e) {
+            // Message saved but email failed
+            echo "<script>
+                    alert('✅ Message saved! (Email notification failed: " . addslashes($mail->ErrorInfo) . ")');
+                    window.location.href='contact.php';
+                  </script>";
+        }
+        
     } else {
         echo "<script>alert('❌ Failed to send message. Please try again.');</script>";
     }
@@ -165,6 +225,7 @@ if(isset($_POST['send_message'])){
 
     <div class="contact-form">
         <h2>✉️ Send Message</h2>
+        <p style="color:#666;font-size:14px;margin-bottom:15px;">We'll get back to you within 24 hours</p>
 
         <form action="contact.php" method="POST">
 
