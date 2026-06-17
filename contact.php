@@ -28,12 +28,12 @@ if(isset($_POST['send_message'])){
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Contact Us</title>
-    <link rel="stylesheet" href="style.css?v=8000">
+    <title>Contact - <?php echo htmlspecialchars($settings['site_name'] ?? 'Library Management System'); ?></title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        .contact-container {
+        .contact-section {
             max-width: 1000px;
             margin: 40px auto;
             padding: 20px;
@@ -51,12 +51,12 @@ if(isset($_POST['send_message'])){
             color: #0b1f3a;
             margin-bottom: 20px;
         }
-        .contact-info .info-item {
-            margin: 15px 0;
-            padding: 10px;
+        .contact-info p {
+            margin: 12px 0;
+            padding: 8px 0;
             border-bottom: 1px solid #eee;
         }
-        .contact-info .info-item strong {
+        .contact-info p b {
             color: #0b1f3a;
         }
         .contact-form {
@@ -105,10 +105,10 @@ if(isset($_POST['send_message'])){
         .dark-mode .contact-info h2 {
             color: white;
         }
-        .dark-mode .contact-info .info-item {
+        .dark-mode .contact-info p {
             border-bottom-color: #333;
         }
-        .dark-mode .contact-info .info-item strong {
+        .dark-mode .contact-info p b {
             color: #ffc72c;
         }
         .dark-mode .contact-form {
@@ -125,7 +125,7 @@ if(isset($_POST['send_message'])){
             border-color: #333;
         }
         @media (max-width: 768px) {
-            .contact-container {
+            .contact-section {
                 grid-template-columns: 1fr;
             }
         }
@@ -138,63 +138,59 @@ if(isset($_POST['send_message'])){
     <ul>
         <li><a href="index.php">Home</a></li>
         <li><a href="books.php">Books</a></li>
-        <?php if(isset($_SESSION['user_id'])): ?>
-            <li><a href="profile.php">Profile</a></li>
-            <li><a href="logout.php">Logout</a></li>
-        <?php else: ?>
-            <li><a href="login.php">Login</a></li>
-            <li><a href="register.php">Register</a></li>
-        <?php endif; ?>
+        <li><a href="login.php">Login</a></li>
+        <li><a href="register.php">Register</a></li>
+        <?php if(isset($_SESSION['email']) && $_SESSION['email'] == "universitylibrary172@gmail.com"){ ?>
+            <li><a href="admin_dashboard.php">Admin Panel</a></li>
+        <?php } ?>
         <li><a class="active" href="contact.php">Contact</a></li>
         <li><button onclick="toggleDarkMode()" class="dark-btn">🌙 Dark</button></li>
     </ul>
 </nav>
 
 <section class="page-header">
-    <h1>📩 Contact Us</h1>
-    <p>Have any questions? Send us a message.</p>
+    <h1>📩 <?php echo htmlspecialchars($settings['site_name'] ?? 'Contact Us'); ?></h1>
+    <p><?php echo htmlspecialchars($settings['site_tagline'] ?? 'Have any questions? Send us a message.'); ?></p>
 </section>
 
-<div class="contact-container">
-    <!-- Contact Info -->
+<section class="contact-section">
+
     <div class="contact-info">
         <h2>📌 Library Information</h2>
-        
-        <div class="info-item">
-            <strong>📍 Address:</strong><br>
-            <?php echo htmlspecialchars($settings['contact_address'] ?? 'University Campus Library'); ?>
-        </div>
-        
-        <div class="info-item">
-            <strong>📧 Email:</strong><br>
-            <a href="mailto:<?php echo htmlspecialchars($settings['contact_email'] ?? 'universitylibrary172@gmail.com'); ?>">
-                <?php echo htmlspecialchars($settings['contact_email'] ?? 'universitylibrary172@gmail.com'); ?>
-            </a>
-        </div>
-        
-        <div class="info-item">
-            <strong>📞 Phone:</strong><br>
-            <?php echo htmlspecialchars($settings['contact_phone'] ?? '+92 300 1234567'); ?>
-        </div>
-        
-        <div class="info-item">
-            <strong>🕐 Timing:</strong><br>
-            Monday - Saturday, 9:00 AM - 5:00 PM
-        </div>
+        <p><b>📍 Address:</b> <?php echo htmlspecialchars($settings['contact_address'] ?? 'University Campus Library'); ?></p>
+        <p><b>📧 Email:</b> <?php echo htmlspecialchars($settings['contact_email'] ?? 'universitylibrary172@gmail.com'); ?></p>
+        <p><b>📞 Phone:</b> <?php echo htmlspecialchars($settings['contact_phone'] ?? '+92 300 1234567'); ?></p>
+        <p><b>🕐 Timing:</b> Monday - Saturday, 9:00 AM - 5:00 PM</p>
     </div>
-    
-    <!-- Contact Form -->
+
     <div class="contact-form">
         <h2>✉️ Send Message</h2>
-        
-        <form method="POST">
-            <input type="text" name="name" placeholder="Your Name" required>
-            <input type="email" name="email" placeholder="Your Email" required>
-            <textarea name="message" placeholder="Your Message" rows="5" required></textarea>
-            <button type="submit" name="send_message">📤 Send Message</button>
+
+        <form action="contact.php" method="POST">
+
+            <input type="text" 
+                   name="name" 
+                   placeholder="Your Name" 
+                   required>
+
+            <input type="email" 
+                   name="email" 
+                   placeholder="Your Email" 
+                   required>
+
+            <textarea name="message" 
+                      placeholder="Your Message" 
+                      rows="5"
+                      required></textarea>
+
+            <button type="submit" name="send_message">
+                📤 Send Message
+            </button>
+
         </form>
     </div>
-</div>
+
+</section>
 
 <footer>
     <p><?php echo htmlspecialchars($settings['footer_text'] ?? '© 2026 Book\'s Library. All Rights Reserved.'); ?></p>
@@ -204,11 +200,15 @@ if(isset($_POST['send_message'])){
 if(localStorage.getItem("theme") === "dark"){
     document.body.classList.add("dark-mode");
 }
+
 function toggleDarkMode(){
+
     document.body.classList.toggle("dark-mode");
+
     if(document.body.classList.contains("dark-mode")){
         localStorage.setItem("theme", "dark");
-    } else {
+    }
+    else{
         localStorage.setItem("theme", "light");
     }
 }
