@@ -62,6 +62,12 @@ $bookmarks = mysqli_query($conn,
  JOIN books ON bookmarks.book_id = books.id
  WHERE bookmarks.user_id='$user_id'
  ORDER BY bookmarks.id DESC");
+
+// ========== GET DOWNLOAD HISTORY ==========
+$downloads = mysqli_query($conn,
+"SELECT * FROM downloads 
+ WHERE user_id='$user_id' 
+ ORDER BY download_date DESC");
 ?>
 
 <!DOCTYPE html>
@@ -191,6 +197,15 @@ $bookmarks = mysqli_query($conn,
             border-bottom-color: #ffc72c;
         }
         
+        .download-badge {
+            background: #28a745;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            display: inline-block;
+        }
+        
         @media (max-width: 768px) {
             .profile-box {
                 max-height: 85vh;
@@ -316,6 +331,9 @@ $bookmarks = mysqli_query($conn,
         <div class="profile-book-card">
             <h3><?php echo htmlspecialchars($progress['title']); ?></h3>
             <p><strong>Progress:</strong> <?php echo (int)$progress['progress']; ?>%</p>
+            <div style="width:100%;background:#e0e0e0;height:8px;border-radius:10px;margin-top:8px;">
+                <div style="width:<?php echo (int)$progress['progress']; ?>%;background:#28a745;height:8px;border-radius:10px;"></div>
+            </div>
             <a href="read_book.php?id=<?php echo $progress['book_id']; ?>"><button>Continue Book</button></a>
         </div>
     <?php } ?>
@@ -336,6 +354,29 @@ $bookmarks = mysqli_query($conn,
     <?php } ?>
 <?php } else { ?>
     <p class="empty-text">No bookmarks yet.</p>
+<?php } ?>
+
+<!-- 📥 My Downloads -->
+<h2 class="profile-heading">📥 My Downloads</h2>
+
+<?php if(mysqli_num_rows($downloads) > 0){ 
+    $download_count = mysqli_num_rows($downloads);
+?>
+    <p style="margin-bottom:15px;color:#28a745;font-weight:bold;">📚 You have downloaded <?php echo $download_count; ?> books</p>
+    
+    <?php while($dl = mysqli_fetch_assoc($downloads)){ ?>
+        <div class="profile-book-card">
+            <h3>📖 <?php echo htmlspecialchars($dl['book_title']); ?></h3>
+            <p><strong>Downloaded:</strong> <?php echo date('d M Y, h:i A', strtotime($dl['download_date'])); ?></p>
+            <span class="download-badge">✅ Downloaded</span>
+            <a href="read_book.php?id=<?php echo $dl['book_id']; ?>">
+                <button>📖 Read Now</button>
+            </a>
+        </div>
+    <?php } ?>
+
+<?php } else { ?>
+    <p class="empty-text">📚 No downloads yet. Start exploring books!</p>
 <?php } ?>
 
 <!-- 📚 Book Requests History -->

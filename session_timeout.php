@@ -4,7 +4,7 @@ if(session_status() == PHP_SESSION_NONE){
     session_start();
 }
 
-$timeout = 180; // 3 minute testing
+$timeout = 600; // 10 minute testing
 
 if(isset($_SESSION['LAST_ACTIVITY'])){
 
