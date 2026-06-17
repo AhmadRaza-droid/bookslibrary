@@ -1,8 +1,9 @@
 <?php
 session_start();
 include 'config.php';
+include 'session_timeout.php';
 
-// ========== PHPMailer USE STATEMENTS - TOP PAR ==========
+// ========== PHPMailer ==========
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -10,28 +11,80 @@ require 'phpmailer/src/Exception.php';
 require 'phpmailer/src/PHPMailer.php';
 require 'phpmailer/src/SMTP.php';
 
+// ========== RATE LIMITING ==========
+$ip = $_SERVER['REMOTE_ADDR'];
+$limit_file = sys_get_temp_dir() . '/login_limit_' . md5($ip);
+$now = time();
+
+if(file_exists($limit_file)){
+    $data = json_decode(file_get_contents($limit_file), true);
+    if($data['time'] + 300 > $now && $data['count'] >= 5){
+        echo "<script>alert('⛔ Too many login attempts! Try again after 5 minutes.'); window.location.href='login.php';</script>";
+        exit();
+    }
+}
+
 // ========== LOGIN ==========
 if(isset($_POST['login'])){
     $email = mysqli_real_escape_string($conn, $_POST['email']);
     $password = $_POST['password'];
 
-    $query = "SELECT * FROM users WHERE email='$email' AND password='$password'";
+    // Update rate limit
+    if(file_exists($limit_file)){
+        $data = json_decode(file_get_contents($limit_file), true);
+        if($data['time'] + 300 > $now){
+            $data['count']++;
+        } else {
+            $data['count'] = 1;
+            $data['time'] = $now;
+        }
+    } else {
+        $data = ['count' => 1, 'time' => $now];
+    }
+    file_put_contents($limit_file, json_encode($data));
+
+    // ✅ FIX 1: Check email first, then verify password with password_verify()
+    $query = "SELECT * FROM users WHERE email='$email'";
     $result = mysqli_query($conn, $query);
 
     if(mysqli_num_rows($result) > 0){
         $user = mysqli_fetch_assoc($result);
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['fullname'] = $user['fullname'];
-        $_SESSION['email'] = $user['email'];
+        
+        // ✅ FIX 2: Check if email is verified
+        if($user['is_verified'] == 0){
+            echo "<script>
+                    alert('⚠️ Please verify your email first! Check your inbox for OTP.');
+                    window.location.href='verify_otp.php';
+                  </script>";
+            exit();
+        }
+        
+        // ✅ FIX 3: Use password_verify() instead of plain text comparison
+        if(password_verify($password, $user['password'])){
+            session_regenerate_id(true);
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['fullname'] = $user['fullname'];
+            $_SESSION['email'] = $user['email'];
+            $_SESSION['ip'] = $_SERVER['REMOTE_ADDR'];
+            
+            // Delete rate limit file on success
+            if(file_exists($limit_file)) unlink($limit_file);
 
-        echo "<script>
-                alert('✅ Login Successful');
-                window.location.href='index.php';
-              </script>";
-        exit();
+            echo "<script>
+                    alert('✅ Login Successful');
+                    window.location.href='index.php';
+                  </script>";
+            exit();
+        } else {
+            echo "<script>
+                    alert('❌ Invalid Password');
+                    window.location.href='login.php';
+                  </script>";
+            exit();
+        }
     } else {
         echo "<script>
-                alert('❌ Invalid Email or Password');
+                alert('❌ Email not found');
                 window.location.href='login.php';
               </script>";
         exit();
@@ -83,7 +136,7 @@ if(isset($_POST['send_otp'])){
                   </script>";
             exit();
         } catch(Exception $e) {
-            echo "<script>alert('❌ Failed to send OTP. Please try again. Error: " . $mail->ErrorInfo . "');</script>";
+            echo "<script>alert('❌ Failed to send OTP. Please try again.');</script>";
         }
     } else {
         echo "<script>alert('❌ Email not found!');</script>";
@@ -127,7 +180,10 @@ if(isset($_POST['reset_password'])){
     if($new_password != $confirm_password){
         echo "<script>alert('Passwords do not match!');</script>";
     } else {
-        $query = "UPDATE users SET password='$new_password', otp=NULL WHERE email='$email'";
+        // ✅ FIX 4: Hash the new password before saving
+        $hashed_password = password_hash($new_password, PASSWORD_BCRYPT, ['cost' => 12]);
+        
+        $query = "UPDATE users SET password='$hashed_password', otp=NULL WHERE email='$email'";
         $result = mysqli_query($conn, $query);
         
         if($result){

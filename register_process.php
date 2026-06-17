@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'config.php';
+include 'session_timeout.php';
 
 // PHPMailer
 use PHPMailer\PHPMailer\PHPMailer;
@@ -10,40 +11,97 @@ require 'phpmailer/src/Exception.php';
 require 'phpmailer/src/PHPMailer.php';
 require 'phpmailer/src/SMTP.php';
 
+// ========== RATE LIMITING ==========
+$ip = $_SERVER['REMOTE_ADDR'];
+$limit_file = sys_get_temp_dir() . '/register_limit_' . md5($ip);
+$now = time();
+
+if(file_exists($limit_file)){
+    $data = json_decode(file_get_contents($limit_file), true);
+    if($data['time'] + 3600 > $now && $data['count'] >= 10){
+        echo "<script>alert('⛔ Too many registration attempts! Try again after 1 hour.'); window.location.href='register.php';</script>";
+        exit();
+    }
+}
+
 if(isset($_POST['register'])){
-    $fullname = mysqli_real_escape_string($conn, $_POST['fullname']);
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    // ✅ FIX 1: Sanitize inputs
+    $fullname = mysqli_real_escape_string($conn, trim($_POST['fullname']));
+    $email = mysqli_real_escape_string($conn, trim($_POST['email']));
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
+    
+    // ✅ FIX 2: Validate email format
+    if(!filter_var($email, FILTER_VALIDATE_EMAIL)){
+        echo "<script>alert('❌ Invalid email format!'); window.location.href='register.php';</script>";
+        exit();
+    }
+    
+    // ✅ FIX 3: Validate password strength
+    if(strlen($password) < 8){
+        echo "<script>alert('❌ Password must be at least 8 characters long!'); window.location.href='register.php';</script>";
+        exit();
+    }
+    if(!preg_match("/[A-Z]/", $password)){
+        echo "<script>alert('❌ Password must contain at least 1 uppercase letter!'); window.location.href='register.php';</script>";
+        exit();
+    }
+    if(!preg_match("/[a-z]/", $password)){
+        echo "<script>alert('❌ Password must contain at least 1 lowercase letter!'); window.location.href='register.php';</script>";
+        exit();
+    }
+    if(!preg_match("/[0-9]/", $password)){
+        echo "<script>alert('❌ Password must contain at least 1 number!'); window.location.href='register.php';</script>";
+        exit();
+    }
 
     if ($password != $confirm_password) {
         echo "<script>alert('Passwords do not match'); window.location.href='register.php';</script>";
         exit();
     }
 
-    $check_query = "SELECT id FROM users WHERE email = '$email'";
-    $check_result = mysqli_query($conn, $check_query);
+    // ✅ FIX 4: Check if email exists (using prepared statement for security)
+    $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $check_result = $stmt->get_result();
 
     if(mysqli_num_rows($check_result) > 0){
         echo "<script>alert('Email already registered! Please login.'); window.location.href='login.php';</script>";
         exit();
     }
 
-    // ✅ Generate OTP
+    // ✅ FIX 5: HASH PASSWORD (not plain text)
+    $hashed_password = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+
+    // Generate OTP
     $otp = rand(100000, 999999);
     $otp_expiry = date('Y-m-d H:i:s', strtotime('+10 minutes'));
 
-    // ✅ Insert user with OTP (is_verified = 0)
-    $query = "INSERT INTO users(fullname, email, password, otp, otp_expiry, is_verified) 
-              VALUES('$fullname', '$email', '$password', '$otp', '$otp_expiry', 0)";
-
-    $result = mysqli_query($conn, $query);
+    // ✅ FIX 6: Insert using prepared statement
+    $stmt = $conn->prepare("INSERT INTO users(fullname, email, password, otp, otp_expiry, is_verified) VALUES (?, ?, ?, ?, ?, 0)");
+    $stmt->bind_param("sssss", $fullname, $email, $hashed_password, $otp, $otp_expiry);
+    $result = $stmt->execute();
 
     if ($result) {
-        // ✅ Set session for OTP verification
+        // Update rate limit
+        if(file_exists($limit_file)){
+            $data = json_decode(file_get_contents($limit_file), true);
+            if($data['time'] + 3600 > $now){
+                $data['count']++;
+            } else {
+                $data['count'] = 1;
+                $data['time'] = $now;
+            }
+        } else {
+            $data = ['count' => 1, 'time' => $now];
+        }
+        file_put_contents($limit_file, json_encode($data));
+        
+        // Set session for OTP verification
         $_SESSION['temp_email'] = $email;
         
-        // ✅ Send OTP via email
+        // Send OTP via email
         $mail = new PHPMailer(true);
         try {
             $mail->isSMTP();
@@ -85,7 +143,7 @@ if(isset($_POST['register'])){
         }
         
     } else {
-        echo "<script>alert('❌ Registration Failed'); window.location.href='register.php';</script>";
+        echo "<script>alert('❌ Registration Failed: " . mysqli_error($conn) . "'); window.location.href='register.php';</script>";
         exit();
     }
 }

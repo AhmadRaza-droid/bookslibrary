@@ -1,0 +1,38 @@
+# ========== SECURITY HEADERS ==========
+<IfModule mod_headers.c>
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "no-referrer-when-downgrade"
+</IfModule>
+
+# ========== ERROR DOCUMENTS ==========
+ErrorDocument 404 /404.php
+ErrorDocument 403 /404.php
+ErrorDocument 500 /404.php
+
+# ========== BLOCK ACCESS TO SENSITIVE FILES ==========
+<FilesMatch "^(config\.php|session_timeout\.php|sanitize\.php|error_log\.txt)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# ========== BLOCK DIRECTORY LISTING ==========
+Options -Indexes
+
+# ========== PROTECT .HTACCESS ==========
+<Files .htaccess>
+    Order allow,deny
+    Deny from all
+</Files>
+
+# ========== PROTECT ERROR LOG ==========
+<Files error_log.txt>
+    Order allow,deny
+    Deny from all
+</Files>
+
+# ========== REDIRECT TO HTTPS (if SSL enabled) ==========
+# RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
