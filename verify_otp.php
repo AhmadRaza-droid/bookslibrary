@@ -11,7 +11,7 @@ if(!isset($_SESSION['temp_email']) && !isset($_SESSION['reset_email'])){
     exit();
 }
 
-// Get email from session (registration or forgot password)
+// Get email from session
 if(isset($_SESSION['temp_email'])){
     $email = $_SESSION['temp_email'];
     $type = 'registration';
@@ -143,6 +143,9 @@ if(isset($_POST['verify'])){
             border-radius: 5px;
             margin: 15px 0;
         }
+        .back-link {
+            margin-top: 20px;
+        }
         .dark-mode .form-box {
             background: #16213e;
             color: white;
@@ -191,11 +194,11 @@ if(isset($_POST['verify'])){
             <br>
             <button type="submit" name="verify">✅ Verify OTP</button>
         </form>
-        <p style="margin-top: 20px;">
+        <div class="back-link">
             <a href="<?php echo ($type == 'registration') ? 'register.php' : 'forgot_password.php'; ?>">
                 ← Back
             </a>
-        </p>
+        </div>
     </div>
 </section>
 
