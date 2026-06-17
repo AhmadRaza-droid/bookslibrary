@@ -2,7 +2,14 @@
 session_start();
 include 'config.php';
 
-$books = mysqli_query($conn, "SELECT * FROM books LIMIT 8");
+// Search functionality
+$search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
+
+if($search != ''){
+    $books = mysqli_query($conn, "SELECT * FROM books WHERE title LIKE '%$search%' OR author LIKE '%$search%' OR category LIKE '%$search%' LIMIT 8");
+} else {
+    $books = mysqli_query($conn, "SELECT * FROM books LIMIT 8");
+}
 
 $recentBooks = mysqli_query($conn, "SELECT * FROM books ORDER BY id DESC LIMIT 4");
 
@@ -29,30 +36,130 @@ $chatBooks = mysqli_query($conn,
 <title>Library Management System</title>
 
 <link rel="stylesheet" href="style.css?v=2400">
+<style>
+    /* ========== ADDITIONAL MODERN STYLES ========== */
+    .hero-search {
+        margin-top: 25px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .hero-search input {
+        padding: 14px 20px;
+        border-radius: 12px;
+        border: none;
+        width: 100%;
+        max-width: 420px;
+        font-size: 16px;
+        background: rgba(255,255,255,0.15);
+        color: white;
+        backdrop-filter: blur(10px);
+    }
+    .hero-search input::placeholder {
+        color: rgba(255,255,255,0.6);
+    }
+    .hero-search input:focus {
+        outline: none;
+        background: rgba(255,255,255,0.25);
+    }
+    .hero-search button {
+        padding: 14px 30px;
+        border-radius: 12px;
+        border: none;
+        background: var(--secondary, #ffc72c);
+        color: var(--primary, #061b33);
+        font-weight: bold;
+        font-size: 16px;
+        cursor: pointer;
+        transition: 0.3s ease;
+    }
+    .hero-search button:hover {
+        transform: scale(1.05);
+    }
+    .hero-search .clear-btn {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        padding: 14px 20px;
+        border-radius: 12px;
+        text-decoration: none;
+        transition: 0.3s ease;
+    }
+    .hero-search .clear-btn:hover {
+        background: rgba(255,255,255,0.3);
+    }
+    .section-title {
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 25px;
+        border-bottom: 4px solid var(--secondary, #ffc72c);
+        display: inline-block;
+        padding-bottom: 8px;
+    }
+    .welcome-msg {
+        text-align: center;
+        padding: 10px 0;
+        color: var(--text-light, #666);
+    }
+    .welcome-msg strong {
+        color: var(--text, #0b183d);
+    }
+    .empty-text {
+        text-align: center;
+        color: var(--text-light, #666);
+        padding: 30px 0;
+        font-size: 18px;
+    }
+    .featured-badge {
+        background: var(--secondary, #ffc72c);
+        color: var(--primary, #061b33);
+        font-size: 11px;
+        padding: 2px 10px;
+        border-radius: 20px;
+        display: inline-block;
+        font-weight: bold;
+        margin-top: 5px;
+    }
+    body.dark-mode .featured-badge {
+        color: #061b33;
+    }
+    body.dark-mode .welcome-msg {
+        color: #aaa;
+    }
+    body.dark-mode .welcome-msg strong {
+        color: white;
+    }
+    body.dark-mode .empty-text {
+        color: #aaa;
+    }
+</style>
 </head>
 
 <body>
 
 <nav>
-    <div class="logo">📖 Library Management System</div>
+    <div class="logo">📖 Book<span>'s</span> Library</div>
 
     <ul>
         <li><a class="active" href="index.php">Home</a></li>
         <li><a href="books.php">Books</a></li>
-        <li><a href="login.php">Login</a></li>
-        <li><a href="register.php">Register</a></li>
+        <?php if(isset($_SESSION['user_id'])): ?>
+            <li><a href="profile.php">👤 Profile</a></li>
+            <li><a href="logout.php">🚪 Logout</a></li>
+        <?php else: ?>
+            <li><a href="login.php">Login</a></li>
+            <li><a href="register.php">Register</a></li>
+        <?php endif; ?>
         <li><a href="contact.php">Contact</a></li>
-        <li><a href="profile.php">Profile</a></li>
-
-        <?php if(isset($_SESSION['email']) && $_SESSION['email'] == "universitylibrary172@gmail.com"){ ?>
-            <li><a href="admin_dashboard.php">Admin Panel</a></li>
-        <?php } ?>
-
         <li><a href="about.php">About</a></li>
+        <?php if(isset($_SESSION['email']) && $_SESSION['email'] == "universitylibrary172@gmail.com"): ?>
+            <li><a href="admin_dashboard.php">Admin Panel</a></li>
+        <?php endif; ?>
         <li><button onclick="toggleDarkMode()" class="dark-btn">🌙 Dark</button></li>
     </ul>
 </nav>
 
+<!-- ========== MODERN HERO SECTION ========== -->
 <section class="hero">
     <div class="hero-text">
         <h1>Welcome To <br><b>Digital Library</b></h1>
@@ -62,13 +169,32 @@ $chatBooks = mysqli_query($conn,
             Read. Learn. Grow.
         </p>
 
-        <div class="hero-buttons">
+        <!-- ========== SEARCH BAR ADDED ========== -->
+        <form class="hero-search" method="GET">
+            <input type="text" name="search" placeholder="🔍 Search books by title, author or category..." value="<?php echo htmlspecialchars($search); ?>">
+            <button type="submit">Search</button>
+            <?php if($search != ''): ?>
+                <a href="index.php" class="clear-btn">✕ Clear</a>
+            <?php endif; ?>
+        </form>
+
+        <div class="hero-buttons" style="margin-top:20px;">
             <a href="books.php" class="btn">📖 Explore Books</a>
-            <a href="login.php" class="btn-outline">👤 Login Now</a>
+            <?php if(!isset($_SESSION['user_id'])): ?>
+                <a href="login.php" class="btn-outline">👤 Login Now</a>
+            <?php endif; ?>
         </div>
     </div>
 </section>
 
+<!-- ========== WELCOME MESSAGE ========== -->
+<?php if(isset($_SESSION['fullname'])): ?>
+    <div style="text-align:center;padding:15px 0 5px;">
+        <p class="welcome-msg">👋 Welcome back, <strong><?php echo htmlspecialchars($_SESSION['fullname']); ?></strong>!</p>
+    </div>
+<?php endif; ?>
+
+<!-- ========== FEATURES ========== -->
 <section class="features">
 
     <div class="card">
@@ -93,36 +219,57 @@ $chatBooks = mysqli_query($conn,
 
 </section>
 
+<!-- ========== SEARCH RESULTS / FEATURED BOOKS ========== -->
 <section class="books">
-    <h2>Featured Books</h2>
+    <h2 class="section-title">
+        <?php if($search != ''): ?>
+            🔍 Search Results for "<?php echo htmlspecialchars($search); ?>"
+        <?php else: ?>
+            📚 Featured Books
+        <?php endif; ?>
+    </h2>
 
-    <div class="book-container">
+    <?php if(mysqli_num_rows($books) > 0): ?>
+        <div class="book-container">
 
-        <?php while($row = mysqli_fetch_assoc($books)){ ?>
+            <?php while($row = mysqli_fetch_assoc($books)){ ?>
 
-            <div class="book-card">
+                <div class="book-card">
 
-                <img src="<?php echo htmlspecialchars($row['cover_image_url']); ?>"
-                     alt="Book Cover"
-                     style="width:100%; height:180px; object-fit:cover; border-radius:10px;">
+                    <img src="<?php echo htmlspecialchars($row['cover_image_url']); ?>"
+                         alt="Book Cover"
+                         style="width:100%; height:180px; object-fit:cover; border-radius:10px;">
 
-                <h3><?php echo htmlspecialchars($row['title']); ?></h3>
+                    <h3><?php echo htmlspecialchars($row['title']); ?></h3>
 
-                <p><?php echo htmlspecialchars($row['author']); ?></p>
+                    <p>✍️ <?php echo htmlspecialchars($row['author']); ?></p>
 
-                <a href="books.php">
-                    <button>View Book</button>
-                </a>
+                    <?php if(isset($row['category']) && $row['category'] != ''): ?>
+                        <span class="featured-badge">📂 <?php echo htmlspecialchars($row['category']); ?></span>
+                    <?php endif; ?>
 
-            </div>
+                    <div style="margin-top:12px;">
+                        <a href="read_book.php?id=<?php echo $row['id']; ?>">
+                            <button style="margin:3px;">📖 Read</button>
+                        </a>
+                        <a href="books.php">
+                            <button style="margin:3px;background:#6c757d;">Details</button>
+                        </a>
+                    </div>
 
-        <?php } ?>
+                </div>
 
-    </div>
+            <?php } ?>
+
+        </div>
+    <?php else: ?>
+        <p class="empty-text">❌ No books found matching your search.</p>
+    <?php endif; ?>
 </section>
 
+<!-- ========== RECENTLY ADDED BOOKS ========== -->
 <section class="books">
-    <h2>🆕 Recently Added Books</h2>
+    <h2 class="section-title">🆕 Recently Added Books</h2>
 
     <div class="book-container">
 
@@ -136,11 +283,17 @@ $chatBooks = mysqli_query($conn,
 
                 <h3><?php echo htmlspecialchars($recent['title']); ?></h3>
 
-                <p><?php echo htmlspecialchars($recent['author']); ?></p>
+                <p>✍️ <?php echo htmlspecialchars($recent['author']); ?></p>
 
-                <a href="books.php">
-                    <button>Read Now</button>
-                </a>
+                <?php if(isset($recent['category']) && $recent['category'] != ''): ?>
+                    <span class="featured-badge">📂 <?php echo htmlspecialchars($recent['category']); ?></span>
+                <?php endif; ?>
+
+                <div style="margin-top:12px;">
+                    <a href="read_book.php?id=<?php echo $recent['id']; ?>">
+                        <button style="margin:3px;">📖 Read Now</button>
+                    </a>
+                </div>
 
             </div>
 
@@ -149,8 +302,9 @@ $chatBooks = mysqli_query($conn,
     </div>
 </section>
 
+<!-- ========== TOP RATED BOOKS ========== -->
 <section class="books">
-    <h2>⭐ Top Rated Books</h2>
+    <h2 class="section-title">⭐ Top Rated Books</h2>
 
     <div class="book-container">
 
@@ -166,16 +320,22 @@ $chatBooks = mysqli_query($conn,
 
                     <h3><?php echo htmlspecialchars($top['title']); ?></h3>
 
-                    <p><?php echo htmlspecialchars($top['author']); ?></p>
+                    <p>✍️ <?php echo htmlspecialchars($top['author']); ?></p>
 
                     <p>
                         <strong>Rating:</strong>
                         <?php echo round($top['avg_rating'], 1); ?> ⭐
                     </p>
 
-                    <a href="books.php">
-                        <button>View Book</button>
-                    </a>
+                    <?php if(isset($top['category']) && $top['category'] != ''): ?>
+                        <span class="featured-badge">📂 <?php echo htmlspecialchars($top['category']); ?></span>
+                    <?php endif; ?>
+
+                    <div style="margin-top:12px;">
+                        <a href="read_book.php?id=<?php echo $top['id']; ?>">
+                            <button style="margin:3px;">📖 Read</button>
+                        </a>
+                    </div>
 
                 </div>
 
@@ -183,18 +343,20 @@ $chatBooks = mysqli_query($conn,
 
         <?php } else { ?>
 
-            <p>No rated books yet.</p>
+            <p class="empty-text">No rated books yet.</p>
 
         <?php } ?>
 
     </div>
 </section>
 
+<!-- ========== FOOTER ========== -->
 <footer>
     <p>© 2026 UMT University Library. All Rights Reserved.</p>
     <p>Developed by Ahmad Raza</p>
 </footer>
 
+<!-- ========== CHATBOT ========== -->
 <div class="chatbot-icon" onclick="toggleChat()">
     🤖
 </div>
@@ -202,7 +364,7 @@ $chatBooks = mysqli_query($conn,
 <div class="chatbot-box" id="chatbot">
 
     <div class="chat-header">
-        AI Library Assistant
+        🤖 AI Library Assistant
     </div>
 
     <div class="chat-body" id="chat-body">
@@ -390,6 +552,11 @@ function toggleDarkMode(){
     else{
         localStorage.setItem("theme", "light");
     }
+}
+
+// Set dark mode on load
+if(localStorage.getItem("theme") === "dark"){
+    document.body.classList.add("dark-mode");
 }
 </script>
 
