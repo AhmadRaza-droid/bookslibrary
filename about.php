@@ -2,7 +2,14 @@
 session_start();
 include 'config.php';
 include 'maintenance_check.php';
-include 'admin_check.php';
+
+// Get settings
+$settings = [];
+$result = mysqli_query($conn, "SELECT * FROM settings");
+if($result){
+    while($row = mysqli_fetch_assoc($result)){
+        $settings[$row['setting_key']] = $row['setting_value'];
+    }
 }
 ?>
 <!DOCTYPE html>
