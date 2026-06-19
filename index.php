@@ -1,7 +1,7 @@
 <?php
 session_start();
 include 'config.php';
-include 'admin_check.php';
+
 
 // Check if user is admin
 $is_admin = false;
