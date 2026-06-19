@@ -11,17 +11,29 @@ if(isset($_SESSION['admin'])){
 $error = '';
 
 if(isset($_POST['login'])){
+    $username = mysqli_real_escape_string($conn, $_POST['username']);
     $password = $_POST['password'];
     
-    // Default admin password (change this)
-    $admin_password = 'admin123';
+    // Check in database
+    $query = "SELECT * FROM users WHERE fullname='$username' AND is_admin=1";
+    $result = mysqli_query($conn, $query);
     
-    if($password == $admin_password){
-        $_SESSION['admin'] = true;
-        header("Location: admin_dashboard.php");
-        exit();
+    if(mysqli_num_rows($result) > 0){
+        $user = mysqli_fetch_assoc($result);
+        
+        // Check password (plain text or hashed)
+        if($password == $user['password'] || password_verify($password, $user['password'])){
+            $_SESSION['admin'] = true;
+            $_SESSION['admin_id'] = $user['id'];
+            $_SESSION['admin_name'] = $user['fullname'];
+            $_SESSION['admin_email'] = $user['email'];
+            header("Location: admin_dashboard.php");
+            exit();
+        } else {
+            $error = 'Invalid password!';
+        }
     } else {
-        $error = 'Invalid password!';
+        $error = 'Username not found or not an admin!';
     }
 }
 ?>
@@ -119,7 +131,7 @@ if(isset($_POST['login'])){
         .login-container .error {
             background: #f8d7da;
             color: #721c24;
-            padding: 10px;
+            padding: 12px;
             border-radius: 8px;
             margin-bottom: 15px;
             font-size: 14px;
@@ -188,13 +200,14 @@ if(isset($_POST['login'])){
 <div class="login-container">
     <div class="icon">🔐</div>
     <h1>Admin Login</h1>
-    <p class="subtitle">Enter your admin password to continue</p>
+    <p class="subtitle">Enter your admin username and password</p>
     
     <?php if($error): ?>
         <div class="error">❌ <?php echo $error; ?></div>
     <?php endif; ?>
     
     <form method="POST">
+        <input type="text" name="username" placeholder="Enter Username" required>
         <input type="password" name="password" placeholder="Enter Password" required>
         <button type="submit" name="login">Login</button>
     </form>
