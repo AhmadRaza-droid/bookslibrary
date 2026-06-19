@@ -2,6 +2,7 @@
 session_start();
 include 'config.php';
 include 'maintenance_check.php';
+include 'admin_check.php';
 
 // PHPMailer
 use PHPMailer\PHPMailer\PHPMailer;
