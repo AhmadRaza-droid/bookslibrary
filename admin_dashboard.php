@@ -28,10 +28,13 @@ require 'phpmailer/src/Exception.php';
 require 'phpmailer/src/PHPMailer.php';
 require 'phpmailer/src/SMTP.php';
 
-// ========== SMTP SETTINGS - EXACT COPY FROM FORGOT PASSWORD ==========
-$smtp_host = 'smtp.gmail.com';
-$smtp_email = getenv('LIBRARY_SMTP_USERNAME') ?: '';
-$smtp_password = getenv('LIBRARY_SMTP_PASSWORD') ?: '';
+// Shared-hosting SMTP settings are loaded from private/smtp_config.php.
+$smtp_config = library_smtp_settings();
+$smtp_host = $smtp_config['host'];
+$smtp_email = $smtp_config['username'];
+$smtp_password = $smtp_config['password'];
+$smtp_port = $smtp_config['port'];
+$smtp_encryption = $smtp_config['encryption'];
 
 // All destructive and role-changing actions require POST and a CSRF token.
 if (empty($_SESSION['admin_csrf'])) $_SESSION['admin_csrf'] = bin2hex(random_bytes(32));
@@ -182,7 +185,7 @@ if (isset($_POST['reply_submit'])) {
             try {
                 $mail->isSMTP(); $mail->Host = $smtp_host; $mail->SMTPAuth = true;
                 $mail->Username = $smtp_email; $mail->Password = $smtp_password;
-                $mail->SMTPSecure = 'tls'; $mail->Port = 587;
+                $mail->SMTPSecure = $smtp_encryption; $mail->Port = $smtp_port;
                 $mail->setFrom($smtp_email, 'Admin - Book Library');
                 $mail->addAddress($msg['email'], $msg['name']);
                 $mail->isHTML(true); $mail->Subject = 'Reply to your message';
