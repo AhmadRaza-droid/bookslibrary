@@ -29,14 +29,18 @@ if (isset($_POST['send_otp'])) {
                 unset($_SESSION['otp_verified'], $_SESSION['otp_verified_at']);
                 $mail = new PHPMailer(true);
                 try {
+                    $smtp = library_smtp_settings();
+                    if ($smtp['username'] === '' || $smtp['password'] === '') {
+                        throw new Exception('SMTP credentials are not configured on the server.');
+                    }
                     $mail->isSMTP();
-                    $mail->Host = 'smtp.gmail.com';
+                    $mail->Host = $smtp['host'];
                     $mail->SMTPAuth = true;
-                    $mail->Username = 'universitylibrary172@gmail.com';
-                    $mail->Password = getenv('LIBRARY_SMTP_PASSWORD') ?: '';
-                    $mail->SMTPSecure = 'tls';
-                    $mail->Port = 587;
-                    $mail->setFrom('universitylibrary172@gmail.com', 'Book Library');
+                    $mail->Username = $smtp['username'];
+                    $mail->Password = $smtp['password'];
+                    $mail->SMTPSecure = $smtp['encryption'];
+                    $mail->Port = $smtp['port'];
+                    $mail->setFrom($smtp['username'], 'Book Library');
                     $mail->addAddress($email);
                     $mail->isHTML(true);
                     $mail->Subject = 'Password Reset OTP';
