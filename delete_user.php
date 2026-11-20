@@ -22,7 +22,7 @@ $user_id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 if (!$user_id || $user_id < 1 || $user_id === $admin_id) { http_response_code(400); exit('Invalid user ID.'); }
 mysqli_begin_transaction($conn);
 try {
-    foreach (['favorites','recently_viewed','reviews','bookmarks','reading_progress','reading_history','notifications','book_requests'] as $table) {
+    foreach (['favorites','recently_viewed','reviews'] as $table) {
         $sql = "DELETE FROM `" . $table . "` WHERE user_id = ?";
         $stmt = mysqli_prepare($conn, $sql);
         if (!$stmt) throw new Exception('Prepare failed for ' . $table);
