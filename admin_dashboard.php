@@ -431,6 +431,20 @@ $book_requests = mysqli_query($conn,
             <input type="text" name="download_epub_link" placeholder="Download EPUB Link">
             <button type="submit" name="add_book" class="green">Add Book</button>
         </form>
+
+        <hr style="margin:28px 0;border:0;border-top:1px solid #dce7dc;">
+        <h2>📄 Upload PDF Book</h2>
+        <p style="margin:8px 0 16px;color:#667;">Upload a PDF and cover image. The PDF will be available in the online reader and download page.</p>
+        <form method="POST" action="upload_book.php" enctype="multipart/form-data" class="admin-book-form">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>">
+            <label>Book Title<input type="text" name="title" maxlength="255" required></label>
+            <label>Author<input type="text" name="author" maxlength="255" required></label>
+            <label>Description<textarea name="description" rows="4" maxlength="10000"></textarea></label>
+            <label>PDF file<input type="file" name="pdf" accept="application/pdf,.pdf" required></label>
+            <label>Cover image (JPG, PNG, WEBP)<input type="file" name="cover" accept="image/jpeg,image/png,image/webp" required></label>
+            <button type="submit" class="green">Upload PDF Book</button>
+        </form>
+        <p style="margin-top:12px;color:#667;font-size:13px;">Limits: PDF up to 20 MB; cover up to 5 MB.</p>
     </div>
     <?php endif; ?>
 
