@@ -18,7 +18,7 @@ require 'phpmailer/src/SMTP.php';
 // ========== SMTP SETTINGS - EXACT COPY FROM FORGOT PASSWORD ==========
 $smtp_host = 'smtp.gmail.com';
 $smtp_email = 'universitylibrary172@gmail.com';
-$smtp_password = 'zuepxvysbxrocdef';
+$smtp_password = getenv('LIBRARY_SMTP_PASSWORD') ?: '';
 
 // ========== DELETE BOOK ==========
 if(isset($_GET['delete_book'])){
