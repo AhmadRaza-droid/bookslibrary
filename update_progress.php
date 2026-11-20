@@ -10,6 +10,7 @@ function progress_response($status, $message, $code = 200) {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') progress_response('error', 'Method not allowed', 405);
 if (empty($_SESSION['user_id'])) progress_response('error', 'Please login', 401);
+if (empty($_SESSION['progress_csrf']) || !hash_equals($_SESSION['progress_csrf'], (string)($_POST['csrf_token'] ?? ''))) progress_response('error', 'Security check failed. Refresh the reader page.', 403);
 
 $user_id = (int)$_SESSION['user_id'];
 $book_id = filter_input(INPUT_POST, 'book_id', FILTER_VALIDATE_INT);
