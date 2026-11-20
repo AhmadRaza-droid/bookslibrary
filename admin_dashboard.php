@@ -30,7 +30,7 @@ require 'phpmailer/src/SMTP.php';
 
 // ========== SMTP SETTINGS - EXACT COPY FROM FORGOT PASSWORD ==========
 $smtp_host = 'smtp.gmail.com';
-$smtp_email = 'universitylibrary172@gmail.com';
+$smtp_email = getenv('LIBRARY_SMTP_USERNAME') ?: '';
 $smtp_password = getenv('LIBRARY_SMTP_PASSWORD') ?: '';
 
 // All destructive and role-changing actions require POST and a CSRF token.
@@ -156,86 +156,90 @@ if (isset($_POST['update_book'])) {
     $admin_error = 'Book could not be updated. Check the title and author.';
 }
 
-// Handle reply message
-// Handle reply message
-if(isset($_POST['reply_submit'])){
-    $message_id = $_POST['message_id'];
-    $reply = mysqli_real_escape_string($conn, $_POST['reply']);
-    mysqli_query($conn, "UPDATE messages SET reply='$reply' WHERE id='$message_id'");
-    
-    $msg = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM messages WHERE id='$message_id'"));
-    if($msg){
-        $mail = new PHPMailer(true);
-        try {
-            $mail->isSMTP();
-            $mail->Host = $smtp_host;
-            $mail->SMTPAuth = true;
-            $mail->Username = $smtp_email;
-            $mail->Password = $smtp_password;
-            $mail->SMTPSecure = 'tls';
-            $mail->Port = 587;
-            $mail->setFrom($smtp_email, 'Admin - Book Library');
-            $mail->addAddress($msg['email'], $msg['name']);
-            $mail->isHTML(true);
-            $mail->Subject = 'Reply to your message';
-            $mail->Body = "
-                <div style='font-family: Arial; padding: 15px;'>
-                    <h3>Reply from Admin</h3>
-                    <p><strong>Your message:</strong> {$msg['message']}</p>
-                    <p><strong>Admin Reply:</strong> $reply</p>
-                    <hr>
-                    <small>Book's Library Team</small>
-                </div>
-            ";
-            $mail->send();
-        } catch(Exception $e) {}
+// Handle admin reply with validated input and prepared statements.
+if (isset($_POST['reply_submit'])) {
+    $message_id = filter_var($_POST['message_id'] ?? null, FILTER_VALIDATE_INT);
+    $reply = trim((string)($_POST['reply'] ?? ''));
+    if (!$message_id || $message_id < 1 || $reply === '' || strlen($reply) > 10000) {
+        http_response_code(400); exit('Please enter a valid reply.');
     }
-    
-    echo "<script>alert('Reply sent successfully!'); window.location='?page=messages';</script>";
-    exit();
+    $updateReply = mysqli_prepare($conn, "UPDATE messages SET reply = ? WHERE id = ?");
+    if (!$updateReply) { http_response_code(500); exit('Unable to save the reply.'); }
+    mysqli_stmt_bind_param($updateReply, 'si', $reply, $message_id);
+    $saved = mysqli_stmt_execute($updateReply);
+    mysqli_stmt_close($updateReply);
+    if (!$saved) { http_response_code(500); exit('Unable to save the reply.'); }
+
+    $getMessage = mysqli_prepare($conn, "SELECT email, name, message FROM messages WHERE id = ? LIMIT 1");
+    if ($getMessage) {
+        mysqli_stmt_bind_param($getMessage, 'i', $message_id);
+        mysqli_stmt_execute($getMessage);
+        $messageResult = mysqli_stmt_get_result($getMessage);
+        $msg = $messageResult ? mysqli_fetch_assoc($messageResult) : null;
+        mysqli_stmt_close($getMessage);
+        if ($msg && filter_var($msg['email'], FILTER_VALIDATE_EMAIL) && $smtp_email !== '' && $smtp_password !== '') {
+            $mail = new PHPMailer(true);
+            try {
+                $mail->isSMTP(); $mail->Host = $smtp_host; $mail->SMTPAuth = true;
+                $mail->Username = $smtp_email; $mail->Password = $smtp_password;
+                $mail->SMTPSecure = 'tls'; $mail->Port = 587;
+                $mail->setFrom($smtp_email, 'Admin - Book Library');
+                $mail->addAddress($msg['email'], $msg['name']);
+                $mail->isHTML(true); $mail->Subject = 'Reply to your message';
+                $safeName = htmlspecialchars((string)$msg['name'], ENT_QUOTES, 'UTF-8');
+                $safeMessage = nl2br(htmlspecialchars((string)$msg['message'], ENT_QUOTES, 'UTF-8'));
+                $safeReply = nl2br(htmlspecialchars($reply, ENT_QUOTES, 'UTF-8'));
+                $mail->Body = "<div style='font-family:Arial;padding:15px'><h3>Reply from Admin</h3><p>Hello {$safeName},</p><p><strong>Your message:</strong> {$safeMessage}</p><p><strong>Admin Reply:</strong> {$safeReply}</p><hr><small>Book's Library Team</small></div>";
+                $mail->AltBody = "Your message: " . $msg['message'] . "\n\nAdmin Reply: " . $reply;
+                $mail->send();
+            } catch (Exception $e) { error_log('Admin reply email failed: ' . $e->getMessage()); }
+        }
+    }
+    header('Location: ?page=messages&replied=1'); exit();
 }
 
-// Handle send notification
-if(isset($_POST['send_notification'])){
-    $title = mysqli_real_escape_string($conn, $_POST['title']);
-    $message_body = mysqli_real_escape_string($conn, $_POST['message']);
-    
-    mysqli_query($conn, "INSERT INTO notifications (title, message, created_at) VALUES ('$title', '$message_body', NOW())");
-    
-    $users = mysqli_query($conn, "SELECT email, fullname FROM users WHERE email != ''");
-    $total_users = mysqli_num_rows($users);
-    $sent_count = 0;
-    
-    while($user = mysqli_fetch_assoc($users)){
-        $mail = new PHPMailer(true);
-        try {
-            $mail->isSMTP();
-            $mail->Host = $smtp_host;
-            $mail->SMTPAuth = true;
-            $mail->Username = $smtp_email;
-            $mail->Password = $smtp_password;
-            $mail->SMTPSecure = 'tls';
-            $mail->Port = 587;
-            $mail->setFrom($smtp_email, 'Book Library');
-            $mail->addAddress($user['email'], $user['fullname']);
-            $mail->isHTML(true);
-            $mail->Subject = $title;
-            $mail->Body = "
-                <div style='font-family: Arial; padding: 20px;'>
-                    <h2 style='color: #0b1f3a;'>📢 $title</h2>
-                    <p>" . nl2br($message_body) . "</p>
-                    <br>
-                    <hr>
-                    <small style='color: #666;'>📚 Book's Library Team</small>
-                </div>
-            ";
-            $mail->AltBody = strip_tags($title . "\n\n" . $message_body);
-            $mail->send();
-            $sent_count++;
-        } catch(Exception $e) {}
+// Save notification using prepared SQL; email delivery is optional.
+if (isset($_POST['send_notification'])) {
+    $title = trim((string)($_POST['title'] ?? ''));
+    $message_body = trim((string)($_POST['message'] ?? ''));
+    if ($title === '' || strlen($title) > 200 || $message_body === '' || strlen($message_body) > 10000) {
+        http_response_code(400); exit('Enter a valid notification title and message.');
     }
-    
-    echo "<script>alert('✅ Notification sent to $sent_count out of $total_users users via email!\\n\\nSaved to database also.'); window.location='?page=notifications';</script>";
+    $saveNotification = mysqli_prepare($conn, "INSERT INTO notifications (title, message, created_at) VALUES (?, ?, NOW())");
+    if (!$saveNotification) { http_response_code(500); exit('Unable to save notification.'); }
+    mysqli_stmt_bind_param($saveNotification, 'ss', $title, $message_body);
+    $saved = mysqli_stmt_execute($saveNotification);
+    mysqli_stmt_close($saveNotification);
+    if (!$saved) { http_response_code(500); exit('Unable to save notification.'); }
+
+    $sent_count = 0; $total_users = 0;
+    if ($smtp_email !== '' && $smtp_password !== '') {
+        $users = mysqli_query($conn, "SELECT email, fullname FROM users WHERE email IS NOT NULL AND email <> ''");
+        if ($users) {
+            $total_users = mysqli_num_rows($users);
+            while ($user = mysqli_fetch_assoc($users)) {
+                if (!filter_var($user['email'], FILTER_VALIDATE_EMAIL)) continue;
+                $mail = new PHPMailer(true);
+                try {
+                    $mail->isSMTP(); $mail->Host = $smtp_host; $mail->SMTPAuth = true;
+                    $mail->Username = $smtp_email; $mail->Password = $smtp_password;
+                    $mail->SMTPSecure = 'tls'; $mail->Port = 587;
+                    $mail->setFrom($smtp_email, 'Book Library');
+                    $mail->addAddress($user['email'], $user['fullname']);
+                    $mail->isHTML(true); $mail->Subject = $title;
+                    $safeTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
+                    $safeBody = nl2br(htmlspecialchars($message_body, ENT_QUOTES, 'UTF-8'));
+                    $mail->Body = "<div style='font-family:Arial;padding:20px'><h2>📢 {$safeTitle}</h2><p>{$safeBody}</p><hr><small>Book's Library Team</small></div>";
+                    $mail->AltBody = $title . "\n\n" . $message_body;
+                    $mail->send(); $sent_count++;
+                } catch (Exception $e) { error_log('Notification email failed: ' . $e->getMessage()); }
+            }
+        }
+    }
+    $_SESSION['admin_notice'] = ($smtp_email !== '' && $smtp_password !== '')
+        ? "Notification saved. Email sent to {$sent_count} of {$total_users} users."
+        : "Notification saved in the library. Configure LIBRARY_SMTP_USERNAME and LIBRARY_SMTP_PASSWORD to enable email delivery.";
+    header('Location: ?page=notifications&sent=1'); exit();
 }
 
 // Get current page
@@ -511,7 +515,7 @@ $book_requests = mysqli_query($conn,
             <tr>
                 <td><?php echo $cat['id']; ?></td>
                 <td><?php echo htmlspecialchars($cat['name']); ?></td>
-                <td><form method="POST" onsubmit="return confirm('Delete this category?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_category"><input type="hidden" name="record_id" value="<?php echo (int)$cat['id']; ?>"><button class="red" type="submit">Delete</button></form></td>
+                <td><form method="POST" onsubmit="return confirm('Delete this category?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_category"><input type="hidden" name="record_id" value="<?php echo (int)$cat['id']; ?>"><button class="red" type="submit">Delete</button></form></td>
             </tr>
             <?php } ?>
         </table>
@@ -542,7 +546,7 @@ $book_requests = mysqli_query($conn,
                 <td><?php echo htmlspecialchars($row['author']); ?></td>
                 <td><?php echo htmlspecialchars($row['category'] ?? 'N/A'); ?></td>
                 <td><?php echo $row['download_count'] ?? 0; ?></td>
-                <td class="action-buttons"><a class="btn" href="?page=edit_book&id=<?php echo (int)$row['id']; ?>">Edit</a><form method="POST" onsubmit="return confirm('Delete this book permanently?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_book"><input type="hidden" name="record_id" value="<?php echo (int)$row['id']; ?>"><button class="red" type="submit">Delete</button></form></td>
+                <td class="action-buttons"><a class="btn" href="?page=edit_book&id=<?php echo (int)$row['id']; ?>">Edit</a><form method="POST" onsubmit="return confirm('Delete this book permanently?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_book"><input type="hidden" name="record_id" value="<?php echo (int)$row['id']; ?>"><button class="red" type="submit">Delete</button></form></td>
             </tr>
             <?php } ?>
         </table>
@@ -571,11 +575,11 @@ $book_requests = mysqli_query($conn,
                 </td>
                 <td class="action-buttons">
                     <?php if(isset($user['is_admin']) && $user['is_admin'] == 1){ ?>
-                        <form method="POST"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="remove_admin"><input type="hidden" name="record_id" value="<?php echo (int)$user['id']; ?>"><button type="submit" style="background:#ffc72c;color:#0b1f3a;">Remove Admin</button></form>
+                        <form method="POST"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="remove_admin"><input type="hidden" name="record_id" value="<?php echo (int)$user['id']; ?>"><button type="submit" style="background:#ffc72c;color:#0b1f3a;">Remove Admin</button></form>
                     <?php } else { ?>
-                        <form method="POST"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="make_admin"><input type="hidden" name="record_id" value="<?php echo (int)$user['id']; ?>"><button class="green" type="submit">Make Admin</button></form>
+                        <form method="POST"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="make_admin"><input type="hidden" name="record_id" value="<?php echo (int)$user['id']; ?>"><button class="green" type="submit">Make Admin</button></form>
                     <?php } ?>
-                    <form method="POST" onsubmit="return confirm('Delete this user?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_user"><input type="hidden" name="record_id" value="<?php echo (int)$user['id']; ?>"><button class="red" type="submit">Delete</button></form>
+                    <form method="POST" onsubmit="return confirm('Delete this user?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_user"><input type="hidden" name="record_id" value="<?php echo (int)$user['id']; ?>"><button class="red" type="submit">Delete</button></form>
                 </td>
             </tr>
             <?php } ?>
