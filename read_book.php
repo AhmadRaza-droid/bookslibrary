@@ -3,38 +3,45 @@ include 'session_timeout.php';
 include 'config.php';
 include 'maintenance_check.php';
 
-if(!isset($_GET['id'])){
+$id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+if (!$id || $id < 1) {
     header("Location: books.php");
     exit();
 }
 
-$id = (int)$_GET['id'];
-
-$result = mysqli_query($conn,
-"SELECT * FROM books WHERE id='$id'");
-
-$book = mysqli_fetch_assoc($result);
-
-if(!$book){
+$book_stmt = mysqli_prepare($conn, "SELECT * FROM books WHERE id = ? LIMIT 1");
+if (!$book_stmt) { http_response_code(500); exit('Unable to load this book.'); }
+mysqli_stmt_bind_param($book_stmt, 'i', $id);
+mysqli_stmt_execute($book_stmt);
+$book_result = mysqli_stmt_get_result($book_stmt);
+$book = $book_result ? mysqli_fetch_assoc($book_result) : null;
+mysqli_stmt_close($book_stmt);
+if (!$book) {
+    http_response_code(404);
     header("Location: books.php");
     exit();
 }
 
-if(isset($_SESSION['user_id'])){
+$current_progress = 0;
+if (!empty($_SESSION['user_id'])) {
+    $user_id = (int)$_SESSION['user_id'];
 
-    $user_id = $_SESSION['user_id'];
+    $recent_stmt = mysqli_prepare($conn, "INSERT INTO recently_viewed (user_id, book_id) VALUES (?, ?)");
+    if ($recent_stmt) {
+        mysqli_stmt_bind_param($recent_stmt, 'ii', $user_id, $id);
+        mysqli_stmt_execute($recent_stmt);
+        mysqli_stmt_close($recent_stmt);
+    }
 
-    // Add to recently viewed
-    mysqli_query($conn,
-    "INSERT INTO recently_viewed(user_id, book_id)
-     VALUES('$user_id','$id')");
-
-    // Get current progress
-    $progress_query = mysqli_query($conn,
-    "SELECT progress FROM reading_progress 
-     WHERE user_id='$user_id' AND book_id='$id'");
-    $progress_data = mysqli_fetch_assoc($progress_query);
-    $current_progress = $progress_data['progress'] ?? 0;
+    $progress_stmt = mysqli_prepare($conn, "SELECT progress FROM reading_progress WHERE user_id = ? AND book_id = ? ORDER BY id DESC LIMIT 1");
+    if ($progress_stmt) {
+        mysqli_stmt_bind_param($progress_stmt, 'ii', $user_id, $id);
+        mysqli_stmt_execute($progress_stmt);
+        $progress_result = mysqli_stmt_get_result($progress_stmt);
+        $progress_data = $progress_result ? mysqli_fetch_assoc($progress_result) : null;
+        $current_progress = $progress_data ? (int)$progress_data['progress'] : 0;
+        mysqli_stmt_close($progress_stmt);
+    }
 }
 ?>
 
