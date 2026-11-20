@@ -88,7 +88,7 @@ if($result_settings){
 <html>
 <head>
     <title>My Profile</title>
-    <link rel="stylesheet" href="style.css?v=11000">
+    <link rel="stylesheet" href="style.css?v=20261120">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * {
