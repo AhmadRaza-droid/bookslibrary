@@ -642,7 +642,11 @@ $book_requests = mysqli_query($conn,
                 <td><?php echo htmlspecialchars($review['title']); ?></td>
                 <td><?php echo $review['rating']; ?> ⭐</td>
                 <td><?php echo htmlspecialchars($review['review']); ?></td>
-                <td><a href="delete_review.php?id=<?php echo $review['id']; ?>"><button class="red">Delete</button></a></td>
+                <td><form method="POST" action="delete_review.php" onsubmit="return confirm('Delete this review?');">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>">
+                    <input type="hidden" name="id" value="<?php echo (int)$review['id']; ?>">
+                    <button type="submit" class="red">Delete</button>
+                </form></td>
             </tr>
             <?php } ?>
         </table>
