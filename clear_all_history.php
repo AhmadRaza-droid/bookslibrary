@@ -13,7 +13,6 @@ $queries = [
     "DELETE FROM reading_progress WHERE user_id = ?",
     "DELETE FROM bookmarks WHERE user_id = ?",
     "DELETE FROM favorites WHERE user_id = ?",
-    "DELETE FROM notifications WHERE user_id = ?",
     "DELETE FROM book_requests WHERE user_id = ?"
 ];
 mysqli_begin_transaction($conn);
@@ -34,7 +33,7 @@ try {
     }
     mysqli_commit($conn);
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-    echo "<script>alert('Your account activity has been cleared.'); window.location='profile.php';</script>";
+    echo "<script>alert('Your personal activity has been cleared. Site announcements were kept.'); window.location='profile.php';</script>";
 } catch (Throwable $e) {
     mysqli_rollback($conn);
     error_log('Activity cleanup failed: ' . $e->getMessage());
