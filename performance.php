@@ -7,20 +7,29 @@ if(!isset($_SESSION['admin'])){
     exit();
 }
 
-// Optimize tables
-if(isset($_POST['optimize'])){
-    $result = mysqli_query($conn, "SHOW TABLES");
-    while($row = mysqli_fetch_row($result)){
-        mysqli_query($conn, "OPTIMIZE TABLE `{$row[0]}`");
+// Protect administrative maintenance actions from cross-site requests.
+if (empty($_SESSION['admin_csrf'])) $_SESSION['admin_csrf'] = bin2hex(random_bytes(32));
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!hash_equals($_SESSION['admin_csrf'], (string)($_POST['csrf_token'] ?? ''))) {
+        http_response_code(403);
+        exit('Security check failed. Refresh the page and try again.');
     }
-    echo "<script>alert('✅ All tables optimized!');</script>";
-}
-
-// Clear cache
-if(isset($_POST['clear_cache'])){
-    // Clear session cache
-    session_destroy();
-    echo "<script>alert('✅ Cache cleared!');</script>";
+    if (isset($_POST['optimize'])) {
+        $result = mysqli_query($conn, "SHOW TABLES");
+        if ($result) {
+            while ($row = mysqli_fetch_row($result)) {
+                $table = preg_replace('/[^A-Za-z0-9_]/', '', $row[0]);
+                if ($table !== '') mysqli_query($conn, "OPTIMIZE TABLE " . $table);
+            }
+        }
+        echo "<script>alert('Database table optimization completed.');</script>";
+    }
+    if (isset($_POST['clear_cache'])) {
+        $cleared = function_exists('opcache_reset') ? @opcache_reset() : false;
+        echo $cleared
+            ? "<script>alert('PHP OPcache cleared.');</script>"
+            : "<script>alert('OPcache is unavailable on this hosting plan. Your session was not changed.');</script>";
+    }
 }
 
 // Get table stats
@@ -74,6 +83,7 @@ while($row = mysqli_fetch_assoc($result)){
             <h3>🗄️ Optimize Database</h3>
             <p>Optimize all tables for better performance</p>
             <form method="POST">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['admin_csrf'], ENT_QUOTES, 'UTF-8'); ?>">
                 <button type="submit" name="optimize" class="green">🔄 Optimize Now</button>
             </form>
         </div>
