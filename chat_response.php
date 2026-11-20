@@ -45,7 +45,10 @@ $intents = [
 
 foreach ($intents as $intent => $phrases) {
     foreach ($phrases as $phrase) {
-        if ($normal === $phrase || strpos($normal, $phrase) !== false) {
+        $matched = ($intent === 'greeting')
+            ? (($normal === 'assalam o alaikum' || preg_match('/(^|\\s)(hi|hello|hey|salam|aoa)(\\s|$)/u', $normal) === 1))
+            : ($normal === $phrase || strpos($normal, $phrase) !== false);
+        if ($matched) {
             switch ($intent) {
                 case 'greeting':
                     chat_reply('Wa Alaikum Assalam! 👋 Welcome to the Digital Library. You can ask me to find a book, author or category, or ask how to read, download, save favorites and request books.');
