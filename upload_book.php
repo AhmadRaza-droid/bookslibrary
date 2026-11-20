@@ -71,12 +71,13 @@ if (!move_uploaded_file($cover['tmp_name'], $cover_dir . '/' . $cover_name)) {
 
 $pdf_path = 'uploads/pdfs/' . $pdf_name;
 $cover_path = 'uploads/covers/' . $cover_name;
-$stmt = mysqli_prepare($conn, "INSERT INTO books (title,author,category,description,cover_image_url,read_link,download_epub_link,pdf_file,cover_file,source) VALUES (?,?,?,?,?,?,?,?,?,'PDF Upload')");
+// Use only columns present in the project's base books schema.
+$stmt = mysqli_prepare($conn, "INSERT INTO books (title,author,description,cover_image_url,read_link,download_epub_link,source) VALUES (?,?,?,?,?,?, 'PDF Upload')");
 if (!$stmt) {
     @unlink($pdf_dir . '/' . $pdf_name); @unlink($cover_dir . '/' . $cover_name);
     http_response_code(500); exit('Could not prepare book details.');
 }
-mysqli_stmt_bind_param($stmt, 'sssssssss', $title, $author, $category, $description, $cover_path, $pdf_path, $pdf_path, $pdf_path, $cover_path);
+mysqli_stmt_bind_param($stmt, 'ssssss', $title, $author, $description, $cover_path, $pdf_path, $pdf_path);
 $ok = mysqli_stmt_execute($stmt);
 $error = mysqli_stmt_error($stmt);
 mysqli_stmt_close($stmt);
