@@ -24,6 +24,13 @@ $smtp_password = getenv('LIBRARY_SMTP_PASSWORD') ?: '';
 if (empty($_SESSION['admin_csrf'])) $_SESSION['admin_csrf'] = bin2hex(random_bytes(32));
 $admin_csrf = $_SESSION['admin_csrf'];
 
+// Validate every form submitted to this dashboard.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
+    !hash_equals($admin_csrf, (string)($_POST['csrf_token'] ?? ''))) {
+    http_response_code(403);
+    exit('Security check failed. Refresh the page and try again.');
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_action'])) {
     if (!hash_equals($admin_csrf, (string)($_POST['csrf_token'] ?? ''))) {
         http_response_code(403);
@@ -391,7 +398,7 @@ $book_requests = mysqli_query($conn,
     <?php if($page == 'add_book'): ?>
     <div class="table-section">
         <h2>➕ Add New Book</h2>
-        <form method="POST" action="">
+        <form method="POST" action=""><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>">
             <input type="text" name="title" placeholder="Book Title" required>
             <input type="text" name="author" placeholder="Author" required>
             <select name="category">
@@ -431,7 +438,7 @@ $book_requests = mysqli_query($conn,
         <?php if (!$editBook): ?>
             <p>Book not found. <a href="?page=all_books">Return to books</a>.</p>
         <?php else: ?>
-        <form method="POST" class="admin-book-form">
+        <form method="POST" class="admin-book-form"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>">
             <input type="hidden" name="book_id" value="<?php echo (int)$editBook['id']; ?>">
             <label>Title<input name="title" required value="<?php echo htmlspecialchars($editBook['title']); ?>"></label>
             <label>Author<input name="author" required value="<?php echo htmlspecialchars($editBook['author']); ?>"></label>
@@ -451,7 +458,7 @@ $book_requests = mysqli_query($conn,
     <?php if($page == 'categories'): ?>
     <div class="table-section">
         <h2>📂 Manage Categories</h2>
-        <form method="POST" action="" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+        <form method="POST" action="" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>">
             <input type="text" name="category" placeholder="Category Name" required style="flex:1;min-width:200px;">
             <button type="submit" name="add_category" class="green">Add Category</button>
         </form>
@@ -461,7 +468,7 @@ $book_requests = mysqli_query($conn,
             <tr>
                 <td><?php echo $cat['id']; ?></td>
                 <td><?php echo htmlspecialchars($cat['name']); ?></td>
-                <td><form method="POST" onsubmit="return confirm('Delete this category?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_category"><input type="hidden" name="record_id" value="<?php echo (int)$cat['id']; ?>"><button class="red" type="submit">Delete</button></form></td>
+                <td><form method="POST" onsubmit="return confirm('Delete this category?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_category"><input type="hidden" name="record_id" value="<?php echo (int)$cat['id']; ?>"><button class="red" type="submit">Delete</button></form></td>
             </tr>
             <?php } ?>
         </table>
@@ -492,7 +499,7 @@ $book_requests = mysqli_query($conn,
                 <td><?php echo htmlspecialchars($row['author']); ?></td>
                 <td><?php echo htmlspecialchars($row['category'] ?? 'N/A'); ?></td>
                 <td><?php echo $row['download_count'] ?? 0; ?></td>
-                <td class="action-buttons"><a class="btn" href="?page=edit_book&id=<?php echo (int)$row['id']; ?>">Edit</a><form method="POST" onsubmit="return confirm('Delete this book permanently?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_book"><input type="hidden" name="record_id" value="<?php echo (int)$row['id']; ?>"><button class="red" type="submit">Delete</button></form></td>
+                <td class="action-buttons"><a class="btn" href="?page=edit_book&id=<?php echo (int)$row['id']; ?>">Edit</a><form method="POST" onsubmit="return confirm('Delete this book permanently?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_book"><input type="hidden" name="record_id" value="<?php echo (int)$row['id']; ?>"><button class="red" type="submit">Delete</button></form></td>
             </tr>
             <?php } ?>
         </table>
@@ -521,11 +528,11 @@ $book_requests = mysqli_query($conn,
                 </td>
                 <td class="action-buttons">
                     <?php if(isset($user['is_admin']) && $user['is_admin'] == 1){ ?>
-                        <form method="POST"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="remove_admin"><input type="hidden" name="record_id" value="<?php echo (int)$user['id']; ?>"><button type="submit" style="background:#ffc72c;color:#0b1f3a;">Remove Admin</button></form>
+                        <form method="POST"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="remove_admin"><input type="hidden" name="record_id" value="<?php echo (int)$user['id']; ?>"><button type="submit" style="background:#ffc72c;color:#0b1f3a;">Remove Admin</button></form>
                     <?php } else { ?>
-                        <form method="POST"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="make_admin"><input type="hidden" name="record_id" value="<?php echo (int)$user['id']; ?>"><button class="green" type="submit">Make Admin</button></form>
+                        <form method="POST"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="make_admin"><input type="hidden" name="record_id" value="<?php echo (int)$user['id']; ?>"><button class="green" type="submit">Make Admin</button></form>
                     <?php } ?>
-                    <form method="POST" onsubmit="return confirm('Delete this user?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_user"><input type="hidden" name="record_id" value="<?php echo (int)$user['id']; ?>"><button class="red" type="submit">Delete</button></form>
+                    <form method="POST" onsubmit="return confirm('Delete this user?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_user"><input type="hidden" name="record_id" value="<?php echo (int)$user['id']; ?>"><button class="red" type="submit">Delete</button></form>
                 </td>
             </tr>
             <?php } ?>
@@ -540,7 +547,7 @@ $book_requests = mysqli_query($conn,
         <table>
             <tr><th>ID</th><th>Name</th><th>Email</th><th>Message</th><th>Reply</th><th>Action</th></tr>
             <?php while($row = mysqli_fetch_assoc($messages)){ ?>
-            <form method="POST" action="">
+            <form method="POST" action=""><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>">
                 <input type="hidden" name="message_id" value="<?php echo $row['id']; ?>">
                 <tr>
                     <td><?php echo $row['id']; ?></td>
@@ -550,7 +557,7 @@ $book_requests = mysqli_query($conn,
                     <td width="250"><input type="text" name="reply" value="<?php echo htmlspecialchars($row['reply'] ?? ''); ?>" placeholder="Type reply..." style="width:100%"></td>
                     <td class="action-buttons">
                         <button type="submit" name="reply_submit" class="green">Reply</button>
-                        <form method="POST" onsubmit="return confirm('Delete this message?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_message"><input type="hidden" name="record_id" value="<?php echo (int)$row['id']; ?>"><button type="submit" class="red">Delete</button></form>
+                        <form method="POST" onsubmit="return confirm('Delete this message?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_message"><input type="hidden" name="record_id" value="<?php echo (int)$row['id']; ?>"><button type="submit" class="red">Delete</button></form>
                     </td>
                 </tr>
             </form>
@@ -564,7 +571,7 @@ $book_requests = mysqli_query($conn,
     <div class="table-section">
         <h2>🔔 Send Notification</h2>
         <p style="color: #28a745; margin-bottom: 15px;">✅ Notification sent via EMAIL + saved to database!</p>
-        <form method="POST" action="">
+        <form method="POST" action=""><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>">
             <input type="text" name="title" placeholder="Notification Title" required style="width:100%; margin-bottom:10px;">
             <textarea name="message" placeholder="Write notification..." rows="5" required style="width:100%; margin-bottom:10px;"></textarea>
             <button type="submit" name="send_notification" class="green">📢 Send to All Users</button>
@@ -596,7 +603,7 @@ $book_requests = mysqli_query($conn,
         <table>
             <tr><th>ID</th><th>User</th><th>Email</th><th>Book</th><th>Category</th><th>Status</th><th>Action</th></tr>
             <?php while($req = mysqli_fetch_assoc($book_requests)){ ?>
-            <form method="POST" action="update_request_status.php">
+            <form method="POST" action="update_request_status.php"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>">
                 <input type="hidden" name="request_id" value="<?php echo $req['id']; ?>">
                 <tr>
                     <td><?php echo $req['id']; ?></td>
