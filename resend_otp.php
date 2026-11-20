@@ -1,76 +1,74 @@
 <?php
-session_start();
 include 'config.php';
 
-if(!isset($_SESSION['temp_email'])){
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+require 'phpmailer/src/Exception.php';
+require 'phpmailer/src/PHPMailer.php';
+require 'phpmailer/src/SMTP.php';
+
+if (!isset($_SESSION['temp_email'])) {
     header("Location: register.php");
     exit();
 }
 
 $email = $_SESSION['temp_email'];
+if (isset($_POST['resend'])) {
+    $last_sent = (int) ($_SESSION['resend_otp_last'] ?? 0);
+    if (time() - $last_sent < 60) {
+        echo "<script>alert('Please wait 60 seconds before requesting another OTP.'); window.location.href='verify_otp.php';</script>";
+        exit();
+    }
 
-// PHPMailer
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+    $stmt = mysqli_prepare($conn, "SELECT fullname FROM users WHERE email = ? AND is_verified = 0 LIMIT 1");
+    mysqli_stmt_bind_param($stmt, 's', $email);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $user = $result ? mysqli_fetch_assoc($result) : null;
+    mysqli_stmt_close($stmt);
 
-require 'phpmailer/src/Exception.php';
-require 'phpmailer/src/PHPMailer.php';
-require 'phpmailer/src/SMTP.php';
+    if (!$user) {
+        unset($_SESSION['temp_email']);
+        header("Location: register.php");
+        exit();
+    }
 
-if(isset($_POST['resend'])){
-    // Get user data
-    $user_query = mysqli_query($conn, "SELECT fullname FROM users WHERE email='$email' AND is_verified=0");
-    $user = mysqli_fetch_assoc($user_query);
-    
-    if($user){
-        $fullname = $user['fullname'];
-        $otp = rand(100000, 999999);
-        $otp_expiry = date('Y-m-d H:i:s', strtotime('+10 minutes'));
-        
-        // Update OTP in database
-        mysqli_query($conn, "UPDATE users SET otp='$otp', otp_expiry='$otp_expiry' WHERE email='$email'");
-        
-        // Send OTP via email
-        $mail = new PHPMailer(true);
-        
-        try {
-            $mail->isSMTP();
-            $mail->Host = 'smtp.gmail.com';
-            $mail->SMTPAuth = true;
-            $mail->Username = 'universitylibrary172@gmail.com';
-            $mail->Password = 'zuepxvysbxrocdef';
-            $mail->SMTPSecure = 'tls';
-            $mail->Port = 587;
-            $mail->setFrom('universitylibrary172@gmail.com', 'Book Library');
-            $mail->addAddress($email, $fullname);
-            $mail->isHTML(true);
-            $mail->Subject = 'New OTP Code - Book Library';
-            $mail->Body = "
-                <div style='font-family: Arial; padding: 20px;'>
-                    <h2 style='color: #0b1f3a;'>Your New OTP</h2>
-                    <p>Hello <strong>$fullname</strong>,</p>
-                    <p>Your new OTP code is:</p>
-                    <h1 style='color: #28a745; font-size: 40px;'>$otp</h1>
-                    <p>This OTP is valid for <strong>10 minutes</strong>.</p>
-                    <hr>
-                    <small>📚 Book's Library Team</small>
-                </div>
-            ";
-            $mail->send();
-            
-            echo "<script>
-                    alert('✅ New OTP sent to your email!');
-                    window.location.href='verify_otp.php';
-                  </script>";
-            exit();
-            
-        } catch(Exception $e) {
-            echo "<script>
-                    alert('❌ Failed to send OTP. Please try again.');
-                    window.location.href='verify_otp.php';
-                  </script>";
-            exit();
-        }
+    $fullname = $user['fullname'];
+    $otp = (string) random_int(100000, 999999);
+    $expiry = date('Y-m-d H:i:s', time() + 600);
+    $update = mysqli_prepare($conn, "UPDATE users SET otp = ?, otp_expiry = ? WHERE email = ? AND is_verified = 0");
+    mysqli_stmt_bind_param($update, 'sss', $otp, $expiry, $email);
+    $saved = mysqli_stmt_execute($update);
+    mysqli_stmt_close($update);
+
+    if (!$saved) {
+        echo "<script>alert('Could not generate a new OTP. Please try again.'); window.location.href='verify_otp.php';</script>";
+        exit();
+    }
+
+    $_SESSION['resend_otp_last'] = time();
+    $mail = new PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = getenv('LIBRARY_SMTP_USERNAME') ?: 'universitylibrary172@gmail.com';
+        $mail->Password = getenv('LIBRARY_SMTP_PASSWORD') ?: '';
+        $mail->SMTPSecure = 'tls';
+        $mail->Port = 587;
+        $mail->setFrom($mail->Username, 'Book Library');
+        $mail->addAddress($email, $fullname);
+        $mail->isHTML(true);
+        $mail->Subject = 'New OTP Code - Book Library';
+        $safe_name = htmlspecialchars($fullname, ENT_QUOTES, 'UTF-8');
+        $mail->Body = "<p>Hello <strong>{$safe_name}</strong>,</p><p>Your new verification code is:</p><h1>{$otp}</h1><p>This code is valid for 10 minutes.</p>";
+        $mail->send();
+        echo "<script>alert('New OTP sent to your email.'); window.location.href='verify_otp.php';</script>";
+        exit();
+    } catch (Exception $e) {
+        error_log('OTP resend failed: ' . $e->getMessage());
+        echo "<script>alert('Failed to send OTP. Please try again later.'); window.location.href='verify_otp.php';</script>";
+        exit();
     }
 }
 ?>
