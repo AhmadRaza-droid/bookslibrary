@@ -49,14 +49,18 @@ if (isset($_POST['resend'])) {
     $_SESSION['resend_otp_last'] = time();
     $mail = new PHPMailer(true);
     try {
+        $smtp = library_smtp_settings();
+        if ($smtp['username'] === '' || $smtp['password'] === '') {
+            throw new Exception('SMTP credentials are not configured on the server.');
+        }
         $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';
+        $mail->Host = $smtp['host'];
         $mail->SMTPAuth = true;
-        $mail->Username = getenv('LIBRARY_SMTP_USERNAME') ?: 'universitylibrary172@gmail.com';
-        $mail->Password = getenv('LIBRARY_SMTP_PASSWORD') ?: '';
-        $mail->SMTPSecure = 'tls';
-        $mail->Port = 587;
-        $mail->setFrom($mail->Username, 'Book Library');
+        $mail->Username = $smtp['username'];
+        $mail->Password = $smtp['password'];
+        $mail->SMTPSecure = $smtp['encryption'];
+        $mail->Port = $smtp['port'];
+        $mail->setFrom($smtp['username'], 'Book Library');
         $mail->addAddress($email, $fullname);
         $mail->isHTML(true);
         $mail->Subject = 'New OTP Code - Book Library';
