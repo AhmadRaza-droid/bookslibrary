@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_action'])) {
     exit();
 }
 
-// Add book with parameterized SQL.
+// Add a book only with validated, safe link schemes.
 if (isset($_POST['add_book'])) {
     $title = trim($_POST['title'] ?? '');
     $author = trim($_POST['author'] ?? '');
@@ -80,14 +80,30 @@ if (isset($_POST['add_book'])) {
     $cover_image_url = trim($_POST['cover_image_url'] ?? '');
     $read_link = trim($_POST['read_link'] ?? '');
     $download_epub_link = trim($_POST['download_epub_link'] ?? '');
-    $stmt = mysqli_prepare($conn, "INSERT INTO books (title, author, description, category, cover_image_url, read_link, download_epub_link) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    if ($stmt) {
-        mysqli_stmt_bind_param($stmt, 'sssssss', $title, $author, $description, $category, $cover_image_url, $read_link, $download_epub_link);
-        $ok = mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
-        if ($ok) { header('Location: ?page=all_books&added=1'); exit(); }
+
+    $safe_link = function ($value) {
+        if ($value === '') return true;
+        if (preg_match('/^(uploads\\/[A-Za-z0-9_\\/.-]+)$/', $value)) return strpos($value, '..') === false;
+        $parts = parse_url($value);
+        return is_array($parts) && isset($parts['scheme'], $parts['host'])
+            && strtolower($parts['scheme']) === 'https'
+            && !isset($parts['user']) && !isset($parts['pass']);
+    };
+
+    if ($title === '' || $author === '' || strlen($title) > 255 || strlen($author) > 255 ||
+        strlen($description) > 10000 || strlen($category) > 120 ||
+        !$safe_link($cover_image_url) || !$safe_link($read_link) || !$safe_link($download_epub_link)) {
+        $admin_error = 'Enter valid book details and use HTTPS or a safe uploads/ path for links.';
+    } else {
+        $stmt = mysqli_prepare($conn, "INSERT INTO books (title, author, description, category, cover_image_url, read_link, download_epub_link) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 'sssssss', $title, $author, $description, $category, $cover_image_url, $read_link, $download_epub_link);
+            $ok = mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+            if ($ok) { header('Location: ?page=all_books&added=1'); exit(); }
+        }
+        $admin_error = 'Book could not be added. Please check the details.';
     }
-    $admin_error = 'Book could not be added. Please check the details.';
 }
 
 // Add category with prepared SQL.
