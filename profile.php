@@ -47,10 +47,10 @@ $myRequests = mysqli_query($conn,
  WHERE user_id='$user_id'
  ORDER BY id DESC");
 
-$notifications = mysqli_query($conn,
-"SELECT * FROM notifications
- ORDER BY id DESC
- LIMIT 5");
+$notification_stmt = mysqli_prepare($conn, "SELECT * FROM notifications WHERE user_id = ? ORDER BY id DESC LIMIT 5");
+mysqli_stmt_bind_param($notification_stmt, "i", $user_id);
+mysqli_stmt_execute($notification_stmt);
+$notifications = mysqli_stmt_get_result($notification_stmt);
 
 $readingProgress = mysqli_query($conn,
 "SELECT reading_progress.*, books.title
