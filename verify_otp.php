@@ -25,7 +25,7 @@ if(isset($_POST['verify'])){
     
     if($type == 'registration'){
         // ========== REGISTRATION OTP VERIFICATION ==========
-        $query = "SELECT * FROM users WHERE email='$email' AND otp='$entered_otp' AND is_verified=0";
+        $query = "SELECT * FROM users WHERE email='$email' AND otp='$entered_otp' AND otp_expiry > NOW() AND is_verified=0 AND otp_expiry > NOW()";
         $result = mysqli_query($conn, $query);
         
         if(mysqli_num_rows($result) > 0){
@@ -53,7 +53,7 @@ if(isset($_POST['verify'])){
         
         if(mysqli_num_rows($result) > 0){
             $_SESSION['otp_verified'] = true;
-            unset($_SESSION['reset_email']);
+            
             
             echo "<script>
                     alert('✅ OTP Verified! Please reset your password.');
