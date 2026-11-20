@@ -1,5 +1,4 @@
 <?php
-session_start();
 include 'config.php';
 
 // ========== CHECK AND CREATE DOWNLOADS TABLE IF NOT EXISTS ==========
@@ -22,33 +21,50 @@ if(mysqli_num_rows($column_check) == 0){
 
 if(isset($_GET['id'])){
 
-    $book_id = mysqli_real_escape_string($conn, $_GET['id']);
-
-    $result = mysqli_query($conn,
-    "SELECT * FROM books WHERE id='$book_id'");
-
-    $book = mysqli_fetch_assoc($result);
+    $book_id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+    if (!$book_id || $book_id < 1) { http_response_code(400); exit('Invalid book ID.'); }
+    $stmt = mysqli_prepare($conn, "SELECT * FROM books WHERE id = ? LIMIT 1");
+    if (!$stmt) { http_response_code(500); exit('Unable to find book.'); }
+    mysqli_stmt_bind_param($stmt, 'i', $book_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $book = $result ? mysqli_fetch_assoc($result) : null;
+    mysqli_stmt_close($stmt);
 
     if($book){
 
-        // Update download count
-        mysqli_query($conn,
-        "UPDATE books
-         SET download_count = download_count + 1
-         WHERE id='$book_id'");
-
-        // Save download history if user logged in
-        if(isset($_SESSION['user_id'])){
-            $user_id = $_SESSION['user_id'];
-            $book_title = $book['title'];
-            mysqli_query($conn, "INSERT INTO downloads (user_id, book_id, book_title) 
-                                VALUES ('$user_id', '$book_id', '$book_title')");
+        $downloadLink = trim((string)$book['download_epub_link']);
+        if ($downloadLink === '') $downloadLink = trim((string)$book['pdf_file']);
+        if (ctype_digit($downloadLink)) {
+            $downloadLink = "https://www.gutenberg.org/ebooks/" . $downloadLink . ".epub.noimages";
+        } elseif (strpos($downloadLink, 'uploads/') === 0 && strpos($downloadLink, '..') === false) {
+            $uploadsRoot = realpath(__DIR__ . '/uploads');
+            $localFile = realpath(__DIR__ . '/' . $downloadLink);
+            if (!$uploadsRoot || !$localFile || strpos($localFile, $uploadsRoot . DIRECTORY_SEPARATOR) !== 0 || !is_file($localFile)) {
+                http_response_code(404); exit('The book file is unavailable.');
+            }
+        } else {
+            $linkParts = parse_url($downloadLink);
+            if (!is_array($linkParts) || !isset($linkParts['scheme']) || strtolower($linkParts['scheme']) !== 'https' || empty($linkParts['host']) || isset($linkParts['user']) || isset($linkParts['pass'])) {
+                http_response_code(400); exit('This book does not have a safe download link.');
+            }
         }
 
-        $downloadLink = $book['download_epub_link'];
-
-        if(is_numeric($downloadLink)){
-            $downloadLink = "https://www.gutenberg.org/ebooks/" . $downloadLink . ".epub.noimages";
+        $countStmt = mysqli_prepare($conn, "UPDATE books SET download_count = COALESCE(download_count, 0) + 1 WHERE id = ?");
+        if ($countStmt) {
+            mysqli_stmt_bind_param($countStmt, 'i', $book_id);
+            mysqli_stmt_execute($countStmt);
+            mysqli_stmt_close($countStmt);
+        }
+        if (isset($_SESSION['user_id'])) {
+            $user_id = (int)$_SESSION['user_id'];
+            $book_title = $book['title'];
+            $historyStmt = mysqli_prepare($conn, "INSERT INTO downloads (user_id, book_id, book_title) VALUES (?, ?, ?)");
+            if ($historyStmt) {
+                mysqli_stmt_bind_param($historyStmt, 'iis', $user_id, $book_id, $book_title);
+                mysqli_stmt_execute($historyStmt);
+                mysqli_stmt_close($historyStmt);
+            }
         }
 
         $book_title = $book['title'];
@@ -301,7 +317,7 @@ if(isset($_GET['id'])){
     </div>
     
     <div class=\"btn-group\" style=\"margin-top:10px;\">
-        <a href=\"read_book.php?id=$book_id\">
+        <a href=\"read_book.php?id=<?php echo (int)$book_id; ?>\">
             <button class=\"btn-read\">📖 Read Online</button>
         </a>
         <a href=\"profile.php\">
