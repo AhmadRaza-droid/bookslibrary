@@ -20,83 +20,107 @@ $smtp_host = 'smtp.gmail.com';
 $smtp_email = 'universitylibrary172@gmail.com';
 $smtp_password = getenv('LIBRARY_SMTP_PASSWORD') ?: '';
 
-// ========== DELETE BOOK ==========
-if(isset($_GET['delete_book'])){
-    $id = $_GET['delete_book'];
-    mysqli_query($conn, "DELETE FROM books WHERE id='$id'");
-    echo "<script>alert('Book deleted successfully!'); window.location='?page=all_books';</script>";
-    exit();
-}
+// All destructive and role-changing actions require POST and a CSRF token.
+if (empty($_SESSION['admin_csrf'])) $_SESSION['admin_csrf'] = bin2hex(random_bytes(32));
+$admin_csrf = $_SESSION['admin_csrf'];
 
-// ========== DELETE USER ==========
-if(isset($_GET['delete_user'])){
-    $id = $_GET['delete_user'];
-    mysqli_query($conn, "DELETE FROM users WHERE id='$id'");
-    echo "<script>alert('User deleted successfully!'); window.location='?page=all_users';</script>";
-    exit();
-}
-
-// ========== ADD BOOK ==========
-if(isset($_POST['add_book'])){
-    $title = mysqli_real_escape_string($conn, $_POST['title']);
-    $author = mysqli_real_escape_string($conn, $_POST['author']);
-    $description = mysqli_real_escape_string($conn, $_POST['description']);
-    $category = mysqli_real_escape_string($conn, $_POST['category']);
-    $cover_image_url = mysqli_real_escape_string($conn, $_POST['cover_image_url']);
-    $read_link = mysqli_real_escape_string($conn, $_POST['read_link']);
-    $download_epub_link = mysqli_real_escape_string($conn, $_POST['download_epub_link']);
-    
-    $query = "INSERT INTO books (title, author, description, category, cover_image_url, read_link, download_epub_link) 
-              VALUES ('$title', '$author', '$description', '$category', '$cover_image_url', '$read_link', '$download_epub_link')";
-    
-    if(mysqli_query($conn, $query)){
-        echo "<script>alert('✅ Book added successfully!'); window.location='?page=all_books';</script>";
-    } else {
-        echo "<script>alert('❌ Error adding book: " . mysqli_error($conn) . "');</script>";
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_action'])) {
+    if (!hash_equals($admin_csrf, (string)($_POST['csrf_token'] ?? ''))) {
+        http_response_code(403);
+        exit('Security check failed. Refresh and try again.');
     }
+    $action = (string)$_POST['admin_action'];
+    $id = filter_var($_POST['record_id'] ?? null, FILTER_VALIDATE_INT);
+    $queries = [
+        'delete_book' => 'DELETE FROM books WHERE id = ?',
+        'delete_category' => 'DELETE FROM categories WHERE id = ?',
+        'delete_message' => 'DELETE FROM messages WHERE id = ?',
+        'delete_user' => 'DELETE FROM users WHERE id = ? AND id <> ?',
+        'make_admin' => 'UPDATE users SET is_admin = 1 WHERE id = ?',
+        'remove_admin' => 'UPDATE users SET is_admin = 0 WHERE id = ? AND id <> ?'
+    ];
+    if (!$id || !isset($queries[$action])) {
+        http_response_code(400);
+        exit('Invalid action.');
+    }
+    $stmt = mysqli_prepare($conn, $queries[$action]);
+    if (!$stmt) {
+        http_response_code(500);
+        exit('Could not process this action.');
+    }
+    if ($action === 'delete_user' || $action === 'remove_admin') {
+        $currentAdminId = (int)($_SESSION['admin_id'] ?? 0);
+        mysqli_stmt_bind_param($stmt, 'ii', $id, $currentAdminId);
+    } else {
+        mysqli_stmt_bind_param($stmt, 'i', $id);
+    }
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+    $redirect = [
+        'delete_book'=>'all_books','delete_category'=>'categories','delete_message'=>'messages',
+        'delete_user'=>'all_users','make_admin'=>'all_users','remove_admin'=>'all_users'
+    ][$action];
+    header('Location: ?page=' . $redirect . '&updated=1');
     exit();
 }
 
-// ========== ADD CATEGORY ==========
-if(isset($_POST['add_category'])){
-    $category = mysqli_real_escape_string($conn, $_POST['category']);
-    mysqli_query($conn, "INSERT INTO categories (name) VALUES ('$category')");
-    echo "<script>alert('✅ Category added!'); window.location='?page=categories';</script>";
+// Add book with parameterized SQL.
+if (isset($_POST['add_book'])) {
+    $title = trim($_POST['title'] ?? '');
+    $author = trim($_POST['author'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $category = trim($_POST['category'] ?? '');
+    $cover_image_url = trim($_POST['cover_image_url'] ?? '');
+    $read_link = trim($_POST['read_link'] ?? '');
+    $download_epub_link = trim($_POST['download_epub_link'] ?? '');
+    $stmt = mysqli_prepare($conn, "INSERT INTO books (title, author, description, category, cover_image_url, read_link, download_epub_link) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, 'sssssss', $title, $author, $description, $category, $cover_image_url, $read_link, $download_epub_link);
+        $ok = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        if ($ok) { header('Location: ?page=all_books&added=1'); exit(); }
+    }
+    $admin_error = 'Book could not be added. Please check the details.';
+}
+
+// Add category with prepared SQL.
+if (isset($_POST['add_category'])) {
+    $category = trim($_POST['category'] ?? '');
+    if ($category !== '') {
+        $stmt = mysqli_prepare($conn, "INSERT INTO categories (name) VALUES (?)");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 's', $category);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+        }
+    }
+    header('Location: ?page=categories&added=1');
     exit();
 }
 
-// ========== DELETE CATEGORY ==========
-if(isset($_GET['delete_category'])){
-    $id = $_GET['delete_category'];
-    mysqli_query($conn, "DELETE FROM categories WHERE id='$id'");
-    echo "<script>alert('Category deleted!'); window.location='?page=categories';</script>";
-    exit();
+// Update book details.
+if (isset($_POST['update_book'])) {
+    $id = filter_var($_POST['book_id'] ?? null, FILTER_VALIDATE_INT);
+    $title = trim($_POST['title'] ?? '');
+    $author = trim($_POST['author'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $category = trim($_POST['category'] ?? '');
+    $cover_image_url = trim($_POST['cover_image_url'] ?? '');
+    $read_link = trim($_POST['read_link'] ?? '');
+    $download_epub_link = trim($_POST['download_epub_link'] ?? '');
+    if ($id && $title !== '' && $author !== '') {
+        $stmt = mysqli_prepare($conn, "UPDATE books SET title=?, author=?, description=?, category=?, cover_image_url=?, read_link=?, download_epub_link=? WHERE id=?");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 'sssssssi', $title, $author, $description, $category, $cover_image_url, $read_link, $download_epub_link, $id);
+            $ok = mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+            if ($ok) { header('Location: ?page=all_books&updated=1'); exit(); }
+        }
+    }
+    $admin_error = 'Book could not be updated. Check the title and author.';
 }
 
-// ========== MAKE ADMIN ==========
-if(isset($_GET['make_admin'])){
-    $id = $_GET['make_admin'];
-    mysqli_query($conn, "UPDATE users SET is_admin=1 WHERE id='$id'");
-    echo "<script>alert('User is now Admin!'); window.location='?page=all_users';</script>";
-    exit();
-}
-
-// ========== REMOVE ADMIN ==========
-if(isset($_GET['remove_admin'])){
-    $id = $_GET['remove_admin'];
-    mysqli_query($conn, "UPDATE users SET is_admin=0 WHERE id='$id'");
-    echo "<script>alert('Admin rights removed!'); window.location='?page=all_users';</script>";
-    exit();
-}
-
-// Delete message
-if(isset($_GET['delete_message'])){
-    $id = $_GET['delete_message'];
-    mysqli_query($conn, "DELETE FROM messages WHERE id='$id'");
-    echo "<script>alert('Message deleted successfully!'); window.location='?page=messages';</script>";
-    exit();
-}
-
+// Handle reply message
 // Handle reply message
 if(isset($_POST['reply_submit'])){
     $message_id = $_POST['message_id'];
@@ -259,6 +283,46 @@ $book_requests = mysqli_query($conn,
             .hamburger-mobile { display: block; position: fixed; top: 15px; left: 15px; z-index: 101; background: #0b1f3a; padding: 10px; border-radius: 5px; cursor: pointer; color: white; font-size: 24px; }
         }
         .badge-admin { background: #ffc72c; color: #0b1f3a; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+
+        body { background:#f3f7f2; color:#23352b; }
+        .side-menu { background:linear-gradient(180deg,#203f31,#315b45); }
+        .side-menu a { margin:3px 10px; border-radius:10px; border-left:0; }
+        .side-menu a.active,.side-menu a:hover { background:rgba(255,255,255,.15); border-left:0; }
+        .main-content { padding:26px; }
+        .top-bar,.stat-card,.table-section { border:1px solid rgba(55,91,67,.10); border-radius:18px; box-shadow:0 10px 30px rgba(35,60,43,.07); }
+        .top-bar { position:sticky; top:12px; z-index:20; backdrop-filter:blur(14px); }
+        .top-bar h2,.table-section h2 { color:#294b37; }
+        .stats-container { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:16px; }
+        .stat-card { width:auto; min-width:0; background:linear-gradient(145deg,#fff,#f5faf4); }
+        .stat-card h1 { color:#315b45; font-size:clamp(26px,3vw,36px); }
+        .table-section { padding:22px; }
+        .table-section table { border-collapse:separate; border-spacing:0; min-width:650px; border-radius:12px; overflow:hidden; }
+        .table-section th { background:#315b45; color:#fff; }
+        .table-section td,.table-section th { border:0; border-bottom:1px solid #e7eee7; padding:12px 14px; }
+        .table-section tr:hover td { background:#f7fbf6; }
+        button,.btn { border-radius:10px; padding:9px 14px; font-weight:600; background:#315b45; }
+        button.green,.btn-green { background:#4d8962; } button.red,.btn-red { background:#c44f50; }
+        input,textarea,select { border:1px solid #dce7dc; border-radius:10px; padding:12px 14px; max-width:100%; }
+        .admin-table-search { width:min(100%,440px); margin:0 0 16px; background:#fbfdfb; }
+        .admin-book-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+        .admin-book-form label { display:flex; flex-direction:column; gap:6px; color:#49624f; font-weight:600; }
+        .admin-book-form label:nth-child(4),.admin-book-form button { grid-column:1/-1; }
+        .admin-book-form input,.admin-book-form textarea { width:100%; margin:0; }
+        .admin-alert { background:#fff1e9; border:1px solid #f2c8ae; color:#8d4929; border-radius:12px; padding:12px 16px; margin-bottom:16px; }
+        .action-buttons form { display:inline-flex; margin:0; }
+        .dark-mode { background:#14231b; color:#e8f0e8; }
+        .dark-mode .top-bar,.dark-mode .stat-card,.dark-mode .table-section { background:#20352a; border-color:#345440; color:#e8f0e8; }
+        .dark-mode .top-bar h2,.dark-mode .table-section h2,.dark-mode .stat-card h1,.dark-mode .stat-card h2,.dark-mode .table-section td { color:#e8f0e8; }
+        .dark-mode .table-section td { border-color:#345440; } .dark-mode .table-section tr:hover td { background:#294535; }
+        .dark-mode input,.dark-mode textarea,.dark-mode select { background:#172a20; color:#f3f7f3; border-color:#45634e; }
+        @media(max-width:768px) {
+            .main-content { padding:76px 12px 18px; }
+            .top-bar { padding:14px; } .top-bar h2 { margin-left:32px; font-size:18px; }
+            .table-section { padding:14px; } .stats-container { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+            .stat-card { padding:15px; } .admin-book-form { grid-template-columns:1fr; }
+            .admin-book-form label:nth-child(4),.admin-book-form button { grid-column:auto; }
+        }
+
     </style>
 </head>
 <body>
@@ -286,6 +350,7 @@ $book_requests = mysqli_query($conn,
 </div>
 
 <div class="main-content">
+    <?php if (!empty($admin_error)): ?><div class="admin-alert"><?php echo htmlspecialchars($admin_error); ?></div><?php endif; ?>
     <div class="top-bar">
         <h2><?php echo ucfirst(str_replace('_', ' ', $page)); ?></h2>
         <button onclick="toggleDarkMode()" class="dark-btn">🌙 Dark Mode</button>
@@ -346,6 +411,42 @@ $book_requests = mysqli_query($conn,
     </div>
     <?php endif; ?>
 
+
+    <?php if($page == 'edit_book'):
+        $editId = filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT);
+        $editBook = null;
+        if ($editId) {
+            $editStmt = mysqli_prepare($conn, "SELECT * FROM books WHERE id=?");
+            if ($editStmt) {
+                mysqli_stmt_bind_param($editStmt, 'i', $editId);
+                mysqli_stmt_execute($editStmt);
+                $editResult = mysqli_stmt_get_result($editStmt);
+                $editBook = mysqli_fetch_assoc($editResult);
+                mysqli_stmt_close($editStmt);
+            }
+        }
+    ?>
+    <div class="table-section">
+        <h2>✏️ Edit Book</h2>
+        <?php if (!$editBook): ?>
+            <p>Book not found. <a href="?page=all_books">Return to books</a>.</p>
+        <?php else: ?>
+        <form method="POST" class="admin-book-form">
+            <input type="hidden" name="book_id" value="<?php echo (int)$editBook['id']; ?>">
+            <label>Title<input name="title" required value="<?php echo htmlspecialchars($editBook['title']); ?>"></label>
+            <label>Author<input name="author" required value="<?php echo htmlspecialchars($editBook['author']); ?>"></label>
+            <label>Category<input name="category" value="<?php echo htmlspecialchars($editBook['category'] ?? ''); ?>"></label>
+            <label>Description<textarea name="description" rows="4"><?php echo htmlspecialchars($editBook['description'] ?? ''); ?></textarea></label>
+            <label>Cover image URL<input type="url" name="cover_image_url" value="<?php echo htmlspecialchars($editBook['cover_image_url'] ?? ''); ?>"></label>
+            <label>Read link<input type="url" name="read_link" value="<?php echo htmlspecialchars($editBook['read_link'] ?? ''); ?>"></label>
+            <label>Download EPUB link<input type="url" name="download_epub_link" value="<?php echo htmlspecialchars($editBook['download_epub_link'] ?? ''); ?>"></label>
+            <button type="submit" name="update_book" class="green">Save Changes</button>
+            <a class="btn" href="?page=all_books">Cancel</a>
+        </form>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
     <!-- ========== CATEGORIES PAGE ========== -->
     <?php if($page == 'categories'): ?>
     <div class="table-section">
@@ -360,7 +461,7 @@ $book_requests = mysqli_query($conn,
             <tr>
                 <td><?php echo $cat['id']; ?></td>
                 <td><?php echo htmlspecialchars($cat['name']); ?></td>
-                <td><a href="?page=categories&delete_category=<?php echo $cat['id']; ?>" onclick="return confirm('Delete this category?')"><button class="red">Delete</button></a></td>
+                <td><form method="POST" onsubmit="return confirm('Delete this category?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_category"><input type="hidden" name="record_id" value="<?php echo (int)$cat['id']; ?>"><button class="red" type="submit">Delete</button></form></td>
             </tr>
             <?php } ?>
         </table>
@@ -380,7 +481,8 @@ $book_requests = mysqli_query($conn,
     <?php if($page == 'all_books'): ?>
     <div class="table-section">
         <h2>📚 All Books (<?php echo mysqli_num_rows($books); ?>)</h2>
-        <table>
+        <input type="search" class="admin-table-search" data-table="booksTable" placeholder="Search books by title, author or category...">
+        <table id="booksTable">
             <tr><th>ID</th><th>Cover</th><th>Title</th><th>Author</th><th>Category</th><th>Downloads</th><th>Action</th></tr>
             <?php while($row = mysqli_fetch_assoc($books)){ ?>
             <tr>
@@ -390,7 +492,7 @@ $book_requests = mysqli_query($conn,
                 <td><?php echo htmlspecialchars($row['author']); ?></td>
                 <td><?php echo htmlspecialchars($row['category'] ?? 'N/A'); ?></td>
                 <td><?php echo $row['download_count'] ?? 0; ?></td>
-                <td><a href="?page=all_books&delete_book=<?php echo $row['id']; ?>" onclick="return confirm('Delete this book?')"><button class="red">Delete</button></a></td>
+                <td class="action-buttons"><a class="btn" href="?page=edit_book&id=<?php echo (int)$row['id']; ?>">Edit</a><form method="POST" onsubmit="return confirm('Delete this book permanently?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_book"><input type="hidden" name="record_id" value="<?php echo (int)$row['id']; ?>"><button class="red" type="submit">Delete</button></form></td>
             </tr>
             <?php } ?>
         </table>
@@ -401,7 +503,8 @@ $book_requests = mysqli_query($conn,
     <?php if($page == 'all_users'): ?>
     <div class="table-section">
         <h2>👥 All Users (<?php echo mysqli_num_rows($all_users); ?>)</h2>
-        <table>
+        <input type="search" class="admin-table-search" data-table="usersTable" placeholder="Search users by name or email...">
+        <table id="usersTable">
             <tr><th>ID</th><th>Profile</th><th>Full Name</th><th>Email</th><th>Role</th><th>Action</th></tr>
             <?php while($user = mysqli_fetch_assoc($all_users)){ ?>
             <tr>
@@ -418,11 +521,11 @@ $book_requests = mysqli_query($conn,
                 </td>
                 <td class="action-buttons">
                     <?php if(isset($user['is_admin']) && $user['is_admin'] == 1){ ?>
-                        <a href="?page=all_users&remove_admin=<?php echo $user['id']; ?>"><button style="background:#ffc72c;color:#0b1f3a;">Remove Admin</button></a>
+                        <form method="POST"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="remove_admin"><input type="hidden" name="record_id" value="<?php echo (int)$user['id']; ?>"><button type="submit" style="background:#ffc72c;color:#0b1f3a;">Remove Admin</button></form>
                     <?php } else { ?>
-                        <a href="?page=all_users&make_admin=<?php echo $user['id']; ?>"><button class="green">Make Admin</button></a>
+                        <form method="POST"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="make_admin"><input type="hidden" name="record_id" value="<?php echo (int)$user['id']; ?>"><button class="green" type="submit">Make Admin</button></form>
                     <?php } ?>
-                    <a href="?page=all_users&delete_user=<?php echo $user['id']; ?>" onclick="return confirm('Delete this user?')"><button class="red">Delete</button></a>
+                    <form method="POST" onsubmit="return confirm('Delete this user?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_user"><input type="hidden" name="record_id" value="<?php echo (int)$user['id']; ?>"><button class="red" type="submit">Delete</button></form>
                 </td>
             </tr>
             <?php } ?>
@@ -447,7 +550,7 @@ $book_requests = mysqli_query($conn,
                     <td width="250"><input type="text" name="reply" value="<?php echo htmlspecialchars($row['reply'] ?? ''); ?>" placeholder="Type reply..." style="width:100%"></td>
                     <td class="action-buttons">
                         <button type="submit" name="reply_submit" class="green">Reply</button>
-                        <a href="?page=messages&delete_message=<?php echo $row['id']; ?>" onclick="return confirm('Delete this message?')"><button type="button" class="red">Delete</button></a>
+                        <form method="POST" onsubmit="return confirm('Delete this message?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_message"><input type="hidden" name="record_id" value="<?php echo (int)$row['id']; ?>"><button type="submit" class="red">Delete</button></form>
                     </td>
                 </tr>
             </form>
@@ -542,6 +645,16 @@ $book_requests = mysqli_query($conn,
 </div>
 
 <script>
+document.querySelectorAll(".admin-table-search").forEach(function(search){
+    search.addEventListener("input", function(){
+        const table = document.getElementById(search.dataset.table);
+        if (!table) return;
+        const query = search.value.toLowerCase();
+        Array.from(table.querySelectorAll("tr")).slice(1).forEach(function(row){
+            row.hidden = !row.textContent.toLowerCase().includes(query);
+        });
+    });
+});
 function toggleMobileMenu() {
     document.getElementById('sideMenu').classList.toggle('open');
 }
