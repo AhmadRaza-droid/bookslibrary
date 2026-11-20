@@ -1,75 +1,56 @@
 <?php
-session_start();
 include 'config.php';
 
-// Check if user came from registration OR forgot password
-if(!isset($_SESSION['temp_email']) && !isset($_SESSION['reset_email'])){
-    echo "<script>
-            alert('Session expired. Please try again.');
-            window.location.href='login.php';
-          </script>";
+if (!isset($_SESSION['temp_email']) && !isset($_SESSION['reset_email'])) {
+    echo "<script>alert('Session expired. Please try again.'); window.location.href='login.php';</script>";
     exit();
 }
 
-// Get email from session
-if(isset($_SESSION['temp_email'])){
-    $email = $_SESSION['temp_email'];
-    $type = 'registration';
-} else if(isset($_SESSION['reset_email'])){
-    $email = $_SESSION['reset_email'];
-    $type = 'reset';
-}
+$type = isset($_SESSION['temp_email']) ? 'registration' : 'reset';
+$email = $type === 'registration' ? $_SESSION['temp_email'] : $_SESSION['reset_email'];
 
-if(isset($_POST['verify'])){
-    $entered_otp = trim($_POST['otp']);
-    $now = date('Y-m-d H:i:s');
-    
-    if($type == 'registration'){
-        // ========== REGISTRATION OTP VERIFICATION ==========
-        $query = "SELECT * FROM users WHERE email='$email' AND otp='$entered_otp' AND otp_expiry > '$now' AND is_verified=0 AND otp_expiry > '$now'";
-        $result = mysqli_query($conn, $query);
-        
-        if(mysqli_num_rows($result) > 0){
-            mysqli_query($conn, "UPDATE users SET is_verified=1, otp=NULL, otp_expiry=NULL WHERE email='$email'");
-            unset($_SESSION['temp_email']);
-            
-            echo "<script>
-                    alert('✅ Email verified successfully! Please login.');
-                    window.location.href='login.php';
-                  </script>";
-            exit();
-        } else {
-            echo "<script>
-                    alert('❌ Invalid OTP! Please try again.');
-                    window.location.href='verify_otp.php';
-                  </script>";
-            exit();
-        }
-        // ===================================================
-        
-    } else if($type == 'reset'){
-        // ========== FORGOT PASSWORD OTP VERIFICATION ==========
-        $query = "SELECT * FROM users WHERE email='$email' AND otp='$entered_otp'";
-        $result = mysqli_query($conn, $query);
-        
-        if(mysqli_num_rows($result) > 0){
-            $_SESSION['otp_verified'] = true;
-            
-            
-            echo "<script>
-                    alert('✅ OTP Verified! Please reset your password.');
-                    window.location.href='forgot_password.php?step=reset';
-                  </script>";
-            exit();
-        } else {
-            echo "<script>
-                    alert('❌ Invalid OTP! Please try again.');
-                    window.location.href='verify_otp.php';
-                  </script>";
-            exit();
-        }
-        // ===================================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify'])) {
+    $entered_otp = trim($_POST['otp'] ?? '');
+    if (!preg_match('/^[0-9]{6}$/', $entered_otp)) {
+        echo "<script>alert('Please enter a valid 6-digit OTP.'); window.location.href='verify_otp.php';</script>";
+        exit();
     }
+
+    if ($type === 'registration') {
+        $sql = "SELECT id FROM users WHERE email = ? AND otp = ? AND otp_expiry > NOW() AND is_verified = 0 LIMIT 1";
+    } else {
+        $sql = "SELECT id FROM users WHERE email = ? AND otp = ? AND otp_expiry > NOW() LIMIT 1";
+    }
+
+    $stmt = mysqli_prepare($conn, $sql);
+    if (!$stmt) { http_response_code(500); exit('Unable to verify OTP.'); }
+    mysqli_stmt_bind_param($stmt, 'ss', $email, $entered_otp);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $matched = $result ? mysqli_fetch_assoc($result) : null;
+    mysqli_stmt_close($stmt);
+
+    if ($matched) {
+        if ($type === 'registration') {
+            $update = mysqli_prepare($conn, "UPDATE users SET is_verified = 1, otp = NULL, otp_expiry = NULL WHERE id = ? AND otp = ? AND otp_expiry > NOW()");
+            mysqli_stmt_bind_param($update, 'is', $matched['id'], $entered_otp);
+            $ok = mysqli_stmt_execute($update) && mysqli_stmt_affected_rows($update) === 1;
+            mysqli_stmt_close($update);
+            if ($ok) {
+                unset($_SESSION['temp_email']);
+                echo "<script>alert('Email verified successfully! Please login.'); window.location.href='login.php';</script>";
+                exit();
+            }
+        } else {
+            $_SESSION['otp_verified'] = true;
+            $_SESSION['otp_verified_at'] = time();
+            echo "<script>alert('OTP verified! Please reset your password.'); window.location.href='forgot_password.php?step=reset';</script>";
+            exit();
+        }
+    }
+
+    echo "<script>alert('Invalid or expired OTP. Please request a new OTP.'); window.location.href='verify_otp.php';</script>";
+    exit();
 }
 ?>
 
