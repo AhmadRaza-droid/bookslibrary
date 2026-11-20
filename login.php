@@ -130,7 +130,7 @@ $step = $_GET['step'] ?? 'login';
 <html lang="en">
 <head>
     <title>Login - Library Management System</title>
-    <link rel="stylesheet" href="style.css?v=100">
+    <link rel="stylesheet" href="style.css?v=20261120">
     <style>
         .form-section {
             display: flex;
