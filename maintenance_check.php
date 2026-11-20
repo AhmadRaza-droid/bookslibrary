@@ -7,10 +7,18 @@ $result = mysqli_query($conn, "SELECT setting_value FROM settings WHERE setting_
 $row = mysqli_fetch_assoc($result);
 $maintenance_mode = $row['setting_value'] ?? '0';
 
-// Check if user is admin
+// Admin bypass is based on a verified admin account, never a hardcoded email.
 $is_admin = false;
-if(isset($_SESSION['email']) && $_SESSION['email'] == "universitylibrary172@gmail.com"){
-    $is_admin = true;
+if (!empty($_SESSION['admin_id'])) {
+    $admin_id = (int) $_SESSION['admin_id'];
+    $admin_stmt = mysqli_prepare($conn, "SELECT id FROM users WHERE id = ? AND is_admin = 1 LIMIT 1");
+    if ($admin_stmt) {
+        mysqli_stmt_bind_param($admin_stmt, "i", $admin_id);
+        mysqli_stmt_execute($admin_stmt);
+        $admin_result = mysqli_stmt_get_result($admin_stmt);
+        $is_admin = $admin_result && mysqli_num_rows($admin_result) === 1;
+        mysqli_stmt_close($admin_stmt);
+    }
 }
 
 // If maintenance mode is ON and user is not admin
