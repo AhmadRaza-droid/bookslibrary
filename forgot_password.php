@@ -17,7 +17,7 @@ if(isset($_POST['send_otp'])){
     $check = mysqli_query($conn, "SELECT * FROM users WHERE email='$email'");
     
     if(mysqli_num_rows($check) > 0){
-        $otp = rand(100000, 999999);
+        $otp = random_int(100000, 999999);
         $otp_expiry = date('Y-m-d H:i:s', strtotime('+10 minutes'));
         
         mysqli_query($conn, "UPDATE users SET otp='$otp', otp_expiry='$otp_expiry' WHERE email='$email'");
