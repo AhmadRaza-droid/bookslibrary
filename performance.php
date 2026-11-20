@@ -84,6 +84,7 @@ while($row = mysqli_fetch_assoc($result)){
             <p>Optimize all tables for better performance</p>
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['admin_csrf'], ENT_QUOTES, 'UTF-8'); ?>">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['admin_csrf'], ENT_QUOTES, 'UTF-8'); ?>">
                 <button type="submit" name="optimize" class="green">🔄 Optimize Now</button>
             </form>
         </div>
@@ -91,6 +92,7 @@ while($row = mysqli_fetch_assoc($result)){
             <h3>🗑️ Clear Cache</h3>
             <p>Clear session cache and temporary data</p>
             <form method="POST">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['admin_csrf'], ENT_QUOTES, 'UTF-8'); ?>">
                 <button type="submit" name="clear_cache" class="green">🗑️ Clear Cache</button>
             </form>
         </div>
