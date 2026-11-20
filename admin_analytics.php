@@ -28,9 +28,9 @@ $total_reviews = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM reviews"));
 
 // Most read books
 $most_read = mysqli_query($conn,
-"SELECT books.title, COUNT(reading_history.id) AS read_count 
- FROM reading_history 
- JOIN books ON reading_history.book_id = books.id 
+"SELECT books.title, COUNT(recently_viewed.id) AS read_count 
+ FROM recently_viewed 
+ JOIN books ON recently_viewed.book_id = books.id 
  GROUP BY books.id 
  ORDER BY read_count DESC 
  LIMIT 5");
@@ -46,9 +46,9 @@ $most_downloaded = mysqli_query($conn,
 
 // Top users
 $top_users = mysqli_query($conn,
-"SELECT users.fullname, COUNT(reading_history.id) AS read_count 
- FROM reading_history 
- JOIN users ON reading_history.user_id = users.id 
+"SELECT users.fullname, COUNT(recently_viewed.id) AS read_count 
+ FROM recently_viewed 
+ JOIN users ON recently_viewed.user_id = users.id 
  GROUP BY users.id 
  ORDER BY read_count DESC 
  LIMIT 5");
