@@ -590,20 +590,28 @@ $book_requests = mysqli_query($conn,
         <table>
             <tr><th>ID</th><th>Name</th><th>Email</th><th>Message</th><th>Reply</th><th>Action</th></tr>
             <?php while($row = mysqli_fetch_assoc($messages)){ ?>
-            <form method="POST" action=""><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>">
-                <input type="hidden" name="message_id" value="<?php echo $row['id']; ?>">
                 <tr>
-                    <td><?php echo $row['id']; ?></td>
+                    <td><?php echo (int)$row['id']; ?></td>
                     <td><?php echo htmlspecialchars($row['name']); ?></td>
                     <td><?php echo htmlspecialchars($row['email']); ?></td>
                     <td><?php echo htmlspecialchars($row['message']); ?></td>
-                    <td width="250"><input type="text" name="reply" value="<?php echo htmlspecialchars($row['reply'] ?? ''); ?>" placeholder="Type reply..." style="width:100%"></td>
+                    <td width="250">
+                        <form method="POST" action="">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="message_id" value="<?php echo (int)$row['id']; ?>">
+                            <input type="text" name="reply" value="<?php echo htmlspecialchars($row['reply'] ?? ''); ?>" placeholder="Type reply..." style="width:100%">
+                            <button type="submit" name="reply_submit" class="green">Reply</button>
+                        </form>
+                    </td>
                     <td class="action-buttons">
-                        <button type="submit" name="reply_submit" class="green">Reply</button>
-                        <form method="POST" onsubmit="return confirm('Delete this message?')"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>"><input type="hidden" name="admin_action" value="delete_message"><input type="hidden" name="record_id" value="<?php echo (int)$row['id']; ?>"><button type="submit" class="red">Delete</button></form>
+                        <form method="POST" onsubmit="return confirm('Delete this message?')">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="admin_action" value="delete_message">
+                            <input type="hidden" name="record_id" value="<?php echo (int)$row['id']; ?>">
+                            <button type="submit" class="red">Delete</button>
+                        </form>
                     </td>
                 </tr>
-            </form>
             <?php } ?>
         </table>
     </div>
