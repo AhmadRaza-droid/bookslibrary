@@ -1,154 +1,130 @@
 <?php
-session_start();
 include 'config.php';
-
-// ========== PHPMailer USE STATEMENTS - TOP PAR ==========
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-
 require 'phpmailer/src/Exception.php';
 require 'phpmailer/src/PHPMailer.php';
 require 'phpmailer/src/SMTP.php';
 
-// ========== LOGIN ==========
-if(isset($_POST['login'])){
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $password = $_POST['password'];
+function sendLibraryOtp($to, $otp) {
+    $secret = getenv('LIBRARY_SMTP_PASSWORD');
+    if (!$secret) throw new RuntimeException('SMTP is not configured.');
+    $mail = new PHPMailer(true);
+    $mail->isSMTP();
+    $mail->Host = 'smtp.gmail.com';
+    $mail->SMTPAuth = true;
+    $mail->Username = getenv('LIBRARY_SMTP_USERNAME') ?: 'universitylibrary172@gmail.com';
+    $mail->Password = $secret;
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+    $mail->Port = 587;
+    $mail->setFrom($mail->Username, 'Book Library');
+    $mail->addAddress($to);
+    $mail->isHTML(true);
+    $mail->Subject = 'Password Reset OTP';
+    $mail->Body = '<h2>Password Reset OTP</h2><p>Your code is <strong>' . htmlspecialchars($otp) . '</strong>.</p><p>It expires in 10 minutes.</p>';
+    $mail->send();
+}
 
-    $query = "SELECT * FROM users WHERE email='$email' AND password='$password'";
-    $result = mysqli_query($conn, $query);
-
-    if(mysqli_num_rows($result) > 0){
-        $user = mysqli_fetch_assoc($result);
-        
-        if($user['is_verified'] == 0){
-            echo "<script>
-                    alert('⚠️ Please verify your email first! Check your inbox for OTP.');
-                    window.location.href='verify_otp.php';
-                  </script>";
+if (isset($_POST['login'])) {
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $stmt = $conn->prepare('SELECT * FROM users WHERE email = ? LIMIT 1');
+    $stmt->bind_param('s', $email);
+    $stmt->execute();
+    $user = $stmt->get_result()->fetch_assoc();
+    $valid = false;
+    if ($user) {
+        $stored = (string)$user['password'];
+        $valid = password_verify($password, $stored);
+        if (!$valid && hash_equals($stored, $password)) {
+            $valid = true;
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            $upgrade = $conn->prepare('UPDATE users SET password = ? WHERE id = ?');
+            $upgrade->bind_param('si', $hash, $user['id']);
+            $upgrade->execute();
+        }
+    }
+    if ($user && $valid) {
+        if ((int)$user['is_verified'] === 0) {
+            echo "<script>alert('Please verify your email first.');window.location.href='verify_otp.php';</script>";
             exit();
         }
-        
+        session_regenerate_id(true);
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['fullname'] = $user['fullname'];
         $_SESSION['email'] = $user['email'];
-
-        echo "<script>
-                alert('✅ Login Successful');
-                window.location.href='index.php';
-              </script>";
-        exit();
-    } else {
-        echo "<script>
-                alert('❌ Invalid Email or Password');
-                window.location.href='login.php';
-              </script>";
+        header('Location: index.php');
         exit();
     }
+    echo "<script>alert('Invalid email or password.');window.location.href='login.php';</script>";
+    exit();
 }
 
-// ========== SEND OTP FOR FORGOT PASSWORD ==========
-if(isset($_POST['send_otp'])){
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    
-    $check = mysqli_query($conn, "SELECT * FROM users WHERE email='$email'");
-    
-    if(mysqli_num_rows($check) > 0){
-        $otp = rand(100000, 999999);
-        $otp_expiry = date('Y-m-d H:i:s', strtotime('+10 minutes'));
-        
-        mysqli_query($conn, "UPDATE users SET otp='$otp', otp_expiry='$otp_expiry' WHERE email='$email'");
+if (isset($_POST['send_otp'])) {
+    $email = trim($_POST['email'] ?? '');
+    $stmt = $conn->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
+    $stmt->bind_param('s', $email);
+    $stmt->execute();
+    $user = $stmt->get_result()->fetch_assoc();
+    if ($user) {
+        $otp = (string)random_int(100000, 999999);
+        $expiry = date('Y-m-d H:i:s', time() + 600);
+        $save = $conn->prepare('UPDATE users SET otp = ?, otp_expiry = ? WHERE id = ?');
+        $save->bind_param('ssi', $otp, $expiry, $user['id']);
+        $save->execute();
         $_SESSION['reset_email'] = $email;
-        
-        $mail = new PHPMailer(true);
+        unset($_SESSION['otp_verified']);
         try {
-            $mail->isSMTP();
-            $mail->Host = 'smtp.gmail.com';
-            $mail->SMTPAuth = true;
-            $mail->Username = 'universitylibrary172@gmail.com';
-            $mail->Password = 'zuepxvysbxrocdef';
-            $mail->SMTPSecure = 'tls';
-            $mail->Port = 587;
-            $mail->setFrom('universitylibrary172@gmail.com', 'Book Library');
-            $mail->addAddress($email);
-            $mail->isHTML(true);
-            $mail->Subject = 'Password Reset OTP';
-            $mail->Body = "
-                <h2>Password Reset OTP</h2>
-                <p>Your OTP is: <strong>$otp</strong></p>
-                <p>Valid for 10 minutes.</p>
-            ";
-            $mail->send();
-            
-            echo "<script>
-                    alert('✅ OTP sent to your email!');
-                    window.location.href='login.php?step=verify_otp';
-                  </script>";
+            sendLibraryOtp($email, $otp);
+            echo "<script>alert('OTP sent to your email.');window.location.href='login.php?step=verify_otp';</script>";
             exit();
-        } catch(Exception $e) {
-            echo "<script>alert('❌ Failed to send OTP. Please try again.');</script>";
+        } catch (Exception $e) {
+            error_log('OTP email failed: ' . $e->getMessage());
+            echo "<script>alert('Could not send OTP. Contact the administrator.');</script>";
         }
     } else {
-        echo "<script>alert('❌ Email not found!');</script>";
+        echo "<script>alert('If the account exists, an OTP will be sent.');</script>";
     }
 }
 
-// ========== VERIFY OTP ==========
-if(isset($_POST['verify_otp'])){
-    $entered_otp = $_POST['otp'];
-    $email = $_SESSION['reset_email'];
-    
-    $query = "SELECT * FROM users WHERE email='$email' AND otp='$entered_otp'";
-    $result = mysqli_query($conn, $query);
-    
-    if(mysqli_num_rows($result) > 0){
+if (isset($_POST['verify_otp'])) {
+    $email = $_SESSION['reset_email'] ?? '';
+    $otp = trim($_POST['otp'] ?? '');
+    $stmt = $conn->prepare('SELECT id FROM users WHERE email = ? AND otp = ? AND otp_expiry > NOW() LIMIT 1');
+    $stmt->bind_param('ss', $email, $otp);
+    $stmt->execute();
+    if ($email !== '' && $stmt->get_result()->fetch_assoc()) {
         $_SESSION['otp_verified'] = true;
-        echo "<script>
-                alert('✅ OTP Verified! Set your new password.');
-                window.location.href='login.php?step=reset_password';
-              </script>";
+        header('Location: login.php?step=reset_password');
         exit();
-    } else {
-        echo "<script>alert('❌ Invalid OTP!');</script>";
     }
+    echo "<script>alert('Invalid or expired OTP.');</script>";
 }
 
-// ========== RESET PASSWORD ==========
-if(isset($_POST['reset_password'])){
-    if(!isset($_SESSION['otp_verified']) || $_SESSION['otp_verified'] !== true){
-        echo "<script>
-                alert('Session expired. Please try again.');
-                window.location.href='login.php';
-              </script>";
+if (isset($_POST['reset_password'])) {
+    $email = $_SESSION['reset_email'] ?? '';
+    $newPassword = $_POST['new_password'] ?? '';
+    $confirmPassword = $_POST['confirm_password'] ?? '';
+    if (empty($_SESSION['otp_verified']) || $email === '') {
+        echo "<script>alert('Verify your OTP first.');window.location.href='login.php?step=forgot';</script>";
         exit();
     }
-    
-    $new_password = $_POST['new_password'];
-    $confirm_password = $_POST['confirm_password'];
-    $email = $_SESSION['reset_email'];
-    
-    if($new_password != $confirm_password){
-        echo "<script>alert('Passwords do not match!');</script>";
+    if (strlen($newPassword) < 8 || $newPassword !== $confirmPassword) {
+        echo "<script>alert('Passwords must match and be at least 8 characters.');</script>";
     } else {
-        $query = "UPDATE users SET password='$new_password', otp=NULL WHERE email='$email'";
-        $result = mysqli_query($conn, $query);
-        
-        if($result){
-            session_destroy();
-            echo "<script>
-                    alert('✅ Password reset successfully! Please login.');
-                    window.location.href='login.php';
-                  </script>";
+        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $stmt = $conn->prepare('UPDATE users SET password = ?, otp = NULL, otp_expiry = NULL WHERE email = ?');
+        $stmt->bind_param('ss', $hash, $email);
+        if ($stmt->execute()) {
+            unset($_SESSION['reset_email'], $_SESSION['otp_verified']);
+            echo "<script>alert('Password reset successfully. Please login.');window.location.href='login.php';</script>";
             exit();
-        } else {
-            echo "<script>alert('❌ Failed to reset password. Try again.');</script>";
         }
+        echo "<script>alert('Could not reset password.');</script>";
     }
 }
-
-$step = isset($_GET['step']) ? $_GET['step'] : 'login';
+$step = $_GET['step'] ?? 'login';
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
