@@ -215,7 +215,7 @@ $book_requests = mysqli_query($conn,
 <html>
 <head>
     <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=8000">
+    <link rel="stylesheet" href="style.css?v=20261120">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
