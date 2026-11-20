@@ -157,7 +157,13 @@ if (!$stmt) {
     http_response_code(500);
     chat_reply('Sorry, book search is temporarily unavailable. Please try again later.');
 }
-mysqli_stmt_bind_param($stmt, $types, ...$params);
+$bindValues = array_merge([$types], $params);
+$bindArguments = [$stmt];
+foreach ($bindValues as $key => &$value) {
+    $bindArguments[] = &$value;
+}
+unset($value);
+call_user_func_array('mysqli_stmt_bind_param', $bindArguments);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 
