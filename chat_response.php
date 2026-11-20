@@ -18,18 +18,19 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $message = trim((string)($_POST['message'] ?? ''));
-if ($message === '' || mb_strlen($message) > 250) {
+$messageLength = function_exists('mb_strlen') ? mb_strlen($message, 'UTF-8') : strlen($message);
+if ($message === '' || $messageLength > 250) {
     http_response_code(400);
     chat_reply('Please enter a question (up to 250 characters).');
 }
 
-$normal = mb_strtolower($message, 'UTF-8');
+$normal = function_exists('mb_strtolower') ? mb_strtolower($message, 'UTF-8') : strtolower($message);
 $normal = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $normal);
 $normal = preg_replace('/\s+/u', ' ', $normal);
 $normal = trim($normal);
 
 $intents = [
-    'greeting' => ['hello','hi','hey','salam','assalam o alaikum','aoa','good morning','good evening'],
+    'greeting' => ['hello','hi','hey','salam','assalam o alaikum','assalamualaikum','asalam o alaikum','aoa','good morning','good evening'],
     'help' => ['help','what can you do','how can you help','options','commands'],
     'download' => ['download','save book','epub'],
     'read' => ['read','online reading','open book','how to read'],
@@ -104,10 +105,10 @@ foreach ($categoryTerms as $category => $terms) {
     }
 }
 
-$stopWords = ['the','and','for','with','from','book','books','find','show','want','need','please','give','me','about','a','an','is','are','of','in','on','to','recommend','recommendation','search','mujhe','koi','kitab','kitabein','chahiye','batao','dikhao','hai','ka','ki','ke','mein','ma','do'];
+$stopWords = ['the','and','for','with','from','book','books','find','show','want','need','please','give','me','about','a','an','is','are','of','in','on','to','recommend','recommendation','search','mujhe','koi','kitab','kitaab','kitabein','chahiye','batao','btao','kaise','kahan','karo','karun','dikhao','hai','ka','ki','ke','mein','ma','do'];
 $tokens = preg_split('/\s+/u', $normal);
 $tokens = array_values(array_unique(array_filter($tokens, function($word) use ($stopWords) {
-    return mb_strlen($word, 'UTF-8') >= 2 && !in_array($word, $stopWords, true);
+    return (function_exists('mb_strlen') ? mb_strlen($word, 'UTF-8') : strlen($word)) >= 2 && !in_array($word, $stopWords, true);
 })));
 
 $conditions = [];
