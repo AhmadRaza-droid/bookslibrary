@@ -47,7 +47,7 @@ $result = mysqli_query($conn, "SELECT * FROM books $where LIMIT $limit OFFSET $o
 <html>
 <head>
     <title>Books</title>
-    <link rel="stylesheet" href="style.css?v=1800">
+    <link rel="stylesheet" href="style.css?v=20261120">
 </head>
 
 <body>
