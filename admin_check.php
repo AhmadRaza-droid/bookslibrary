@@ -1,12 +1,17 @@
 <?php
-// Check if user is admin
+// Verify the signed-in account's admin role with a prepared query.
 $is_admin = false;
-if(isset($_SESSION['user_id'])){
-    $uid = $_SESSION['user_id'];
-    $check_admin = mysqli_query($conn, "SELECT is_admin FROM users WHERE id='$uid'");
-    if($check_admin && mysqli_num_rows($check_admin) > 0){
-        $admin_data = mysqli_fetch_assoc($check_admin);
-        $is_admin = ($admin_data['is_admin'] == 1);
+if (!empty($_SESSION['user_id'])) {
+    $uid = (int) $_SESSION['user_id'];
+    $check_admin = mysqli_prepare($conn, "SELECT is_admin FROM users WHERE id = ? LIMIT 1");
+    if ($check_admin) {
+        mysqli_stmt_bind_param($check_admin, 'i', $uid);
+        mysqli_stmt_execute($check_admin);
+        $admin_result = mysqli_stmt_get_result($check_admin);
+        if ($admin_result && ($admin_data = mysqli_fetch_assoc($admin_result))) {
+            $is_admin = ((int)$admin_data['is_admin'] === 1);
+        }
+        mysqli_stmt_close($check_admin);
     }
 }
 ?>
