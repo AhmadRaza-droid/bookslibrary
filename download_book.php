@@ -1,24 +1,8 @@
 <?php
 include 'config.php';
 
-// ========== CHECK AND CREATE DOWNLOADS TABLE IF NOT EXISTS ==========
-$table_check = mysqli_query($conn, "SHOW TABLES LIKE 'downloads'");
-if(mysqli_num_rows($table_check) == 0){
-    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS downloads (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        book_id INT NOT NULL,
-        book_title VARCHAR(255) NOT NULL,
-        download_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )");
-}
-
-// ========== CHECK AND ADD download_count COLUMN IF NOT EXISTS ==========
-$column_check = mysqli_query($conn, "SHOW COLUMNS FROM books LIKE 'download_count'");
-if(mysqli_num_rows($column_check) == 0){
-    mysqli_query($conn, "ALTER TABLE books ADD COLUMN download_count INT DEFAULT 0");
-}
-
+// Database structure is managed by the migration in database_migrations/.
+// Public download requests must never run CREATE TABLE or ALTER TABLE.
 if(isset($_GET['id'])){
 
     $book_id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
@@ -316,7 +300,7 @@ if(isset($_GET['id'])){
     </div>
     
     <div class=\"btn-group\" style=\"margin-top:10px;\">
-        <a href=\"read_book.php?id=<?php echo (int)$book_id; ?>\">
+        <a href=\"read_book.php?id=" . (int)$book_id . "\">
             <button class=\"btn-read\">📖 Read Online</button>
         </a>
         <a href=\"profile.php\">
