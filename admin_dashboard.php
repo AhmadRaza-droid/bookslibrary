@@ -226,7 +226,7 @@ if (isset($_POST['send_notification'])) {
                 try {
                     $mail->isSMTP(); $mail->Host = $smtp_host; $mail->SMTPAuth = true;
                     $mail->Username = $smtp_email; $mail->Password = $smtp_password;
-                    $mail->SMTPSecure = 'tls'; $mail->Port = 587;
+                    $mail->SMTPSecure = $smtp_encryption; $mail->Port = $smtp_port;
                     $mail->setFrom($smtp_email, 'Book Library');
                     $mail->addAddress($user['email'], $user['fullname']);
                     $mail->isHTML(true); $mail->Subject = $title;
@@ -241,7 +241,7 @@ if (isset($_POST['send_notification'])) {
     }
     $_SESSION['admin_notice'] = ($smtp_email !== '' && $smtp_password !== '')
         ? "Notification saved. Email sent to {$sent_count} of {$total_users} users."
-        : "Notification saved in the library. Configure LIBRARY_SMTP_USERNAME and LIBRARY_SMTP_PASSWORD to enable email delivery.";
+        : "Notification saved in the library. Create private/smtp_config.php on your hosting to enable email delivery.";
     header('Location: ?page=notifications&sent=1'); exit();
 }
 
@@ -631,7 +631,7 @@ $book_requests = mysqli_query($conn,
         <?php if (!empty($_SESSION['admin_notice'])): ?>
             <p class="admin-alert"><?php echo htmlspecialchars($_SESSION['admin_notice'], ENT_QUOTES, 'UTF-8'); unset($_SESSION['admin_notice']); ?></p>
         <?php else: ?>
-            <p style="color:#52745a;margin-bottom:15px;">Notifications are saved in the library. Email delivery requires SMTP environment settings.</p>
+            <p style="color:#52745a;margin-bottom:15px;">Notifications are saved in the library. Email delivery requires the private SMTP configuration file on the hosting account.</p>
         <?php endif; ?>
         <form method="POST" action=""><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>">
             <input type="text" name="title" placeholder="Notification Title" required style="width:100%; margin-bottom:10px;">
