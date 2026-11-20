@@ -54,7 +54,7 @@ $chatBooks = mysqli_query($conn,
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?php echo htmlspecialchars($settings['site_name'] ?? 'Library Management System'); ?></title>
-<link rel="stylesheet" href="style.css?v=2400">
+<link rel="stylesheet" href="style.css?v=20261120">
 <style>
     .hero-search {
         margin-top: 25px;
