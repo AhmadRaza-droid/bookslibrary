@@ -22,10 +22,11 @@ if(isset($_SESSION['temp_email'])){
 
 if(isset($_POST['verify'])){
     $entered_otp = trim($_POST['otp']);
+    $now = date('Y-m-d H:i:s');
     
     if($type == 'registration'){
         // ========== REGISTRATION OTP VERIFICATION ==========
-        $query = "SELECT * FROM users WHERE email='$email' AND otp='$entered_otp' AND otp_expiry > NOW() AND is_verified=0 AND otp_expiry > NOW()";
+        $query = "SELECT * FROM users WHERE email='$email' AND otp='$entered_otp' AND otp_expiry > '$now' AND is_verified=0 AND otp_expiry > '$now'";
         $result = mysqli_query($conn, $query);
         
         if(mysqli_num_rows($result) > 0){
