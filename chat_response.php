@@ -80,6 +80,27 @@ foreach ($intents as $intent => $phrases) {
     }
 }
 
+// Quick catalogue questions.
+if (preg_match('/\b(how many books|total books|book count|kitni books|kitni kitab|kitni kitaab)\b/u', $normal)) {
+    $countResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM books");
+    $countRow = $countResult ? mysqli_fetch_assoc($countResult) : ['total' => 0];
+    chat_reply('There are currently ' . (int)$countRow['total'] . ' books in the library collection.');
+}
+if (preg_match('/\b(show all books|list books|book list|what books do you have|konsi books|kon si books|books available)\b/u', $normal)) {
+    $catalogResult = mysqli_query($conn, "SELECT id, title, author, category FROM books ORDER BY id DESC LIMIT 5");
+    $catalog = [];
+    if ($catalogResult) {
+        while ($row = mysqli_fetch_assoc($catalogResult)) {
+            $catalog[] = ['id'=>(int)$row['id'], 'title'=>$row['title'], 'author'=>$row['author'], 'category'=>$row['category'] ?? ''];
+        }
+    }
+    if ($catalog) chat_reply('Here are a few books available in the library. Open the Books page to see the full collection.', $catalog);
+    chat_reply('The library collection is currently empty.');
+}
+if (preg_match('/\b(who are you|your name|what are you)\b/u', $normal)) {
+    chat_reply('I am your Digital Library Assistant. I can search this library by book title, author and category, and guide you through common library features.');
+}
+
 $categoryTerms = [
     'programming' => ['programming','coding','computer','software','java','python','algorithm','assembly','programmer'],
     'science' => ['science','scientific','physics','chemistry','biology','astronomy'],
