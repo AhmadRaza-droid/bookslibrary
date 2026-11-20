@@ -31,7 +31,7 @@ if(isset($_POST['send_otp'])){
             $mail->Host = 'smtp.gmail.com';
             $mail->SMTPAuth = true;
             $mail->Username = 'universitylibrary172@gmail.com';
-            $mail->Password = 'zuepxvysbxrocdef';
+            $mail->Password = getenv('LIBRARY_SMTP_PASSWORD') ?: '';
             $mail->SMTPSecure = 'tls';
             $mail->Port = 587;
             $mail->setFrom('universitylibrary172@gmail.com', 'Book Library');
@@ -77,11 +77,13 @@ if(isset($_POST['reset_password'])){
     $confirm_password = $_POST['confirm_password'];
     $email = $_SESSION['reset_email'];
     
-    if($new_password != $confirm_password){
+    if(strlen($new_password) < 8 || $new_password != $confirm_password){
         echo "<script>alert('Passwords do not match!');</script>";
     } else {
-        $query = "UPDATE users SET password='$new_password', otp=NULL WHERE email='$email'";
-        $result = mysqli_query($conn, $query);
+        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+        $stmt = $conn->prepare("UPDATE users SET password=?, otp=NULL, otp_expiry=NULL WHERE email=?");
+        $stmt->bind_param("ss", $hashed_password, $email);
+        $result = $stmt->execute();
         
         if($result){
             session_destroy();
