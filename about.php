@@ -18,7 +18,7 @@ if($result){
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About - <?php echo htmlspecialchars($settings['site_name'] ?? 'Library Management System'); ?></title>
-    <link rel="stylesheet" href="style.css?v=10">
+    <link rel="stylesheet" href="style.css?v=20261120">
     <style>
         .about-container {
             max-width: 900px;
