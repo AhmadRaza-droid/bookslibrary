@@ -6,7 +6,9 @@ CREATE TABLE IF NOT EXISTS books (
   cover_image_url VARCHAR(500),
   read_link VARCHAR(500) NOT NULL,
   download_epub_link VARCHAR(500) NOT NULL,
-  source VARCHAR(100) DEFAULT 'Project Gutenberg'
+  source VARCHAR(100) DEFAULT 'Project Gutenberg',
+  category VARCHAR(120) NULL,
+  download_count INT NOT NULL DEFAULT 0
 );
 
 INSERT INTO books (title, author, description, cover_image_url, read_link, download_epub_link, source) VALUES
@@ -110,3 +112,15 @@ INSERT INTO books (title, author, description, cover_image_url, read_link, downl
 ('The Railway Children','E. Nesbit','A children’s story about family, kindness, and adventure.','https://www.gutenberg.org/cache/epub/1874/pg1874.cover.medium.jpg','https://www.gutenberg.org/ebooks/1874','https://www.gutenberg.org/ebooks/1874.epub.noimages','Project Gutenberg'),
 ('The Wind in the Willows','Kenneth Grahame','A charming animal fantasy about friendship and countryside adventures.','https://www.gutenberg.org/cache/epub/27805/pg27805.cover.medium.jpg','https://www.gutenberg.org/ebooks/27805','https://www.gutenberg.org/ebooks/27805.epub.noimages','Project Gutenberg'),
 ('Alice’s Adventures in Wonderland','Lewis Carroll','A fantasy classic about Alice’s strange journey through Wonderland.','https://www.gutenberg.org/cache/epub/11/pg11.cover.medium.jpg','https://www.gutenberg.org/ebooks/11','https://www.gutenberg.org/ebooks/11.epub.noimages','Project Gutenberg');
+
+
+CREATE TABLE IF NOT EXISTS downloads (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  book_id INT NOT NULL,
+  book_title VARCHAR(255) NOT NULL,
+  download_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_downloads_user_id (user_id),
+  INDEX idx_downloads_book_id (book_id),
+  INDEX idx_downloads_date (download_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
