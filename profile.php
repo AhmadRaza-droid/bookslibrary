@@ -10,7 +10,10 @@ if(!isset($_SESSION['user_id'])){
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
+$user_id = (int) $_SESSION['user_id'];
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 
 $result = mysqli_query($conn,
 "SELECT * FROM users WHERE id='$user_id'");
@@ -481,6 +484,7 @@ if($result_settings){
 
         <!-- Clear All Activity -->
         <form action="clear_all_history.php" method="POST" onsubmit="return confirm('⚠️ WARNING: This will delete ALL your activity!');">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
             <button type="submit" class="btn-danger" style="width:100%;padding:12px;font-size:16px;border:none;border-radius:8px;cursor:pointer;margin:15px 0;">
                 🗑️ Clear All My Activity
             </button>
