@@ -311,7 +311,7 @@ if(isset($_GET['id'])){
     </div>
     
     <div class=\"btn-group\">
-        <a href=\"$downloadLink\" target=\"_blank\">
+        <a href=\"" . htmlspecialchars($downloadLink, ENT_QUOTES, 'UTF-8') . "\" target=\"_blank\">
             <button class=\"btn-download-now\">📥 Download EPUB</button>
         </a>
     </div>
