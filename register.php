@@ -70,7 +70,7 @@ if($allow_registration == '0'){
 <html lang="en">
 <head>
     <title>Register - Library Management System</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20261120">
     <style>
         .form-section {
             display: flex;
