@@ -33,8 +33,7 @@ if(isset($_GET['id'])){
 
     if($book){
 
-        $downloadLink = trim((string)$book['download_epub_link']);
-        if ($downloadLink === '') $downloadLink = trim((string)$book['pdf_file']);
+        $downloadLink = trim((string)($book['download_epub_link'] ?? ''));
         if (ctype_digit($downloadLink)) {
             $downloadLink = "https://www.gutenberg.org/ebooks/" . $downloadLink . ".epub.noimages";
         } elseif (strpos($downloadLink, 'uploads/') === 0 && strpos($downloadLink, '..') === false) {
