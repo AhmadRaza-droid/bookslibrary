@@ -2,6 +2,7 @@
 include 'session_timeout.php';
 include 'config.php';
 include 'maintenance_check.php';
+if (empty($_SESSION['progress_csrf'])) $_SESSION['progress_csrf'] = bin2hex(random_bytes(32));
 
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$id || $id < 1) {
@@ -33,7 +34,7 @@ if (!empty($_SESSION['user_id'])) {
         mysqli_stmt_close($recent_stmt);
     }
 
-    $progress_stmt = mysqli_prepare($conn, "SELECT progress FROM reading_progress WHERE user_id = ? AND book_id = ? ORDER BY id DESC LIMIT 1");
+    $progress_stmt = mysqli_prepare($conn, "SELECT progress FROM reading_progress WHERE user_id = ? AND book_id = ? LIMIT 1");
     if ($progress_stmt) {
         mysqli_stmt_bind_param($progress_stmt, 'ii', $user_id, $id);
         mysqli_stmt_execute($progress_stmt);
@@ -249,6 +250,7 @@ if (!empty($_SESSION['user_id'])) {
         
         <div class="progress-controls">
             <input type="hidden" id="book_id" value="<?php echo $id; ?>">
+            <input type="hidden" id="progress_csrf" value="<?php echo htmlspecialchars($_SESSION["progress_csrf"], ENT_QUOTES, "UTF-8"); ?>">
             
             <select id="progress_select" style="flex:1;min-width:150px;">
                 <option value="0" <?php echo $current_progress == 0 ? 'selected' : ''; ?>>0%</option>
@@ -307,7 +309,7 @@ function saveProgress(){
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: 'book_id=' + book_id + '&progress=' + progress
+        body: 'book_id=' + encodeURIComponent(book_id) + '&progress=' + encodeURIComponent(progress) + '&csrf_token=' + encodeURIComponent(document.getElementById('progress_csrf').value)
     })
     .then(response => response.json())
     .then(data => {
