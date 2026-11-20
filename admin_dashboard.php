@@ -2,7 +2,20 @@
 include 'session_timeout.php';
 include 'config.php';
 
-if(!isset($_SESSION['admin'])){
+$admin_id = (int)($_SESSION['admin_id'] ?? 0);
+if ($admin_id < 1 || empty($_SESSION['admin'])) {
+    header("Location: admin_login.php");
+    exit();
+}
+$admin_verify = mysqli_prepare($conn, "SELECT id FROM users WHERE id = ? AND is_admin = 1 LIMIT 1");
+if (!$admin_verify) { http_response_code(500); exit('Unable to verify admin access.'); }
+mysqli_stmt_bind_param($admin_verify, 'i', $admin_id);
+mysqli_stmt_execute($admin_verify);
+$admin_verify_result = mysqli_stmt_get_result($admin_verify);
+$admin_is_valid = $admin_verify_result && mysqli_num_rows($admin_verify_result) === 1;
+mysqli_stmt_close($admin_verify);
+if (!$admin_is_valid) {
+    unset($_SESSION['admin'], $_SESSION['admin_id'], $_SESSION['admin_email']);
     header("Location: admin_login.php");
     exit();
 }
