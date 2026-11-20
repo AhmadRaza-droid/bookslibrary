@@ -44,44 +44,10 @@ if(isset($_GET['action']) && $_GET['action'] == 'backup'){
     exit();
 }
 
-// Restore only server-generated backup files, with an admin CSRF token and strict upload limits.
-if (isset($_POST['restore'])) {
-    $token = $_POST['csrf_token'] ?? '';
-    if (!hash_equals($_SESSION['admin_csrf'], $token)) {
-        http_response_code(403);
-        exit('Security check failed. Refresh the page and try again.');
-    }
+// Restore is temporarily disabled. A header string is not proof that SQL is trusted.
+// Re-enable only after implementing authenticated, integrity-checked backup packages.
+$restore_disabled_message = 'Database restore is temporarily disabled for security. Create a fresh backup and contact the administrator for recovery.';
 
-    $upload = $_FILES['backup_file'] ?? null;
-    $valid_upload = $upload && $upload['error'] === UPLOAD_ERR_OK
-        && is_uploaded_file($upload['tmp_name'])
-        && $upload['size'] > 0 && $upload['size'] <= 10 * 1024 * 1024
-        && strtolower(pathinfo($upload['name'], PATHINFO_EXTENSION)) === 'sql';
-
-    if (!$valid_upload) {
-        echo "<script>alert('Invalid backup file. Choose a SQL backup smaller than 10 MB.');</script>";
-    } else {
-        $sql = file_get_contents($upload['tmp_name']);
-        if ($sql === false || strpos($sql, "-- Database Backup") !== 0) {
-            echo "<script>alert('This file is not a Book Library database backup.');</script>";
-        } else {
-            $restore_ok = mysqli_multi_query($conn, $sql);
-            if ($restore_ok) {
-                do {
-                    if ($result = mysqli_store_result($conn)) mysqli_free_result($result);
-                } while (mysqli_more_results($conn) && mysqli_next_result($conn));
-                $restore_ok = mysqli_errno($conn) === 0;
-            }
-            if ($restore_ok) {
-                $_SESSION['admin_csrf'] = bin2hex(random_bytes(32));
-                echo "<script>alert('Database restore completed. Please review the website.');</script>";
-            } else {
-                error_log('Database restore failed: ' . mysqli_error($conn));
-                echo "<script>alert('Restore failed. Check the backup file and database permissions.');</script>";
-            }
-        }
-    }
-}
 ?>
 
 <!DOCTYPE html>
@@ -131,13 +97,8 @@ if (isset($_POST['restore'])) {
     <!-- Restore -->
     <div class="backup-box">
         <h2>📥 Restore Backup</h2>
-        <p>Upload a SQL file to restore your database</p>
-        <form method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['admin_csrf'], ENT_QUOTES, 'UTF-8'); ?>">
-            <input type="file" name="backup_file" accept=".sql" required>
-            <button type="submit" name="restore" class="green">🔄 Restore Database</button>
-        </form>
-        <p style="font-size:12px;color:#dc3545;margin-top:10px;">⚠️ Warning: This will overwrite all existing data!</p>
+        <p>Database restore is temporarily disabled for security.</p>
+        <p style="font-size:12px;color:#dc3545;margin-top:10px;">⚠️ SQL uploads can execute destructive commands. Use a verified recovery process.</p>
     </div>
 </div>
 
