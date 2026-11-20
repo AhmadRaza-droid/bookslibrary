@@ -20,7 +20,7 @@ if (!hash_equals($_SESSION['admin_csrf'], (string)($_POST['csrf_token'] ?? '')))
 
 $request_id = filter_input(INPUT_POST, 'request_id', FILTER_VALIDATE_INT);
 $status = $_POST['status'] ?? '';
-$allowed_statuses = ['pending','approved','rejected','completed'];
+$allowed_statuses = ['Pending','Approved','Added','Rejected'];
 if (!$request_id || $request_id < 1 || !in_array($status, $allowed_statuses, true)) { http_response_code(400); exit('Invalid request status.'); }
 $stmt = mysqli_prepare($conn, "UPDATE book_requests SET status = ? WHERE id = ?");
 if (!$stmt) { http_response_code(500); exit('Unable to update request.'); }
