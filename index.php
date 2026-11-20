@@ -302,119 +302,72 @@ $chatBooks = mysqli_query($conn,
         <div class="bot-message">Hello 👋 Tell me a book name or category like programming, science, islamic, urdu, novel, history or horror.</div>
     </div>
     <div class="chat-input">
-        <input type="text" id="userInput" placeholder="Ask something..." onkeydown="if(event.key === 'Enter'){sendMessage();}">
+        <input type="text" id="userInput" placeholder="Ask something..." >
         <button onclick="sendMessage()">Send</button>
     </div>
 </div>
 
 <script>
-let bookData = [
-<?php while($chat = mysqli_fetch_assoc($chatBooks)){ ?>
-{
-title: "<?php echo addslashes($chat['title']); ?>",
-author: "<?php echo addslashes($chat['author']); ?>",
-description: "<?php echo addslashes($chat['description'] ?? ''); ?>",
-category: "<?php echo addslashes($chat['category'] ?? ''); ?>"
-},
-<?php } ?>
-];
-
 function toggleChat(){
-    let bot = document.getElementById("chatbot");
-    bot.style.display = (bot.style.display === "flex") ? "none" : "flex";
+    const bot = document.getElementById("chatbot");
+    bot.style.display = (getComputedStyle(bot).display === "none") ? "flex" : "none";
+}
+
+function addChatMessage(text, type){
+    const body = document.getElementById("chat-body");
+    const bubble = document.createElement("div");
+    bubble.className = type === "user" ? "user-message" : "bot-message";
+    bubble.textContent = text;
+    body.appendChild(bubble);
+    body.scrollTop = body.scrollHeight;
+    return bubble;
 }
 
 function sendMessage(){
-    let input = document.getElementById("userInput");
-    let message = input.value.toLowerCase().trim();
-    let chatBody = document.getElementById("chat-body");
-    if(message === "") return;
-    chatBody.innerHTML += `<div class="user-message">${input.value}</div>`;
-    chatBody.innerHTML += `<div class="bot-message" id="typing">Typing...</div>`;
-    chatBody.scrollTop = chatBody.scrollHeight;
-    let reply = getBotReply(message);
-    setTimeout(() => {
-        let typing = document.getElementById("typing");
-        if(typing) typing.remove();
-        chatBody.innerHTML += `<div class="bot-message">${reply}</div>`;
-        chatBody.scrollTop = chatBody.scrollHeight;
-    }, 700);
+    const input = document.getElementById("userInput");
+    const message = input.value.trim();
+    if(!message) return;
+
+    addChatMessage(message, "user");
     input.value = "";
+    input.disabled = true;
+
+    const typing = addChatMessage("Searching the library…", "bot");
+    const data = new FormData();
+    data.append("message", message);
+
+    fetch("chat_response.php", {method:"POST", body:data, headers:{"X-Requested-With":"XMLHttpRequest"}})
+      .then(response => {
+          if(!response.ok) throw new Error("Request failed");
+          return response.json();
+      })
+      .then(data => {
+          typing.remove();
+          addChatMessage(data.reply || "Sorry, I could not prepare an answer.", "bot");
+          if(Array.isArray(data.books) && data.books.length){
+              const body = document.getElementById("chat-body");
+              data.books.forEach(book => {
+                  const link = document.createElement("a");
+                  link.className = "bot-message";
+                  link.href = "read_book.php?id=" + encodeURIComponent(book.id);
+                  link.textContent = "📘 " + book.title + " — " + book.author + (book.category ? " · " + book.category : "");
+                  link.style.display = "block";
+                  link.style.textDecoration = "none";
+                  body.appendChild(link);
+              });
+              body.scrollTop = body.scrollHeight;
+          }
+      })
+      .catch(() => {
+          typing.remove();
+          addChatMessage("I could not connect to the library right now. Please try again in a moment.", "bot");
+      })
+      .finally(() => { input.disabled = false; input.focus(); });
 }
 
-function getBotReply(message){
-    if(message.includes("hello") || message.includes("hi") || message.includes("salam")){
-        return "👋 Hello! Tell me a book name or category like horror, novel, science, adventure, detective, history, children, fantasy or poetry.";
-    }
-    if(message.includes("download")){
-        return "⬇ Open the Books page and press Download EPUB under any book.";
-    }
-    if(message.includes("login")){
-        return "🔐 Use the Login page to access your account.";
-    }
-    if(message.includes("register") || message.includes("signup")){
-        return "📝 Use the Register page to create a new account.";
-    }
-    if(message.includes("favorite")){
-        return "❤️ Login first, then press Favorite under any book. Favorite books show in your Profile.";
-    }
-    if(message.includes("review") || message.includes("rating")){
-        return "⭐ You can rate books and write reviews on the Books page.";
-    }
-    if(message.includes("admin")){
-        return "🛡 Admin can manage books, users, reviews, requests and analytics from Admin Panel.";
-    }
-    if(message.includes("dark")){
-        return "🌙 Press the Dark button in the navbar to switch theme.";
-    }
-    let categories = {
-        horror: ["horror","vampire","dracula","frankenstein","ghost","gothic","terror","fear","dark","mystery"],
-        novel: ["novel","fiction","story","classic","moby","pride","love","family"],
-        science: ["science","scientist","physics","chemistry","biology","invisible","time machine"],
-        adventure: ["adventure","sea","island","treasure","journey","travel","pirate"],
-        detective: ["detective","sherlock","holmes","crime","case","mystery"],
-        history: ["history","historical","war","revolution","empire"],
-        children: ["children","child","alice","wonderland","animal","family"],
-        fantasy: ["fantasy","wonderland","dream","strange","magic"],
-        poetry: ["poetry","poem","poems"],
-        romance: ["romance","love","marriage"],
-        programming: ["programming","coding","computer","assembly","software","java","python","algorithm"]
-    };
-    for(let cat in categories){
-        if(message.includes(cat)){
-            return recommendByWords(cat, categories[cat]);
-        }
-    }
-    let words = message.split(" ").filter(w => w.length > 2);
-    let matches = bookData.filter(book => {
-        let text = (book.title + " " + book.author + " " + book.description + " " + book.category).toLowerCase();
-        return words.some(word => text.includes(word));
-    });
-    if(matches.length > 0){
-        return makeReply(matches, "📚 Recommended Books");
-    }
-    return "😢 No matching books found. Try Dracula, Frankenstein, Sherlock, horror, novel, adventure, detective, science, children or fantasy.";
-}
-
-function recommendByWords(category, words){
-    let matches = bookData.filter(book => {
-        let text = (book.title + " " + book.author + " " + book.description + " " + book.category).toLowerCase();
-        return words.some(word => text.includes(word));
-    });
-    if(matches.length === 0){
-        return "😢 No books found for " + category + ". Try another word like novel, adventure, detective, science or children.";
-    }
-    return makeReply(matches, "📚 Recommended " + category + " books");
-}
-
-function makeReply(matches, heading){
-    let reply = heading + ":<br><br>";
-    matches.slice(0,5).forEach(book => {
-        reply += "• " + book.title + " - " + book.author + "<br>";
-    });
-    reply += "<br><a href='books.php'>Open Books Page</a>";
-    return reply;
-}
+document.getElementById("userInput").addEventListener("keydown", function(event){
+    if(event.key === "Enter") sendMessage();
+});
 
 function toggleDarkMode(){
     document.body.classList.toggle("dark-mode");
