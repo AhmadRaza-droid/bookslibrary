@@ -2,6 +2,46 @@
 error_reporting(0);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
+
+/**
+ * Load SMTP settings from a private file on shared hosting.
+ * Keep private/smtp_config.php out of Git and never expose its contents.
+ */
+if (!function_exists('library_smtp_settings')) {
+    function library_smtp_settings(): array {
+        static $settings = null;
+        if ($settings !== null) return $settings;
+
+        $settings = [
+            'host' => 'smtp.gmail.com',
+            'username' => '',
+            'password' => '',
+            'port' => 587,
+            'encryption' => 'tls'
+        ];
+
+        $privateFile = __DIR__ . '/private/smtp_config.php';
+        if (is_file($privateFile) && is_readable($privateFile)) {
+            $privateSettings = require $privateFile;
+            if (is_array($privateSettings)) {
+                $settings = array_merge($settings, array_intersect_key(
+                    $privateSettings,
+                    array_flip(['host', 'username', 'password', 'port', 'encryption'])
+                ));
+            }
+        }
+
+        // Retain environment-variable support on hosts that provide it.
+        $settings['username'] = (string)($settings['username'] ?: (getenv('LIBRARY_SMTP_USERNAME') ?: ''));
+        $settings['password'] = (string)($settings['password'] ?: (getenv('LIBRARY_SMTP_PASSWORD') ?: ''));
+        $settings['host'] = (string)($settings['host'] ?: 'smtp.gmail.com');
+        $settings['port'] = (int)($settings['port'] ?: 587);
+        $settings['encryption'] = (string)($settings['encryption'] ?: 'tls');
+
+        return $settings;
+    }
+}
+
 $host = getenv('LIBRARY_DB_HOST') ?: 'sql103.byetcluster.com';
 $user = getenv('LIBRARY_DB_USER') ?: 'if0_42113689';
 $password = getenv('LIBRARY_DB_PASSWORD');
