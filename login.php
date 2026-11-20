@@ -90,8 +90,9 @@ if (isset($_POST['send_otp'])) {
 if (isset($_POST['verify_otp'])) {
     $email = $_SESSION['reset_email'] ?? '';
     $otp = trim($_POST['otp'] ?? '');
-    $stmt = $conn->prepare('SELECT id FROM users WHERE email = ? AND otp = ? AND otp_expiry > NOW() LIMIT 1');
-    $stmt->bind_param('ss', $email, $otp);
+    $now = date('Y-m-d H:i:s');
+    $stmt = $conn->prepare('SELECT id FROM users WHERE email = ? AND otp = ? AND otp_expiry > ? LIMIT 1');
+    $stmt->bind_param('sss', $email, $otp, $now);
     $stmt->execute();
     if ($email !== '' && $stmt->get_result()->fetch_assoc()) {
         $_SESSION['otp_verified'] = true;
