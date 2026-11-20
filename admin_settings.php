@@ -7,17 +7,35 @@ if(!isset($_SESSION['admin'])){
     exit();
 }
 
-// Update settings
-if(isset($_POST['update_settings'])){
-    foreach($_POST as $key => $value){
-        if($key == 'update_settings') continue;
-        $value = mysqli_real_escape_string($conn, $value);
-        mysqli_query($conn, "UPDATE settings SET setting_value='$value' WHERE setting_key='$key'");
+// Update only known settings using prepared statements and CSRF validation.
+$allowed_settings = [
+    'site_name', 'site_tagline', 'site_logo', 'footer_text',
+    'contact_email', 'contact_phone', 'contact_address',
+    'maintenance_mode', 'allow_registration'
+];
+if (empty($_SESSION['admin_csrf'])) $_SESSION['admin_csrf'] = bin2hex(random_bytes(32));
+if (isset($_POST['update_settings'])) {
+    $token = $_POST['csrf_token'] ?? '';
+    if (!hash_equals($_SESSION['admin_csrf'], $token)) {
+        http_response_code(403);
+        exit('Security check failed. Refresh the page and try again.');
     }
-    echo "<script>
-            alert('✅ Settings updated successfully!');
-            window.location.href='admin_settings.php';
-          </script>";
+    $stmt = mysqli_prepare($conn, "UPDATE settings SET setting_value = ? WHERE setting_key = ?");
+    if (!$stmt) { http_response_code(500); exit('Unable to update settings.'); }
+    foreach ($allowed_settings as $key) {
+        if (!array_key_exists($key, $_POST) || !is_string($_POST[$key])) continue;
+        $value = trim($_POST[$key]);
+        if (in_array($key, ['maintenance_mode', 'allow_registration'], true)) $value = $value === '1' ? '1' : '0';
+        mysqli_stmt_bind_param($stmt, 'ss', $value, $key);
+        if (!mysqli_stmt_execute($stmt)) {
+            mysqli_stmt_close($stmt);
+            http_response_code(500);
+            exit('A setting could not be saved.');
+        }
+    }
+    mysqli_stmt_close($stmt);
+    $_SESSION['admin_csrf'] = bin2hex(random_bytes(32));
+    echo "<script>alert('Settings updated successfully!'); window.location.href='admin_settings.php';</script>";
     exit();
 }
 
@@ -108,6 +126,7 @@ if($result && mysqli_num_rows($result) > 0){
         <p class="subtitle">Update your website settings below</p>
         
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['admin_csrf'], ENT_QUOTES, 'UTF-8'); ?>">
             <div class="form-group">
                 <label>🏠 Site Name</label>
                 <input type="text" name="site_name" value="<?php echo htmlspecialchars($settings['site_name'] ?? 'Book\'s Library'); ?>">
