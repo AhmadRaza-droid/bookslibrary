@@ -1,48 +1,41 @@
 <?php
-session_start();
 include 'config.php';
 
-if(isset($_POST['login'])){
+if (isset($_POST['login'])) {
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-    $username = mysqli_real_escape_string($conn, $_POST['username']);
-    $password = mysqli_real_escape_string($conn, $_POST['password']);
-
-    // ✅ Check in users table where is_admin = 1
-    $query = "SELECT * FROM users 
-              WHERE fullname='$username' 
-              AND is_admin=1";
-
-    $result = mysqli_query($conn, $query);
-
-    if(mysqli_num_rows($result) > 0){
-
-        $user = mysqli_fetch_assoc($result);
-
-        // ✅ Check password (plain text or hashed)
-        if($password == $user['password'] || password_verify($password, $user['password'])){
-
-            $_SESSION['admin'] = $username;
-            $_SESSION['admin_id'] = $user['id'];
-            $_SESSION['admin_email'] = $user['email'];
-
-            echo "<script>
-                    alert('Admin Login Successful');
-                    window.location.href='admin_dashboard.php';
-                  </script>";
-
-        } else {
-
-            echo "<script>
-                    alert('Invalid Password');
-                  </script>";
-        }
-
-    } else {
-
-        echo "<script>
-                alert('Invalid Username or Not an Admin');
-              </script>";
+    $stmt = mysqli_prepare($conn, "SELECT id, fullname, email, password FROM users WHERE fullname = ? AND is_admin = 1 LIMIT 1");
+    if (!$stmt) {
+        http_response_code(500);
+        exit('Unable to login right now.');
     }
+    mysqli_stmt_bind_param($stmt, 's', $username);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $user = $result ? mysqli_fetch_assoc($result) : null;
+    mysqli_stmt_close($stmt);
+
+    if ($user && (password_verify($password, $user['password']) || hash_equals((string)$user['password'], $password))) {
+        // Upgrade legacy plaintext passwords to a secure hash after a successful login.
+        if (password_get_info($user['password'])['algo'] === null) {
+            $new_hash = password_hash($password, PASSWORD_DEFAULT);
+            $update = mysqli_prepare($conn, "UPDATE users SET password = ? WHERE id = ?");
+            if ($update) {
+                mysqli_stmt_bind_param($update, 'si', $new_hash, $user['id']);
+                mysqli_stmt_execute($update);
+                mysqli_stmt_close($update);
+            }
+        }
+        session_regenerate_id(true);
+        $_SESSION['admin'] = $user['fullname'];
+        $_SESSION['admin_id'] = (int) $user['id'];
+        $_SESSION['admin_email'] = $user['email'];
+        echo "<script>alert('Admin login successful.'); window.location.href='admin_dashboard.php';</script>";
+        exit();
+    }
+
+    echo "<script>alert('Invalid username or password, or this account is not an admin.');</script>";
 }
 ?>
 
