@@ -108,7 +108,7 @@ if(isset($_POST['register'])){
             $mail->Host = 'smtp.gmail.com';
             $mail->SMTPAuth = true;
             $mail->Username = 'universitylibrary172@gmail.com';
-            $mail->Password = 'zuepxvysbxrocdef';
+            $mail->Password = getenv('LIBRARY_SMTP_PASSWORD') ?: '';
             $mail->SMTPSecure = 'tls';
             $mail->Port = 587;
             $mail->setFrom('universitylibrary172@gmail.com', 'Book Library');
