@@ -625,7 +625,11 @@ $book_requests = mysqli_query($conn,
     <?php if($page == 'notifications'): ?>
     <div class="table-section">
         <h2>🔔 Send Notification</h2>
-        <p style="color: #28a745; margin-bottom: 15px;">✅ Notification sent via EMAIL + saved to database!</p>
+        <?php if (!empty($_SESSION['admin_notice'])): ?>
+            <p class="admin-alert"><?php echo htmlspecialchars($_SESSION['admin_notice'], ENT_QUOTES, 'UTF-8'); unset($_SESSION['admin_notice']); ?></p>
+        <?php else: ?>
+            <p style="color:#52745a;margin-bottom:15px;">Notifications are saved in the library. Email delivery requires SMTP environment settings.</p>
+        <?php endif; ?>
         <form method="POST" action=""><input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($admin_csrf, ENT_QUOTES, 'UTF-8'); ?>">
             <input type="text" name="title" placeholder="Notification Title" required style="width:100%; margin-bottom:10px;">
             <textarea name="message" placeholder="Write notification..." rows="5" required style="width:100%; margin-bottom:10px;"></textarea>
