@@ -1,11 +1,30 @@
 <?php
+include 'session_timeout.php';
 include 'config.php';
-if (!isset($_SESSION['admin'])) { header('Location: admin_login.php'); exit(); }
-$id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
-if (!$id || $id < 1) { http_response_code(400); exit('Invalid book ID.'); }
-$stmt = $conn->prepare('DELETE FROM books WHERE id = ?');
-$stmt->bind_param('i',$id);
-if ($stmt->execute()) { header('Location: admin_dashboard.php?page=all_books'); exit(); }
-error_log('Book deletion failed: '.$stmt->error);
-http_response_code(500); echo 'Could not delete this book.';
+
+$admin_id = (int)($_SESSION['admin_id'] ?? 0);
+if ($admin_id < 1) { header("Location: admin_login.php"); exit(); }
+$admin_stmt = mysqli_prepare($conn, "SELECT id FROM users WHERE id = ? AND is_admin = 1 LIMIT 1");
+if (!$admin_stmt) { http_response_code(500); exit('Unable to verify admin access.'); }
+mysqli_stmt_bind_param($admin_stmt, 'i', $admin_id);
+mysqli_stmt_execute($admin_stmt);
+$admin_result = mysqli_stmt_get_result($admin_stmt);
+$is_admin = $admin_result && mysqli_num_rows($admin_result) === 1;
+mysqli_stmt_close($admin_stmt);
+if (!$is_admin) { unset($_SESSION['admin'], $_SESSION['admin_id']); header("Location: admin_login.php"); exit(); }
+if (empty($_SESSION['admin_csrf'])) $_SESSION['admin_csrf'] = bin2hex(random_bytes(32));
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit('Method not allowed.'); }
+if (!hash_equals($_SESSION['admin_csrf'], (string)($_POST['csrf_token'] ?? ''))) {
+    http_response_code(403); exit('Security check failed. Refresh the admin page and try again.');
+}
+
+$book_id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+if (!$book_id || $book_id < 1) { http_response_code(400); exit('Invalid book ID.'); }
+$stmt = mysqli_prepare($conn, "DELETE FROM books WHERE id = ?");
+if (!$stmt) { http_response_code(500); exit('Unable to delete book.'); }
+mysqli_stmt_bind_param($stmt, 'i', $book_id);
+$ok = mysqli_stmt_execute($stmt);
+mysqli_stmt_close($stmt);
+if (!$ok) { http_response_code(500); exit('Could not delete this book.'); }
+header('Location: admin_dashboard.php?page=all_books'); exit();
 ?>
