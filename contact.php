@@ -93,7 +93,7 @@ if(isset($_POST['send_message'])){
 <html lang="en">
 <head>
     <title>Contact - <?php echo htmlspecialchars($settings['site_name'] ?? 'Library Management System'); ?></title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20261120">
     <style>
         .contact-section {
             max-width: 1000px;
